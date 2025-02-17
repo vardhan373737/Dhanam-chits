@@ -376,7 +376,7 @@
                     const data = await response.json();
                     alert('Bank details submitted successfully!');
                     // Trigger invoice download
-                    window.location.href = data.invoiceUrl;
+                    window.location.href = 'home.html';
                 } else {
                     const errorData = await response.json();
                     alert(`Error: ${errorData.message}`);
