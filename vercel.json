@@ -11,9 +11,5 @@
       "src": "/(.*)",
       "dest": "/public/$1"
     }
-  ],
-  "rewrites": [
-    { "source": "/login", "destination": "/login.html" },
-    { "source": "/chitty-plans", "destination": "/chitty-plans.html" }
   ]
 }
