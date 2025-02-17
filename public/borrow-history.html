@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borrow History - Dhanam Chits Pvt. Ltd</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            color: #333;
+        }
+
+        .table-responsive {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        .table-striped tbody tr {
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        .table-striped tbody tr:hover {
+            box-shadow: 0 0 15px rgba(0, 123, 255, 0.7);
+            transform: scale(1.02);
+        }
+
+        .back-button {
+            display: block;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            margin: 20px auto;
+            text-align: center;
+            width: 200px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .back-button:hover {
+            background-color: #0056b3;
+        }
+
+        .approve-button, .reject-button {
+            margin: 5px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .approve-button {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .reject-button {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Indicator -->
+    <div id="loading" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); color: white; display: flex; justify-content: center; align-items: center; font-size: 2rem; z-index: 1000;">
+        Loading...
+    </div>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(45deg, #090a0b, #6610f2);">
+        <a class="navbar-brand" href="home.html">Dhanam Chits Pvt. Ltd</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item"><a class="nav-link" href="login.html">Login</a></li>
+                <li class="nav-item"><a class="nav-link" href="money-borrow.html">Money Borrow</a></li>
+                <li class="nav-item"><a class="nav-link" href="borrow-history.html">Borrow History</a></li>
+                <li class="nav-item"><a class="nav-link" href="bank-details.html">Bank Details</a></li>
+                <li class="nav-item"><a class="nav-link" href="profile.html">Profile</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2>Borrow History</h2>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Mobile</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="borrow-history">
+                    <!-- Borrow history will be populated here -->
+                </tbody>
+            </table>
+        </div>
+        <button class="back-button" onclick="goBack()">Back to Dashboard</button>
+    </div>
+
+    <script>
+        function goBack() {
+            window.location.href = "dashboard.html";
+        }
+
+        async function updateBorrowStatus(id, status) {
+            document.getElementById('loading').style.display = 'flex';
+            try {
+                const response = await fetch(`http://localhost:5001/api/borrow/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert(result.message);
+                    location.reload();
+                } else {
+                    alert(result.message || 'Failed to update borrow request.');
+                }
+            } catch (error) {
+                console.error('Error updating borrow request:', error);
+                alert('Error updating borrow request.');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            document.getElementById('loading').style.display = 'flex';
+            const user = JSON.parse(localStorage.getItem("user"));
+            if (!user) {
+                alert("Please log in to view your borrow history.");
+                window.location.href = "login.html";
+                return;
+            }
+
+            try {
+                console.log(`Fetching borrow history for user: ${user.mobile}`); // Logging
+                const response = await fetch(`http://localhost:5001/api/borrow-history/${user.mobile}`);
+                console.log(`Response status: ${response.status}`); // Logging
+                const borrowHistory = await response.json();
+                console.log(`Response data: ${JSON.stringify(borrowHistory)}`); // Logging
+
+                if (response.ok) {
+                    console.log(`Borrow history received: ${borrowHistory.length}`); // Logging
+                    const borrowHistoryTable = document.getElementById("borrow-history");
+                    borrowHistoryTable.innerHTML = ""; // Clear previous results
+                    borrowHistory.forEach(borrow => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${borrow.fullname}</td>
+                            <td>${borrow.email}</td>
+                            <td>${borrow.mobile}</td>
+                            <td>${borrow.amount}</td>
+                            <td>${new Date(borrow.date).toLocaleDateString()}</td>
+                            <td>${borrow.status}</td>
+                            <td>
+                                ${user.role === 'admin' ? `
+                                    <button class="approve-button" onclick="updateBorrowStatus('${borrow._id}', 'Approved')">Approve</button>
+                                    <button class="reject-button" onclick="updateBorrowStatus('${borrow._id}', 'Rejected')">Reject</button>
+                                ` : ''}
+                            </td>
+                        `;
+                        borrowHistoryTable.appendChild(row);
+                    });
+                } else {
+                    console.error("Error fetching borrow history:", borrowHistory.message);
+                    alert("Error retrieving borrow history. Please try again later.");
+                }
+            } catch (error) {
+                console.error("Error retrieving borrow history:", error);
+                alert("Error retrieving borrow history. Please try again later.");
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+    </script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!--Start of Tawk.to Script-->
+<script type="text/javascript">
+    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+    (function(){
+    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+    s1.async=true;
+    s1.src='https://embed.tawk.to/67a0a1ce3a84273260790919/1ij5ng3uf';
+    s1.charset='UTF-8';
+    s1.setAttribute('crossorigin','*');
+    s0.parentNode.insertBefore(s1,s0);
+    })();
+    </script>
+    <!--End of Tawk.to Script-->
+</body>
+</html>

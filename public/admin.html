@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <style>
+    /* General Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Arial', sans-serif;
+    }
+
+    body {
+      display: flex;
+      height: 100vh;
+      background: #f5f6fa;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 250px;
+      height: 100%;
+      background: #2c3e50;
+      padding: 20px;
+      position: fixed;
+      left: 0;
+      top: 0;
+      transition: width 0.3s;
+      overflow: hidden;
+    }
+
+    .sidebar h2 {
+      color: white;
+      text-align: center;
+      margin-bottom: 30px;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+    }
+
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      color: white;
+      text-decoration: none;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 5px;
+      transition: 0.3s;
+      white-space: nowrap;
+      text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+    }
+
+    .sidebar a i {
+      margin-right: 10px;
+      font-size: 18px;
+    }
+
+    .sidebar a:hover {
+      background: #34495e;
+      box-shadow: 0 0 15px rgba(0, 123, 255, 0.7);
+      transform: scale(1.05);
+    }
+
+    .logout-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #e74c3c;
+      text-align: center;
+      padding: 12px;
+      border-radius: 5px;
+      margin-top: 50px;
+      color: white;
+      font-weight: bold;
+      text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+    }
+
+    .logout-btn:hover {
+      background: #c0392b;
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+      transform: scale(1.05);
+    }
+
+    /* Toggle Button */
+    .menu-toggle {
+      display: none;
+      position: fixed;
+      left: 10px;
+      top: 10px;
+      background: #2c3e50;
+      color: white;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 5px;
+      z-index: 1000;
+    }
+
+    /* Content */
+    .content {
+      margin-left: 250px;
+      width: calc(100% - 250px);
+      padding: 20px;
+      transition: margin-left 0.3s;
+    }
+
+    .content h1 {
+      color: #333;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+    }
+
+    .content p {
+      font-size: 1.2rem;
+      color: #666;
+    }
+
+    .dashboard-cards {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin: 10px;
+      flex: 1;
+      min-width: 250px;
+      max-width: 300px;
+      text-align: center;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .card h3 {
+      margin-bottom: 10px;
+      color: #333;
+      text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+    }
+
+    .card p {
+      font-size: 1.1rem;
+      color: #666;
+    }
+
+    .card i {
+      font-size: 2rem;
+      color: #007BFF;
+      margin-bottom: 10px;
+      text-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
+    }
+
+    .card:hover {
+      box-shadow: 0 0 15px rgba(0, 123, 255, 0.7);
+      transform: scale(1.05);
+    }
+
+    /* Responsive Design */
+    @media screen and (max-width: 768px) {
+      .menu-toggle {
+        display: block;
+      }
+
+      .sidebar {
+        width: 60px;
+        padding: 10px;
+      }
+
+      .sidebar h2 {
+        display: none;
+      }
+
+      .sidebar a {
+        justify-content: center;
+        padding: 10px;
+      }
+
+      .sidebar a i {
+        font-size: 18px;
+        margin: 0;
+      }
+
+      .content {
+        margin-left: 60px;
+        width: calc(100% - 60px);
+      }
+
+      .dashboard-cards {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Toggle Button -->
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>Admin Panel</h2>
+    <a href="admin.html"><i class="fas fa-tachometer-alt"></i> <span class="menu-text">Dashboard</span></a>
+    <a href="users.html"><i class="fas fa-users"></i> <span class="menu-text">Users</span></a>
+    <a href="bankdetailA.html"><i class="fas fa-university"></i> <span class="menu-text">Bank Details</span></a>
+    <a href="borrowA.html"><i class="fas fa-hand-holding-usd"></i> <span class="menu-text">Borrows</span></a>
+    <a href="paymentA.html"><i class="fas fa-credit-card"></i> <span class="menu-text">Payments</span></a>
+    <a href="contactA.html"><i class="fas fa-envelope"></i> <span class="menu-text">Contact Details</span></a>
+    <a href="#" class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+    <h1>Welcome to the Admin Dashboard</h1>
+    <p>Use the sidebar to navigate through different sections.</p>
+
+    <div class="dashboard-cards">
+      <div class="card">
+        <i class="fas fa-users"></i>
+        <h3>Total Users</h3>
+        <p id="total-users">Loading...</p>
+      </div>
+      <div class="card">
+        <i class="fas fa-university"></i>
+        <h3>Total Bank Details</h3>
+        <p id="total-bank-details">Loading...</p>
+      </div>
+      <div class="card">
+        <i class="fas fa-hand-holding-usd"></i>
+        <h3>Total Borrows</h3>
+        <p id="total-borrows">Loading...</p>
+      </div>
+      <div class="card">
+        <i class="fas fa-credit-card"></i>
+        <h3>Total Payments</h3>
+        <p id="total-payments">Loading...</p>
+      </div>
+      <div class="card">
+        <i class="fas fa-envelope"></i>
+        <h3>Total Contacts</h3>
+        <p id="total-contacts">Loading...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function fetchData() {
+      try {
+        const [usersResponse, bankDetailsResponse, borrowsResponse, paymentsResponse, contactsResponse] = await Promise.all([
+          fetch('http://localhost:4000/api/users'),
+          fetch('http://localhost:5001/api/bankdetails'),
+          fetch('http://localhost:5001/api/borrows'),
+          fetch('http://localhost:5001/api/payments'),
+          fetch('http://localhost:5005/api/contacts')
+        ]);
+
+        const users = await usersResponse.json();
+        const bankDetails = await bankDetailsResponse.json();
+        const borrows = await borrowsResponse.json();
+        const payments = await paymentsResponse.json();
+        const contacts = await contactsResponse.json();
+
+        document.getElementById('total-users').textContent = users.length;
+        document.getElementById('total-bank-details').textContent = bankDetails.length;
+        document.getElementById('total-borrows').textContent = borrows.length;
+        document.getElementById('total-payments').textContent = payments.length;
+        document.getElementById('total-contacts').textContent = contacts.length;
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    }
+
+    function logout() {
+      fetch('http://localhost:4000/logout', {
+        method: 'POST',
+        credentials: 'include',
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.message === "Logout successful.") {
+          window.location.href = "/login.html";
+        }
+      })
+      .catch(error => {
+        console.error('Error logging out:', error);
+      });
+    }
+
+    function toggleSidebar() {
+      let sidebar = document.querySelector('.sidebar');
+      let content = document.querySelector('.content');
+
+      if (sidebar.style.width === "250px" || sidebar.style.width === "") {
+        sidebar.style.width = "60px";
+        content.style.marginLeft = "60px";
+      } else {
+        sidebar.style.width = "250px";
+        content.style.marginLeft = "250px";
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchData);
+  </script>
+
+</body>
+</html>

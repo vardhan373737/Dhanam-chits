@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Details - Dhanam Chits Pvt. Ltd</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            color: #333;
+        }
+
+        .form-container {
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 100%;
+            text-align: left;
+        }
+
+        .form-container h3 {
+            text-align: center;
+            color: #333333;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .back-button {
+            display: block;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            margin: 20px auto;
+            text-align: center;
+            width: 200px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .back-button:hover {
+            background-color: #0056b3;
+        }
+
+        .notice {
+            background: #ffeb3b;
+            color: #333;
+            padding: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            text-align: center;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .bank-details {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .bank-details h4 {
+            margin-bottom: 10px;
+        }
+
+        .bank-details p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="notice">
+            Please ensure all your bank details are accurate before submitting.
+        </div>
+        <h2>Bank Details</h2>
+        <div class="form-container">
+            <h3>Add Bank Details</h3>
+            <form id="bankDetailsForm">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="accountNumber">Account Number</label>
+                    <input type="text" class="form-control" id="accountNumber" name="accountNumber" required>
+                </div>
+                <div class="form-group">
+                    <label for="ifscCode">IFSC Code</label>
+                    <input type="text" class="form-control" id="ifscCode" name="ifscCode" required>
+                </div>
+                <div class="form-group">
+                    <label for="upiId">UPI ID</label>
+                    <input type="text" class="form-control" id="upiId" name="upiId" required>
+                </div>
+                <div class="form-group">
+                    <label for="bankName">Bank Name</label>
+                    <input type="text" class="form-control" id="bankName" name="bankName" required>
+                </div>
+                <div class="form-group">
+                    <label for="mobile">Mobile Number</label>
+                    <input type="text" class="form-control" id="mobile" name="mobile" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Add Details</button>
+                <div id="error-message" class="error-message"></div>
+            </form>
+        </div>
+        <div class="bank-details" id="bank-details">
+            <!-- Bank details will be displayed here -->
+        </div>
+        <button class="back-button" onclick="goBack()">Back to Dashboard</button>
+    </div>
+
+    <script>
+        function goBack() {
+            window.location.href = "dashboard.html";
+        }
+
+        document.getElementById("bankDetailsForm").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+        
+            try {
+                console.log("Sending data:", data);
+                const response = await fetch("http://localhost:5001/api/bank-detail", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
+                });
+        
+                const result = await response.json();
+        
+                if (response.ok) {
+                    alert(result.message);
+                    form.reset();
+                    fetchBankDetails(data.mobile);
+                } else {
+                    document.getElementById("error-message").textContent = result.message || "Submission failed.";
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error connecting to server.");
+            }
+        });
+
+        async function fetchBankDetails(mobile) {
+            try {
+                const response = await fetch(`http://localhost:5001/api/bank-details/${mobile}`);
+                const bankDetails = await response.json();
+                const bankDetailsContainer = document.getElementById("bank-details");
+                bankDetailsContainer.innerHTML = ""; // Clear previous details
+
+                if (response.ok && bankDetails.length > 0) {
+                    bankDetails.forEach(detail => {
+                        const detailDiv = document.createElement("div");
+                        detailDiv.innerHTML = `
+                            <h4>Bank Details</h4>
+                            <p><strong>Name:</strong> ${detail.name}</p>
+                            <p><strong>Account Number:</strong> ${detail.accountNumber}</p>
+                            <p><strong>IFSC Code:</strong> ${detail.ifscCode}</p>
+                            <p><strong>UPI ID:</strong> ${detail.upiId}</p>
+                            <p><strong>Bank Name:</strong> ${detail.bankName}</p>
+                            <p><strong>Mobile:</strong> ${detail.mobile}</p>
+                        `;
+                        bankDetailsContainer.appendChild(detailDiv);
+                    });
+                } else {
+                    bankDetailsContainer.innerHTML = "<p>No bank details found for this mobile number.</p>";
+                }
+            } catch (error) {
+                console.error("Error fetching bank details:", error);
+                alert("Error fetching bank details.");
+            }
+        }
+    </script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!--Start of Tawk.to Script-->
+<script type="text/javascript">
+    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+    (function(){
+    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+    s1.async=true;
+    s1.src='https://embed.tawk.to/67a0a1ce3a84273260790919/1ij5ng3uf';
+    s1.charset='UTF-8';
+    s1.setAttribute('crossorigin','*');
+    s0.parentNode.insertBefore(s1,s0);
+    })();
+    </script>
+    <!--End of Tawk.to Script-->
+
+</body>
+</html>

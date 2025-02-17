@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Details - Dhanam Chits Pvt. Ltd</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> <!-- Font Awesome -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Nunito', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+            animation: gradientBackground 15s ease infinite;
+        }
+        @keyframes gradientBackground {
+            0% { background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%); }
+            50% { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
+            100% { background: linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%); }
+        }
+        header {
+            background: linear-gradient(45deg, #090a0b, #6610f2);
+            color: #fff;
+        }
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .navbar-nav .nav-link {
+            color: #fff !important;
+        }
+        .navbar-nav .nav-link:hover {
+            color: #ffc107 !important;
+            text-decoration: underline;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .details-box {
+            background: linear-gradient(135deg, #ffffff, #e0e0e0);
+            border-radius: 12px;
+            padding: 20px 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .details-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 123, 255, 0.7);
+            background: linear-gradient(135deg, #ffffff, #f0f0f0);
+        }
+        .details-box h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        .details-box p {
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        .details-box img {
+            max-width: 100px;
+            margin-bottom: 10px;
+        }
+        .back-button {
+            display: block;
+            margin: 20px auto 0;
+            width: 100%;
+            padding: 12px;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+            background: #444;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .back-button:hover {
+            background: #333;
+        }
+        .copy-button {
+            display: none; /* Hide the copy button */
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #343a40;
+            color: #ccc;
+            margin-top: 40px;
+        }
+        footer a {
+            color: #ffc107;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+        }
+        .modal-content {
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.5s ease-in-out;
+            background: linear-gradient(135deg, #ffffff, #e0e0e0);
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .modal-header {
+            border-bottom: none;
+        }
+        .modal-header .close {
+            font-size: 1.5rem;
+        }
+        .modal-body {
+            text-align: center;
+        }
+        .modal-body p {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+        .modal-body img {
+            max-width: 150px;
+            margin-bottom: 15px;
+        }
+        .modal-footer {
+            border-top: none;
+            justify-content: center;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            border: none;
+            transition: background 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2575fc, #6a11cb);
+        }
+        .btn-secondary {
+            background: #444;
+            border: none;
+            transition: background 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background: #333;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <a class="navbar-brand" href="#">Dhanam Chits Pvt. Ltd</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="login.html">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="chitty-plans.html">Chits Plans</a></li>
+                    <li class="nav-item"><a class="nav-link" href="payment.html">Payment Form</a></li>
+                    <li class="nav-item"><a class="nav-link" href="home.html">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="details-box" data-toggle="modal" data-target="#bankModal">
+            <img src="bank-icon.jpg" alt="Bank Logo">
+            <h2>Bank Details</h2>
+            <p>Click to view bank details</p>
+        </div>
+        <div class="details-box" data-toggle="modal" data-target="#upiModal">
+            <img src="upi-logo.jpg" alt="UPI Logo">
+            <h2>UPI Details</h2>
+            <p>Click to view UPI details</p>
+        </div>
+        <button class="back-button" onclick="window.location.href='home.html'">Back to Home</button>
+    </div>
+
+    <!-- Bank Details Modal -->
+    <div class="modal fade" id="bankModal" tabindex="-1" role="dialog" aria-labelledby="bankModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bankModalLabel">Bank Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="bankForm">
+                        <div class="form-group">
+                            <label for="bankSelect">Select Bank</label>
+                            <select class="form-control" id="bankSelect" onchange="updateBankDetails()">
+                                <option value="bank1">Bank 1</option>
+                                <option value="bank2">Bank 2</option>
+                            </select>
+                        </div>
+                        <div id="bankDetails">
+                            <!-- Bank details will be updated here based on selection -->
+                        </div>
+                        <div class="form-group">
+                            <label for="bankName">Name</label>
+                            <input type="text" class="form-control" id="bankName" readonly required>
+                        </div>
+                        <div class="form-group">
+                            <label for="bankMobile">Mobile</label>
+                            <input type="tel" class="form-control" id="bankMobile" readonly required>
+                        </div>
+                        <div class="form-group">
+                            <label for="bankAmount">Amount</label>
+                            <input type="number" class="form-control" id="bankAmount" readonly required>
+                        </div>
+                        <div class="form-group">
+                            <label for="bankUtr">UTR Number</label>
+                            <input type="text" class="form-control" id="bankUtr" required>
+                        </div>
+                        <input type="hidden" id="bankEmail" name="email">
+                        <input type="hidden" id="paymentType" name="type">
+                        <input type="hidden" id="chitsPlan" name="chitsPlan">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UPI Details Modal -->
+    <div class="modal fade" id="upiModal" tabindex="-1" role="dialog" aria-labelledby="upiModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="upiModalLabel">UPI Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        <strong>UPI ID:</strong> 9346412185@slc 
+                    </p>
+                    <img src="paymentQr-1.png" alt="UPI QR Code" class="img-fluid mb-3">
+                    <form id="upiForm">
+                        <div class="form-group">
+                            <label for="upiName">Name</label>
+                            <input type="text" class="form-control" id="upiName" readonly required>
+                        </div>
+                        <div class="form-group">
+                            <label for="upiMobile">Mobile</label>
+                            <input type="tel" class="form-control" id="upiMobile" readonly required>
+                        </div>
+                        <div class="form-group">
+                            <label for="upiAmount">Amount</label>
+                            <input type="number" class="form-control" id="upiAmount" readonly required>
+                        </div>
+                        <div class="form-group">
+                            <label for="upiUtr">UTR Number</label>
+                            <input type="text" class="form-control" id="upiUtr" required>
+                        </div>
+                        <input type="hidden" id="upiEmail" name="email">
+                        <input type="hidden" id="paymentType" name="type">
+                        <input type="hidden" id="chitsPlan" name="chitsPlan">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Dhanam Chits Pvt. Ltd. All Rights Reserved. <a href="#">Privacy Policy</a></p>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const amount = getQueryParam('amount');
+            const name = getQueryParam('name');
+            const mobile = getQueryParam('mobile');
+            const email = getQueryParam('email');
+            const type = getQueryParam('type');
+            const chitsPlan = getQueryParam('chitsPlan');
+            if (amount) {
+                document.getElementById('bankAmount').value = amount;
+                document.getElementById('upiAmount').value = amount;
+            }
+            if (name) {
+                document.getElementById('bankName').value = name;
+                document.getElementById('upiName').value = name;
+            }
+            if (mobile) {
+                document.getElementById('bankMobile').value = mobile;
+                document.getElementById('upiMobile').value = mobile;
+            }
+            if (email) {
+                document.getElementById('bankEmail').value = email;
+                document.getElementById('upiEmail').value = email;
+            }
+            if (type) {
+                document.getElementById('paymentType').value = type;
+            }
+            if (chitsPlan) {
+                document.getElementById('chitsPlan').value = chitsPlan;
+            }
+            updateBankDetails();
+        });
+
+        function updateBankDetails() {
+            const bankSelect = document.getElementById('bankSelect').value;
+            const bankDetails = document.getElementById('bankDetails');
+            if (bankSelect === 'bank1') {
+                bankDetails.innerHTML = `
+                    <p><strong>Bank Name:</strong> NORTH EAST SMALL FINANCE BANK LIMITED</p>
+                    <p><strong>Account Number:</strong> 033325221476919</p>
+                    <p><strong>IFSC Code:</strong> NESF0000333</p>
+                    <p><strong>Branch:</strong> KORAMANGALA</p>
+                    <p><strong>Account Holder Name:</strong> KODIGANTI HARSHSA VARDHAN</p>
+                `;
+            } else if (bankSelect === 'bank2') {
+                bankDetails.innerHTML = `
+                    <p><strong>Bank Name:</strong> ANOTHER BANK NAME</p>
+                    <p><strong>Account Number:</strong> 123456789012345</p>
+                    <p><strong>IFSC Code:</strong> ABCD0123456</p>
+                    <p><strong>Branch:</strong> ANOTHER BRANCH</p>
+                    <p><strong>Account Holder Name:</strong> ANOTHER ACCOUNT HOLDER</p>
+                `;
+            }
+        }
+
+        document.getElementById('bankForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const name = document.getElementById('bankName').value;
+            const mobile = document.getElementById('bankMobile').value;
+            const amount = document.getElementById('bankAmount').value;
+            const utr = document.getElementById('bankUtr').value;
+            const email = document.getElementById('bankEmail').value;
+            const type = document.getElementById('paymentType').value;
+            const chitsPlan = document.getElementById('chitsPlan').value;
+
+            try {
+                const response = await fetch('http://localhost:5001/api/bank-details', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, mobile, amount, utrNumber: utr, email, type, chitsPlan })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert('Bank details submitted successfully!');
+                    // Trigger invoice download
+                    window.location.href = data.invoiceUrl;
+                } else {
+                    const errorData = await response.json();
+                    alert(`Error: ${errorData.message}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error connecting to server.');
+            }
+        });
+
+        document.getElementById('upiForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const name = document.getElementById('upiName').value;
+            const mobile = document.getElementById('upiMobile').value;
+            const amount = document.getElementById('upiAmount').value;
+            const utr = document.getElementById('upiUtr').value;
+            const email = document.getElementById('upiEmail').value;
+            const type = document.getElementById('paymentType').value;
+            const chitsPlan = document.getElementById('chitsPlan').value;
+
+            try {
+                const response = await fetch('http://localhost:5001/api/bank-details', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, mobile, amount, utrNumber: utr, email, type, chitsPlan })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert('UPI details submitted successfully!');
+                    // Trigger invoice download
+                    window.location.href = data.invoiceUrl;
+                } else {
+                    const errorData = await response.json();
+                    alert(`Error: ${errorData.message}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error connecting to server.');
+            }
+        });
+    </script>
+</body>
+</html>

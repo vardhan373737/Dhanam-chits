@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payments - Chit Fund System</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            color: #333;
+        }
+
+        .table-responsive {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        .table-striped tbody tr {
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        .table-striped tbody tr:hover {
+            box-shadow: 0 0 15px rgba(0, 123, 255, 0.7);
+            transform: scale(1.02);
+        }
+
+        .logout-button {
+            display: block;
+            background-color: #007bff; /* Change to blue */
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            margin: 20px auto;
+            text-align: center;
+            width: 200px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .logout-button:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
+
+        /* Scrolling notice style */
+        .scrolling-notice {
+            background: #ffeb3b;
+            color: #333;
+            padding: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            text-align: center;
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+        }
+        .scrolling-notice span {
+            display: inline-block;
+            white-space: nowrap;
+            animation: scroll 10s linear infinite;
+        }
+        @keyframes scroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .container h2 {
+                font-size: 1.5rem;
+            }
+
+            .table th, .table td {
+                font-size: 0.9rem;
+                padding: 8px;
+            }
+
+            .logout-button {
+                width: 150px;
+                padding: 8px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .container {
+                padding: 15px;
+            }
+
+            .container h2 {
+                font-size: 1.2rem;
+            }
+
+            .table th, .table td {
+                font-size: 0.8rem;
+                padding: 6px;
+            }
+
+            .logout-button {
+                width: 120px;
+                padding: 6px;
+                font-size: 0.8rem;
+            }
+        }
+
+        .nav-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .nav-buttons button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .nav-buttons button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(45deg, #090a0b, #6610f2);">
+        <a class="navbar-brand" href="home.html">Dhanam Chits Pvt. Ltd</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item"><a class="nav-link" href="home.html">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="login.html">Login</a></li>
+                <li class="nav-item"><a class="nav-link" href="chitty-plans.html">Chits Plans</a></li>
+                <li class="nav-item"><a class="nav-link" href="payment.html">Payment Form</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.html">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Scrolling Notice -->
+    <div class="scrolling-notice">
+        <span>Welcome to Dhanam Chits Pvt. Ltd! Track your contributions and payouts here!</span>
+    </div>
+
+    <div class="container">
+        <h2>Payments</h2>
+        <div class="nav-buttons">
+            <button onclick="window.location.href='add-payment.html'">Add Payment</button>
+            <button onclick="window.location.href='view-payments.html'">View Payments</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Mobile</th>
+                        <th>Email</th>
+                        <th>Chit ID</th>
+                        <th>Amount</th>
+                        <th>UTR Number</th>
+                        <th>Type</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="payments-table">
+                    <!-- Payments will be populated here -->
+                </tbody>
+            </table>
+        </div>
+        <button class="logout-button" onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            try {
+                const response = await fetch('http://localhost:5001/api/payments');
+                const payments = await response.json();
+                const paymentsTable = document.getElementById('payments-table');
+                paymentsTable.innerHTML = '';
+                payments.forEach(payment => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${payment.name}</td>
+                        <td>${payment.mobile}</td>
+                        <td>${payment.email}</td>
+                        <td>${payment.chitsPlan}</td>
+                        <td>${payment.amount}</td>
+                        <td>${payment.utrNumber}</td>
+                        <td>${payment.type}</td>
+                        <td>
+                            <button onclick="editPayment('${payment._id}')">Edit</button>
+                            <button onclick="deletePayment('${payment._id}')">Delete</button>
+                        </td>
+                    `;
+                    paymentsTable.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error fetching payments:', error);
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem("user");
+            window.location.href = "login.html";
+        }
+
+        async function editPayment(id) {
+            // Implement edit payment functionality
+        }
+
+        async function deletePayment(id) {
+            try {
+                const response = await fetch(`http://localhost:5001/api/payments/${id}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    alert('Payment deleted successfully!');
+                    location.reload();
+                } else {
+                    alert('Failed to delete payment.');
+                }
+            } catch (error) {
+                console.error('Error deleting payment:', error);
+            }
+        }
+    </script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Card Application</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e3f2fd;
+        }
+        .navbar {
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            padding: 15px;
+            text-align: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .notice {
+            background-color: #ffeb3b;
+            color: #000;
+            padding: 10px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            position: fixed;
+            top: 60px;
+            width: 100%;
+            z-index: 999;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        /* Make the notice scroll horizontally */
+        .notice p {
+            animation: scroll 15s linear infinite;
+            margin: 0;
+        }
+        /* Define the scrolling animation */
+        @keyframes scroll {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 120px);
+            padding-top: 100px;
+        }
+        .card-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            width: 400px;
+            transition: transform 0.3s ease-in-out;
+        }
+        .card-container:hover {
+            transform: scale(1.05);
+        }
+        .card-container h2 {
+            text-align: center;
+            color: #007bff;
+            font-size: 28px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: box-shadow 0.3s ease-in-out, border-color 0.3s ease-in-out;
+        }
+        /* Glowing effect for input fields on focus */
+        input:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
+            border-color: #007bff;
+        }
+        /* Glowing effect for submit button */
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background 0.3s, box-shadow 0.3s ease-in-out;
+        }
+        button:hover {
+            background: linear-gradient(90deg, #0056b3, #004099);
+            box-shadow: 0 0 15px rgba(0, 123, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">Credit Card Application</div>
+    <div class="notice">
+        <p><strong>Notice:</strong> Please ensure you are 18 years or older to apply. All fields are required.</p>
+    </div>
+    <div class="container">
+        <div class="card-container">
+            <h2>Apply Now</h2>
+            <form id="applicationForm">
+                <label>Name</label>
+                <input type="text" id="name" placeholder="John Doe" required>
+                
+                <label>Aadhar Number</label>
+                <input type="text" id="aadhar" placeholder="1234 5678 9012" required>
+                
+                <label>Age</label>
+                <input type="number" id="age" placeholder="30" required>
+                
+                <label>Mobile Number</label>
+                <input type="tel" id="mobile" placeholder="9876543210" required>
+                
+                <label>PAN Number</label>
+                <input type="text" id="pan" placeholder="EEPPS2006B" required>
+                
+                <label>Gender</label>
+                <select id="gender" required>
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+                
+                <label>Employment Status</label>
+                <select id="employment" required>
+                    <option value="">Select</option>
+                    <option value="Salaried">Salaried</option>
+                    <option value="Self-employed">Self-employed</option>
+                    <option value="Unemployed">Unemployed</option>
+                </select>
+                
+                <label>Marital Status</label>
+                <select id="marital" required>
+                    <option value="">Select</option>
+                    <option value="Single">Single</option>
+                    <option value="Married">Married</option>
+                    <option value="Divorced">Divorced</option>
+                </select>
+                
+                <h3>Address Details</h3>
+                
+                <label>House Number</label>
+                <input type="text" id="houseNumber" placeholder="Flat/House No." required>
+                
+                <label>City</label>
+                <input type="text" id="city" placeholder="City" required>
+                
+                <label>District</label>
+                <input type="text" id="district" placeholder="District" required>
+                
+                <label>Pin Code</label>
+                <input type="text" id="pinCode" placeholder="Pin Code" required>
+                
+                <label>State</label>
+                <input type="text" id="state" placeholder="State" required>
+                
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('applicationForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const aadhar = document.getElementById('aadhar').value;
+            const age = document.getElementById('age').value;
+            const mobile = document.getElementById('mobile').value;
+            const pan = document.getElementById('pan').value;
+            const gender = document.getElementById('gender').value;
+            const employment = document.getElementById('employment').value;
+            const marital = document.getElementById('marital').value;
+            const houseNumber = document.getElementById('houseNumber').value;
+            const city = document.getElementById('city').value;
+            const district = document.getElementById('district').value;
+            const pinCode = document.getElementById('pinCode').value;
+            const state = document.getElementById('state').value;
+
+            // Check if all fields are filled
+            if (!name || !aadhar || !age || !mobile || !pan || !gender || !employment || !marital || !houseNumber || !city || !district || !pinCode || !state) {
+                alert('Please fill out all the fields.');
+                return;
+            }
+            
+            // Check if age is 18 or older
+            if (parseInt(age) < 18) {
+                alert('You must be 18 or older to apply.');
+                return;
+            }
+            
+            // Validate Mobile Number (10 digits)
+            if (!/^\d{10}$/.test(mobile)) {
+                alert('Mobile number must be 10 digits.');
+                return;
+            }
+
+            // Validate Aadhar Number (12 digits)
+            if (!/^\d{12}$/.test(aadhar)) {
+                alert('Aadhar number must be 12 digits.');
+                return;
+            }
+
+            // Ensure PAN Number is exactly "EEPPS2006B"
+            if (pan !== 'EEPPS2006B') {
+                alert('PAN number must be exactly EEPPS2006B.');
+                return;
+            }
+
+            // You can add more validation here (e.g., regex for mobile, PAN, etc.)
+            alert('Application submitted successfully!');
+            // You can reset the form or send the data here
+            document.getElementById('applicationForm').reset();
+        });
+    </script>
+</body>
+</html>
