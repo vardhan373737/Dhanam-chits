@@ -87,43 +87,48 @@ if (!fs.existsSync(invoicesDir)) {
 
 // Function to generate invoice PDF
 const generateInvoice = (payment) => {
-    const doc = new pdf();
-    const filePath = path.join(invoicesDir, `${payment._id}.pdf`);
-    const writeStream = fs.createWriteStream(filePath);
+    try {
+        const doc = new pdf();
+        const filePath = path.join(invoicesDir, `${payment._id}.pdf`);
+        const writeStream = fs.createWriteStream(filePath);
 
-    writeStream.on('error', (err) => {
-        console.error('Error writing invoice:', err);
-    });
+        writeStream.on('error', (err) => {
+            console.error('Error writing invoice:', err);
+        });
 
-    doc.pipe(writeStream);
+        doc.pipe(writeStream);
 
-    // Add company name and details with black color
-    doc.rect(0, 0, doc.page.width, 50).fill('#003366'); // Dark blue header background
-    doc.fillColor('#000000').fontSize(20).text('Dhanam Chits Pvt. Ltd', 0, 15, { align: 'center' }); // Black color for company name
-    doc.fillColor('#000000').fontSize(12).text('1234 Chits Street, Business City, Country', 0, 35, { align: 'center' }); // Black color for address
-    doc.fillColor('#000000').fontSize(12).text('Phone: +123 456 7890 | Email: info@dhanamchits.com', 0, 50, { align: 'center' }); // Black color for contact details
-    doc.moveDown(2);
+        // Add company name and details with black color
+        doc.rect(0, 0, doc.page.width, 50).fill('#003366'); // Dark blue header background
+        doc.fillColor('#000000').fontSize(20).text('Dhanam Chits Pvt. Ltd', 0, 15, { align: 'center' }); // Black color for company name
+        doc.fillColor('#000000').fontSize(12).text('1234 Chits Street, Business City, Country', 0, 35, { align: 'center' }); // Black color for address
+        doc.fillColor('#000000').fontSize(12).text('Phone: +123 456 7890 | Email: info@dhanamchits.com', 0, 50, { align: 'center' }); // Black color for contact details
+        doc.moveDown(2);
 
-    doc.fillColor('#003366').fontSize(16).text('Invoice', { align: 'center' });
-    doc.moveDown();
+        doc.fillColor('#003366').fontSize(16).text('Invoice', { align: 'center' });
+        doc.moveDown();
 
-    // Add payment details with colors
-    doc.fillColor('#000000').fontSize(14).text(`Invoice ID: ${payment._id}`);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`);
-    doc.moveDown();
-    doc.fillColor('#000000').fontSize(14).text(`Name: ${payment.name}`);
-    doc.text(`Mobile: ${payment.mobile}`);
-    doc.text(`Email: ${payment.email}`);
-    doc.text(`Chit Plan: ${payment.chitsPlan}`);
-    doc.moveDown();
-    doc.fillColor('#000000').fontSize(14).text('Payment Details:');
-    doc.text(`Amount: ${payment.amount}`);
-    doc.text(`UTR Number: ${payment.utrNumber}`);
-    doc.text(`Payment Type: ${payment.type}`);
-    doc.end();
+        // Add payment details with colors
+        doc.fillColor('#000000').fontSize(14).text(`Invoice ID: ${payment._id}`);
+        doc.text(`Date: ${new Date().toLocaleDateString()}`);
+        doc.moveDown();
+        doc.fillColor('#000000').fontSize(14).text(`Name: ${payment.name}`);
+        doc.text(`Mobile: ${payment.mobile}`);
+        doc.text(`Email: ${payment.email}`);
+        doc.text(`Chit Plan: ${payment.chitsPlan}`);
+        doc.moveDown();
+        doc.fillColor('#000000').fontSize(14).text('Payment Details:');
+        doc.text(`Amount: ${payment.amount}`);
+        doc.text(`UTR Number: ${payment.utrNumber}`);
+        doc.text(`Payment Type: ${payment.type}`);
+        doc.end();
 
-    console.log(`Invoice generated at: ${filePath}`); // Add logging
-    return filePath;
+        console.log(`Invoice generated at: ${filePath}`); // Add logging
+        return filePath; // Return the path to the generated invoice
+    } catch (error) {
+        console.error('Error generating invoice:', error);
+        throw new Error('Failed to generate invoice.');
+    }
 };
 
 // Define a Submission schema
