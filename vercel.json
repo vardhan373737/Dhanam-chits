@@ -6,8 +6,10 @@
       "use": "@vercel/static"
     }
   ],
-  "rewrites": [
-    { "source": "/login", "destination": "/login.html" },
-    { "source": "/chitty-plans", "destination": "/chitty-plans.html" }
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
+    }
   ]
 }
