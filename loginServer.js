@@ -113,7 +113,7 @@ app.post("/register", async (req, res) => {
 });
 
 // ✅ Login Endpoint
-app.post("/login", async (req, res) => {
+app.post("/Login", async (req, res) => {
   try {
     const { mobile, password } = req.body;
 
@@ -173,7 +173,7 @@ app.post('/api/reset-password', async (req, res) => {
     await user.save();
 
     // Send reset link via email
-    const resetLink = `http://localhost:4000/new-password.html?token=${token}`;
+    const resetLink = `http://localhost:4000/newpassword.html?token=${token}`;
     const mailOptions = {
       to: user.email,
       from: 'shekarchandra99311@gmail.com',

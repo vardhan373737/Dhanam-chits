@@ -75,9 +75,10 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item"><a class="nav-link" href="Login.html">Login</a></li>
-                <li class="nav-item"><a class="nav-link" href="money-borrow.html">Money Borrow</a></li>
-                <li class="nav-item"><a class="nav-link" href="borrow-history.html">Borrow History</a></li>
-                <li class="nav-item"><a class="nav-link" href="bank-details.html">Bank Details</a></li>
+                <li class="nav-item"><a class="nav-link" href="moneyborrow.html">Money Borrow</a></li>
+                <li class="nav-item"><a class="nav-link" href="borrowhistory.html">Borrow History</a></li>
+                <li class="nav-item"><a class="nav-link" href="bankdetails.html">Bank Details</a></li>
+                <li class="nav-item"><a class="nav-link" href="Chitid.html">Chitfunds</a></li>
                 <li class="nav-item"><a class="nav-link" href="profile.html">Profile</a></li>
             </ul>
         </div>
@@ -105,12 +106,15 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:5001/api/profile/${user.mobile}`);
+                const response = await fetch(`http://localhost:5001/api/profile?mobile=${user.mobile}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
                 const profile = await response.json();
                 const profileInfoContainer = document.getElementById("profile-info");
                 profileInfoContainer.innerHTML = ""; // Clear previous details
 
-                if (response.ok && profile) {
+                if (profile) {
                     profileInfoContainer.innerHTML = `
                         <h4>Profile Information</h4>
                         <p><strong>Name:</strong> ${profile.fullname}</p>

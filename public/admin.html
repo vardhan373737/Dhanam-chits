@@ -209,6 +209,7 @@
     <a href="admin.html"><i class="fas fa-tachometer-alt"></i> <span class="menu-text">Dashboard</span></a>
     <a href="users.html"><i class="fas fa-users"></i> <span class="menu-text">Users</span></a>
     <a href="bankdetailA.html"><i class="fas fa-university"></i> <span class="menu-text">Bank Details</span></a>
+    <a href="ChitidA.html"><i class="fas fa-university"></i> <span class="menu-text">chit-ids Approve</span></a>
     <a href="borrowA.html"><i class="fas fa-hand-holding-usd"></i> <span class="menu-text">Borrows</span></a>
     <a href="paymentA.html"><i class="fas fa-credit-card"></i> <span class="menu-text">Payments</span></a>
     <a href="contactA.html"><i class="fas fa-envelope"></i> <span class="menu-text">Contact Details</span></a>
@@ -246,18 +247,24 @@
         <h3>Total Contacts</h3>
         <p id="total-contacts">Loading...</p>
       </div>
+      <div class="card">
+        <i class="fas fa-file-alt"></i>
+        <h3>Total Chit IDs</h3>
+        <p id="total-chit-ids">Loading...</p>
+      </div>
     </div>
   </div>
 
   <script>
     async function fetchData() {
       try {
-        const [usersResponse, bankDetailsResponse, borrowsResponse, paymentsResponse, contactsResponse] = await Promise.all([
+        const [usersResponse, bankDetailsResponse, borrowsResponse, paymentsResponse, contactsResponse, chitIdsResponse] = await Promise.all([
           fetch('http://localhost:4000/api/users'),
           fetch('http://localhost:5001/api/bankdetails'),
           fetch('http://localhost:5001/api/borrows'),
           fetch('http://localhost:5001/api/payments'),
-          fetch('http://localhost:5005/api/contacts')
+          fetch('http://localhost:5005/api/contacts'),
+          fetch('http://localhost:5001/api/chit-ids')
         ]);
 
         const users = await usersResponse.json();
@@ -265,12 +272,14 @@
         const borrows = await borrowsResponse.json();
         const payments = await paymentsResponse.json();
         const contacts = await contactsResponse.json();
+        const chitIds = await chitIdsResponse.json();
 
         document.getElementById('total-users').textContent = users.length;
         document.getElementById('total-bank-details').textContent = bankDetails.length;
         document.getElementById('total-borrows').textContent = borrows.length;
         document.getElementById('total-payments').textContent = payments.length;
         document.getElementById('total-contacts').textContent = contacts.length;
+        document.getElementById('total-chit-ids').textContent = chitIds.length;
       } catch (error) {
         console.error('Error fetching data:', error);
       }

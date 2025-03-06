@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chit Payment - Dhanam Chits Pvt. Ltd</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+            animation: gradientBackground 15s ease infinite;
+        }
+        @keyframes gradientBackground {
+            0% { background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%); }
+            50% { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
+            100% { background: linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%); }
+        }
+        header {
+            background: linear-gradient(45deg, #090a0b, #6610f2);
+            color: #fff;
+        }
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .navbar-nav .nav-link {
+            color: #fff !important;
+        }
+        .navbar-nav .nav-link:hover {
+            color: #ffc107 !important;
+            text-decoration: underline;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .details-box {
+            background: linear-gradient(135deg, #ffffff, #e0e0e0);
+            border-radius: 12px;
+            padding: 20px 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .details-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 123, 255, 0.7);
+            background: linear-gradient(135deg, #ffffff, #f0f0f0);
+        }
+        .details-box h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        .details-box p {
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        .details-box img {
+            max-width: 100px;
+            margin-bottom: 10px;
+        }
+        .back-button {
+            display: block;
+            margin: 20px auto 0;
+            width: 100%;
+            padding: 12px;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+            background: #444;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .back-button:hover {
+            background: #333;
+        }
+        .pay-now-button {
+            display: block;
+            margin: 20px auto 0;
+            width: 100%;
+            padding: 12px;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+            background: #007bff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .pay-now-button:hover {
+            background: #0056b3;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #343a40;
+            color: #ccc;
+            margin-top: 40px;
+        }
+        footer a {
+            color: #ffc107;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(45deg, #090a0b, #6610f2);">
+            <a class="navbar-brand" href="#">Dhanam Chits Pvt. Ltd</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item"><a class="nav-link" href="Login.html">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="money-borrow.html">Money Borrow</a></li>
+                    <li class="nav-item"><a class="nav-link" href="borrow-history.html">Borrow History</a></li>
+                    <li class="nav-item"><a class="nav-link" href="bank-details.html">Bank Details</a></li>
+                    <li class="nav-item"><a class="nav-link" href="Chitid.html">Chitfunds</a></li>
+                    <li class="nav-item"><a class="nav-link" href="profile.html">Profile</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="details-box">
+            <h2>Chit Payment</h2>
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label for="chitId">Chit ID</label>
+                    <input type="text" class="form-control" id="chitId" name="chitId" readonly required>
+                </div>
+                <div class="form-group">
+                    <label for="mobile">Mobile Number</label>
+                    <input type="text" class="form-control" id="mobile" name="mobile" readonly required>
+                </div>
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" class="form-control" id="name" name="name" readonly required>
+                </div>
+                <div class="form-group">
+                    <label for="totalBalance">Total Balance</label>
+                    <input type="number" class="form-control" id="totalBalance" name="totalBalance"readonly required>
+                </div>
+                <div class="form-group">
+                    <label for="totalPaid">Total Paid</label>
+                    <input type="number" class="form-control" id="totalPaid" name="totalPaid"readonly required>
+                </div>
+                <div class="form-group">
+                    <label for="partialPayment">Partial Payment</label>
+                    <input type="number" class="form-control" id="partialPayment" name="partialPayment" required>
+                </div>
+                <button type="submit" class="btn btn-primary pay-now-button">Pay Now</button>
+            </form>
+        </div>
+        <button class="back-button" onclick="window.location.href='dashboard.html'">Back to Home</button>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Dhanam Chits Pvt. Ltd. All Rights Reserved. <a href="#">Privacy Policy</a></p>
+    </footer>
+
+    <script>
+        document.getElementById('paymentForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const chitId = document.getElementById('chitId').value;
+            const mobile = document.getElementById('mobile').value;
+            const name = document.getElementById('name').value;
+            const totalBalance = document.getElementById('totalBalance').value;
+            const totalPaid = document.getElementById('totalPaid').value;
+            const partialPayment = document.getElementById('partialPayment').value;
+
+            try {
+                const response = await fetch('http://localhost:5001/api/payments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chitId, mobile, name, totalBalance, totalPaid, partialPayment })
+                });
+
+                if (response.ok) {
+                    alert('Payment submitted successfully!');
+                } else {
+                    const errorData = await response.json();
+                    alert(`Error: ${errorData.message}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error connecting to server.');
+            }
+        });
+
+        // Function to get URL parameters
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            const results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // Pre-fill the Chit ID and Mobile Number fields from URL parameters
+        document.getElementById('chitId').value = getUrlParameter('chitId') || 'defaultChitId';
+        document.getElementById('mobile').value = getUrlParameter('mobile') || 'defaultMobileNumber';
+        document.getElementById('totalBalance').value = getUrlParameter('totalBalance') || 'defaultTotalBalance';
+        document.getElementById('totalPaid').value = getUrlParameter('totalPaid') || 'defaultTotalPaid';
+        document.getElementById('name').value = getUrlParameter('name') || 'defaultName';
+
+    </script>
+</body>
+</html>

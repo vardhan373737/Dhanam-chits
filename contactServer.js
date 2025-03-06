@@ -5,6 +5,7 @@ const cors = require("cors");
 const path = require("path");
 const mongoose = require('mongoose'); // Add this line
 const connectDB = require('./db'); // Import the shared MongoDB connection
+const crypto = require('crypto'); // Add this line
 
 // Initialize Express app
 const app = express();
@@ -13,6 +14,7 @@ const PORT = 5005; // Change port number to 5005
 // Middleware setup
 app.use(bodyParser.json());
 app.use(cors());
+app.use(bodyParser.urlencoded({ extended: true })); // Add this line
 
 // Nodemailer transporter setup
 const transporter = nodemailer.createTransport({
@@ -130,6 +132,29 @@ app.delete('/api/contacts/:id', async (req, res) => {
         res.status(500).json({ message: 'Failed to delete contact submission' });
     }
 });
+
+// Paytm callback endpoint
+app.post('/api/paytm-callback', (req, res) => {
+    const paytmChecksum = req.body.CHECKSUMHASH;
+    delete req.body.CHECKSUMHASH;
+
+    const isVerifySignature = verifySignature(req.body, 'YOUR_ACTUAL_PAYTM_MERCHANT_KEY', paytmChecksum);
+    if (isVerifySignature) {
+        console.log("Checksum Matched");
+        // Process the payment response
+        res.redirect('/payment-success.html');
+    } else {
+        console.log("Checksum Mismatched");
+        res.redirect('/payment-failure.html');
+    }
+});
+
+// Function to verify Paytm checksum
+function verifySignature(params, key, checksum) {
+    const data = Object.keys(params).sort().map(key => `${key}=${params[key]}`).join('&');
+    const hash = crypto.createHmac('sha256', key).update(data).digest('hex');
+    return hash === checksum;
+}
 
 // Start the server
 app.listen(PORT, () => {

@@ -1,16 +1,15 @@
-// server.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const path = require('path'); // Import path module
-const mongoose = require('mongoose'); // Import mongoose
-const connectDB = require('./db'); // Import the shared MongoDB connection
-const nodemailer = require('nodemailer'); // Import Nodemailer
+const path = require('path');
+const mongoose = require('mongoose');
+const connectDB = require('./db');
+const nodemailer = require('nodemailer');
 const fs = require('fs');
-const pdf = require('pdfkit'); // Import PDFKit for generating PDFs
+const pdf = require('pdfkit');
 
 const app = express();
-const PORT = process.env.PORT || 5001; // Set default port to 5001
+const PORT = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors());
@@ -26,15 +25,15 @@ connectDB();
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'shekarchandra99311@gmail.com', // Replace with your email
-        pass: 'xyxq owea zryq xfyt'   // Replace with your email password or app-specific password
+        user: 'shekarchandra99311@gmail.com',
+        pass: 'xyxq owea zryq xfyt'
     }
 });
 
 // Function to send email
 const sendEmail = (to, subject, text) => {
     const mailOptions = {
-        from: 'shekarchandra99311@gmail.com', // Correctly set the from field
+        from: 'shekarchandra99311@gmail.com',
         to,
         subject,
         text
@@ -54,7 +53,7 @@ const sendPaymentConfirmation = (userEmail, userName, mobile, amount, utrNumber,
     const userSubject = 'Payment Confirmation';
     const userText = `Dear ${userName}, your payment of ${amount} has been received. UTR Number: ${utrNumber}. Payment Type: ${type}. Chit ID: ${chitsPlan}`;
     const userMailOptions = {
-        from: 'shekarchandra99311@gmail.com', // Correctly set the from field
+        from: 'shekarchandra99311@gmail.com',
         to: userEmail,
         subject: userSubject,
         text: userText,
@@ -76,7 +75,7 @@ const sendPaymentConfirmation = (userEmail, userName, mobile, amount, utrNumber,
 
     const adminSubject = 'New Payment Received';
     const adminText = `Name: ${userName}\nEmail: ${userEmail}\nMobile: ${mobile}\nAmount: ${amount}\nUTR Number: ${utrNumber}\nPayment Type: ${type}\nChit ID: ${chitsPlan}`;
-    sendEmail('shekarchandra99311@gmail.com', adminSubject, adminText); // Replace with your email
+    sendEmail('shekarchandra99311@gmail.com', adminSubject, adminText);
 };
 
 // Ensure the invoices directory exists
@@ -87,13 +86,59 @@ if (!fs.existsSync(invoicesDir)) {
 
 // Function to generate invoice PDF
 const generateInvoice = (payment) => {
+    const doc = new pdf();
+    const filePath = path.join(invoicesDir, `${payment._id}.pdf`);
+    const writeStream = fs.createWriteStream(filePath);
+
+    writeStream.on('error', (err) => {
+        console.error('Error writing invoice:', err);
+    });
+
+    doc.pipe(writeStream);
+
+    // Add company name and details with black color
+    doc.rect(0, 0, doc.page.width, 50).fill('#003366'); // Dark blue header background
+    doc.fillColor('#000000').fontSize(20).text('Dhanam Chits Pvt. Ltd', 0, 15, { align: 'center' }); // Black color for company name
+    doc.fillColor('#000000').fontSize(12).text('1234 Chits Street, Business City, Country', 0, 35, { align: 'center' }); // Black color for address
+    doc.fillColor('#000000').fontSize(12).text('Phone: +123 456 7890 | Email: info@dhanamchits.com', 0, 50, { align: 'center' }); // Black color for contact details
+    doc.moveDown(2);
+
+    doc.fillColor('#003366').fontSize(16).text('Invoice', { align: 'center' });
+    doc.moveDown();
+
+    // Add payment details with colors
+    doc.fillColor('#000000').fontSize(14).text(`Invoice ID: ${payment._id}`);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`);
+    doc.moveDown();
+    doc.fillColor('#000000').fontSize(14).text(`Name: ${payment.name}`);
+    doc.text(`Mobile: ${payment.mobile}`);
+    doc.text(`Email: ${payment.email}`);
+    doc.text(`Chit Plan: ${payment.chitsPlan}`);
+    doc.moveDown();
+    doc.fillColor('#000000').fontSize(14).text('Payment Details:');
+    doc.text(`Amount: ${payment.amount}`);
+    doc.text(`UTR Number: ${payment.utrNumber}`);
+    doc.text(`Payment Type: ${payment.type}`);
+    doc.end();
+
+    console.log(`Invoice generated at: ${filePath}`);
+    return filePath;
+};
+
+// Function to generate and send statement
+const sendStatement = async (paymentId) => {
     try {
+        const payment = await Payment.findById(paymentId);
+        if (!payment) {
+            throw new Error('Payment not found');
+        }
+
         const doc = new pdf();
-        const filePath = path.join(invoicesDir, `${payment._id}.pdf`);
+        const filePath = path.join(invoicesDir, `${payment._id}-statement.pdf`);
         const writeStream = fs.createWriteStream(filePath);
 
         writeStream.on('error', (err) => {
-            console.error('Error writing invoice:', err);
+            console.error('Error writing statement:', err);
         });
 
         doc.pipe(writeStream);
@@ -105,11 +150,11 @@ const generateInvoice = (payment) => {
         doc.fillColor('#000000').fontSize(12).text('Phone: +123 456 7890 | Email: info@dhanamchits.com', 0, 50, { align: 'center' }); // Black color for contact details
         doc.moveDown(2);
 
-        doc.fillColor('#003366').fontSize(16).text('Invoice', { align: 'center' });
+        doc.fillColor('#003366').fontSize(16).text('Statement', { align: 'center' });
         doc.moveDown();
 
         // Add payment details with colors
-        doc.fillColor('#000000').fontSize(14).text(`Invoice ID: ${payment._id}`);
+        doc.fillColor('#000000').fontSize(14).text(`Statement ID: ${payment._id}`);
         doc.text(`Date: ${new Date().toLocaleDateString()}`);
         doc.moveDown();
         doc.fillColor('#000000').fontSize(14).text(`Name: ${payment.name}`);
@@ -123,11 +168,33 @@ const generateInvoice = (payment) => {
         doc.text(`Payment Type: ${payment.type}`);
         doc.end();
 
-        console.log(`Invoice generated at: ${filePath}`); // Add logging
-        return filePath; // Return the path to the generated invoice
+        console.log(`Statement generated at: ${filePath}`);
+
+        // Send statement via email
+        const userSubject = 'Payment Statement';
+        const userText = `Dear ${payment.name}, please find attached your payment statement.`;
+        const userMailOptions = {
+            from: 'shekarchandra99311@gmail.com',
+            to: payment.email,
+            subject: userSubject,
+            text: userText,
+            attachments: [
+                {
+                    filename: 'statement.pdf',
+                    path: filePath
+                }
+            ]
+        };
+
+        transporter.sendMail(userMailOptions, (error, info) => {
+            if (error) {
+                console.error('Error sending statement to user:', error);
+            } else {
+                console.log('Statement sent to user:', info.response);
+            }
+        });
     } catch (error) {
-        console.error('Error generating invoice:', error);
-        throw new Error('Failed to generate invoice.');
+        console.error('Error generating or sending statement:', error);
     }
 };
 
@@ -182,7 +249,7 @@ const paymentSchema = new mongoose.Schema({
     email: String,
     type: String,
     chitsPlan: String,
-    status: { type: String, default: 'Pending' } // Add status field with default value
+    status: { type: String, default: 'Pending' }
 });
 
 // Create a Payment model
@@ -192,10 +259,10 @@ const Payment = mongoose.model('Payment', paymentSchema);
 app.get('/api/bank-details', async (req, res) => {
     try {
         const payments = await Payment.find();
-        console.log('Fetched payments from database:', payments); // Add logging
+        console.log('Fetched payments from database:', payments);
         res.json(payments);
     } catch (err) {
-        console.error('Failed to fetch payments:', err); // Add logging
+        console.error('Failed to fetch payments:', err);
         res.status(500).json({ error: 'Failed to fetch payments' });
     }
 });
@@ -203,13 +270,13 @@ app.get('/api/bank-details', async (req, res) => {
 // Get payments by mobile number
 app.get('/api/payments/:mobile', async (req, res) => {
     const { mobile } = req.params;
-    console.log(`Received request to fetch payments for mobile: ${mobile}`); // Logging
+    console.log(`Received request to fetch payments for mobile: ${mobile}`);
     try {
         const payments = await Payment.find({ mobile });
-        console.log(`Payments found: ${payments.length}`); // Logging
+        console.log(`Payments found: ${payments.length}`);
         res.json(payments);
     } catch (err) {
-        console.error('Failed to fetch payments:', err); // Add logging
+        console.error('Failed to fetch payments:', err);
         res.status(500).json({ error: 'Failed to fetch payments' });
     }
 });
@@ -243,7 +310,7 @@ app.post('/api/bank-details', async (req, res) => {
             res.status(200).json({ message: 'Payment details submitted successfully!', invoiceUrl: `/invoices/${payment._id}.pdf` });
         }, 1000); // 1 second delay
     } catch (error) {
-        console.error('Error saving payment details:', error); // Add logging
+        console.error('Error saving payment details:', error);
         res.status(500).json({ message: 'Error saving payment details.', error });
     }
 });
@@ -265,7 +332,7 @@ app.put('/api/bank-details/:id/status', async (req, res) => {
         payment.status = status;
         await payment.save();
 
-        console.log('Updated payment status:', payment); // Add logging
+        console.log('Updated payment status:', payment);
         res.status(200).json({ message: 'Payment status updated successfully' });
     } catch (error) {
         console.error('Error updating payment status:', error);
@@ -278,7 +345,7 @@ app.delete('/api/bank-details/:id', async (req, res) => {
     const { id } = req.params;
     try {
         await Payment.findByIdAndDelete(id);
-        console.log('Deleted payment with ID:', id); // Add logging
+        console.log('Deleted payment with ID:', id);
         res.status(200).json({ message: 'Payment deleted successfully' });
     } catch (error) {
         console.error('Error deleting payment:', error);
@@ -293,7 +360,7 @@ const bankDetailsSchema = new mongoose.Schema({
     ifscCode: String,
     upiId: String,
     bankName: String,
-    mobile: String // Add mobile field to schema
+    mobile: String
 });
 
 const BankDetails = mongoose.model('BankDetails', bankDetailsSchema);
@@ -340,7 +407,7 @@ app.get('/api/bank-details/:mobile', async (req, res) => {
 app.get('/api/bankdetails', async (req, res) => {
     try {
         const bankDetails = await BankDetails.find();
-        console.log('Fetched bank details from database:', bankDetails); // Add logging
+        console.log('Fetched bank details from database:', bankDetails);
         res.json(bankDetails);
     } catch (err) {
         console.error('Failed to fetch bank details:', err);
@@ -379,14 +446,14 @@ app.put('/api/bank-details/:id', async (req, res) => {
 app.delete('/api/bank-details/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        console.log(`Attempting to delete bank detail with ID: ${id}`); // Add logging
+        console.log(`Attempting to delete bank detail with ID: ${id}`);
         const bankDetail = await BankDetails.findById(id);
         if (!bankDetail) {
-            console.error(`Bank detail with ID: ${id} not found`); // Add logging
+            console.error(`Bank detail with ID: ${id} not found`);
             return res.status(404).json({ message: 'Bank detail not found' });
         }
         await bankDetail.remove();
-        console.log(`Deleted bank detail with ID: ${id}`); // Add logging
+        console.log(`Deleted bank detail with ID: ${id}`);
         res.status(200).json({ message: 'Bank detail deleted successfully', bankDetail });
     } catch (error) {
         console.error('Error deleting bank detail:', error);
@@ -405,8 +472,9 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 // Get user profile by mobile number
-app.get('/api/profile/:mobile', async (req, res) => {
-    const { mobile } = req.params;
+app.get('/api/profile', async (req, res) => {
+    const { mobile } = req.query;
+
     try {
         const user = await User.findOne({ mobile });
         if (!user) {
@@ -436,7 +504,7 @@ const borrowSchema = new mongoose.Schema({
     email: String,
     mobile: String,
     amount: Number,
-    status: { type: String, default: 'Pending' }, // Ensure status field is defined with a default value
+    status: { type: String, default: 'Pending' },
     date: { type: Date, default: Date.now }
 });
 
@@ -519,6 +587,142 @@ app.get('/api/payments', async (req, res) => {
     } catch (err) {
         console.error('Failed to fetch payments:', err);
         res.status(500).json({ error: 'Failed to fetch payments' });
+    }
+});
+
+// Define a Chit ID schema
+const chitIdSchema = new mongoose.Schema({
+    chitId: String,
+    email: String,
+    name: String,
+    mobile: String,
+    month: String,
+    totalBalance: Number,
+    totalPaid: Number, // Add totalPaid field to the schema
+    status: { type: String, default: 'Pending' }
+});
+
+// Create a Chit ID model
+const ChitId = mongoose.model('ChitId', chitIdSchema);
+
+// Endpoint to get all Chit IDs
+app.get('/api/chit-ids', async (req, res) => {
+    try {
+        const chits = await ChitId.find();
+        console.log('Chit IDs found:', chits); // Add logging
+        res.status(200).json(chits);
+    } catch (error) {
+        console.error('Error fetching Chit ID details:', error);
+        res.status(500).json({ message: 'Failed to fetch Chit ID details' });
+    }
+});
+
+// Endpoint to get Chit ID details by chitId
+app.get('/api/chit-ids/:chitId', async (req, res) => {
+    const { chitId } = req.params;
+
+    try {
+        const chit = await ChitId.findOne({ chitId });
+        if (!chit) {
+            return res.status(404).json({ message: 'Chit ID not found' });
+        }
+
+        res.status(200).json(chit);
+    } catch (error) {
+        console.error('Error fetching Chit ID details:', error);
+        res.status(500).json({ message: 'Failed to fetch Chit ID details' });
+    }
+});
+
+// Endpoint to get Chit ID details by mobile number
+app.get('/api/chit-ids/mobile/:mobile', async (req, res) => {
+    const { mobile } = req.params;
+
+    try {
+        const chits = await ChitId.find({ mobile });
+        if (!chits.length) {
+            return res.status(404).json({ message: 'No Chit IDs found for this mobile number' });
+        }
+
+        res.status(200).json(chits);
+    } catch (error) {
+        console.error('Error fetching Chit ID details:', error);
+        res.status(500).json({ message: 'Failed to fetch Chit ID details' });
+    }
+});
+
+// Endpoint to submit Chit ID
+app.post('/api/chit-ids', async (req, res) => {
+    const { chitId, email, name, mobile, month } = req.body;
+
+    try {
+        const newChit = new ChitId({ chitId, email, name, mobile, month });
+        await newChit.save();
+
+        res.status(201).json({ message: 'Chit ID submitted successfully', chit: newChit });
+    } catch (error) {
+        console.error('Error submitting Chit ID:', error);
+        res.status(500).json({ message: 'Failed to submit Chit ID' });
+    }
+});
+
+// Endpoint to approve Chit ID and set total balance and total paid
+app.post('/api/chit-ids/approve', async (req, res) => {
+    const { chitId, totalBalance, totalPaid } = req.body;
+
+    try {
+        const chit = await ChitId.findOne({ chitId });
+        if (!chit) {
+            return res.status(404).json({ message: 'Chit ID not found' });
+        }
+
+        chit.status = 'Approved';
+        chit.totalBalance = totalBalance;
+        chit.totalPaid = totalPaid; // Ensure totalPaid is set
+        await chit.save();
+
+        res.status(200).json({ message: 'Chit ID approved successfully' });
+    } catch (error) {
+        console.error('Error approving Chit ID:', error);
+        res.status(500).json({ message: 'Failed to approve Chit ID' });
+    }
+});
+
+// Endpoint to update Chit ID status
+app.put('/api/chit-ids/:id/status', async (req, res) => {
+    const { id } = req.params;
+    const { status, totalBalance, totalPaid } = req.body; // Include totalPaid in the request body
+
+    try {
+        const chit = await ChitId.findById(id);
+        if (!chit) {
+            return res.status(404).json({ message: 'Chit ID not found' });
+        }
+
+        chit.status = status;
+        chit.totalBalance = totalBalance;
+        chit.totalPaid = totalPaid; // Ensure totalPaid is updated
+        await chit.save();
+
+        res.status(200).json({ message: 'Chit ID status updated successfully' });
+    } catch (error) {
+        console.error('Error updating Chit ID status:', error);
+        res.status(500).json({ message: 'Failed to update Chit ID status' });
+    }
+});
+
+// Endpoint to delete Chit ID by ID
+app.delete('/api/chit-ids/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const chit = await ChitId.findByIdAndDelete(id);
+        if (!chit) {
+            return res.status(404).json({ message: 'Chit ID not found' });
+        }
+        res.status(200).json({ message: 'Chit ID deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting Chit ID:', error);
+        res.status(500).json({ message: 'Failed to delete Chit ID' });
     }
 });
 

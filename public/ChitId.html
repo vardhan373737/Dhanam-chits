@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chit ID - Dhanam Chits Pvt. Ltd</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+            animation: gradientBackground 15s ease infinite;
+        }
+        @keyframes gradientBackground {
+            0% { background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%); }
+            50% { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
+            100% { background: linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%); }
+        }
+        header {
+            background: linear-gradient(45deg, #090a0b, #6610f2);
+            color: #fff;
+        }
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .navbar-nav .nav-link {
+            color: #fff !important;
+        }
+        .navbar-nav .nav-link:hover {
+            color: #ffc107 !important;
+            text-decoration: underline;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .details-box {
+            background: linear-gradient(135deg, #ffffff, #e0e0e0);
+            border-radius: 12px;
+            padding: 20px 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .details-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 123, 255, 0.7);
+            background: linear-gradient(135deg, #ffffff, #f0f0f0);
+        }
+        .details-box h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        .details-box p {
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        .details-box img {
+            max-width: 100px;
+            margin-bottom: 10px;
+        }
+        .back-button {
+            display: block;
+            margin: 20px auto 0;
+            width: 100%;
+            padding: 12px;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+            background: #444;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .back-button:hover {
+            background: #333;
+        }
+        .approve-button {
+            display: block;
+            margin: 20px auto 0;
+            width: 100%;
+            padding: 12px;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+            background: #28a745;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .approve-button:hover {
+            background: #218838;
+        }
+        .pay-now-button {
+            display: block;
+            margin: 20px auto 0;
+            width: 100%;
+            padding: 12px;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+            background: #007bff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .pay-now-button:hover {
+            background: #0056b3;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #343a40;
+            color: #ccc;
+            margin-top: 40px;
+        }
+        footer a {
+            color: #ffc107;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(45deg, #090a0b, #6610f2);">
+            <a class="navbar-brand" href="#">Dhanam Chits Pvt. Ltd</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item"><a class="nav-link" href="Login.html">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="moneyborrow.html">Money Borrow</a></li>
+                    <li class="nav-item"><a class="nav-link" href="borrowhistory.html">Borrow History</a></li>
+                    <li class="nav-item"><a class="nav-link" href="bankdetails.html">Bank Details</a></li>
+                    <li class="nav-item"><a class="nav-link" href="Chitid.html">Chitfunds</a></li>
+                    <li class="nav-item"><a class="nav-link" href="profile.html">Profile</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="details-box">
+            <h2>Your Chit ID</h2>
+            <p id="chitId">Loading...</p>
+            <p id="mobileNumber">Loading...</p>
+            <p id="totalBalance">Loading...</p>
+            <p id="totalPaid">Loading...</p> <!-- Add total paid amount -->
+            <button class="pay-now-button" id="payNowButton">Pay Now</button>
+        </div>
+        <form id="chitIdForm">
+            <div class="form-group">
+                <label for="chitId">Chit ID</label>
+                <select class="form-control" id="chitIdInput" name="chitId" required>
+                    <option value="1010">1010</option>
+                    <option value="2010">2010</option>
+                    <option value="5010">5010</option>
+                    <option value="5015">5015</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="email">User Email</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="name">User Name</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="mobile">Mobile Number</label>
+                <input type="text" class="form-control" id="mobile" name="mobile" required>
+            </div>
+            <div class="form-group">
+                <label for="month">Month</label>
+                <select class="form-control" id="month" name="month" required>
+                    <option value="January">January</option>
+                    <option value="February">February</option>
+                    <option value="March">March</option>
+                    <option value="April">April</option>
+                    <option value="May">May</option>
+                    <option value="June">June</option>
+                    <option value="July">July</option>
+                    <option value="August">August</option>
+                    <option value="September">September</option>
+                    <option value="October">October</option>
+                    <option value="November">November</option>
+                    <option value="December">December</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Chit ID</button>
+        </form>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Chit ID</th>
+                    <th>User Email</th>
+                    <th>User Name</th>
+                    <th>Mobile Number</th>
+                    <th>Month</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="chitIdTable">
+                <!-- Chit ID data will be loaded here -->
+            </tbody>
+        </table>
+        <button class="back-button" onclick="window.location.href='dashboard.html'">Back to Home</button>
+        <button class="approve-button" onclick="approveChitId()">Approve Chit ID</button>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Dhanam Chits Pvt. Ltd. All Rights Reserved. <a href="#">Privacy Policy</a></p>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const user = JSON.parse(localStorage.getItem("user"));
+            if (!user) {
+                alert("Please log in to view your profile.");
+                window.location.href = "login.html";
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:5001/api/profile?mobile=${user.mobile}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const userData = await response.json();
+                const mobile = userData.mobile;
+                localStorage.setItem('mobile', mobile);
+                document.getElementById('mobileNumber').textContent = `Mobile Number: ${mobile}`;
+                loadChitIdDetails(mobile);
+            } catch (error) {
+                console.error('Error fetching user profile:', error);
+                alert('Failed to fetch user profile. Please try again later.');
+            }
+        });
+
+        document.getElementById('chitIdForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const chitId = document.getElementById('chitIdInput').value;
+            const email = document.getElementById('email').value;
+            const name = document.getElementById('name').value;
+            const mobile = document.getElementById('mobile').value;
+            const month = document.getElementById('month').value;
+
+            try {
+                const response = await fetch('http://localhost:5001/api/chit-ids', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chitId, email, name, mobile, month })
+                });
+
+                if (response.ok) {
+                    alert('Chit ID submitted successfully!');
+                    loadChitIdDetails(mobile);
+                } else {
+                    const errorData = await response.json();
+                    alert(`Error: ${errorData.message}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error connecting to server.');
+            }
+        });
+
+        async function loadChitIdDetails(mobile) {
+            try {
+                const response = await fetch(`http://localhost:5001/api/chit-ids/mobile/${mobile}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                const tableBody = document.getElementById('chitIdTable');
+                tableBody.innerHTML = '';
+
+                data.forEach((chit) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${chit.chitId}</td>
+                        <td>${chit.email}</td>
+                        <td>${chit.name}</td>
+                        <td>${chit.mobile}</td>
+                        <td>${chit.month}</td>
+                        <td>${chit.status}</td>
+                        <td>
+                            <button class="btn btn-danger" onclick="deleteChitId('${chit._id}')">Delete</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+
+                    if (chit.status === 'Approved') {
+                        document.getElementById('chitId').textContent = chit.chitId;
+                        document.getElementById('totalBalance').textContent = `Total Balance: ${chit.totalBalance || 'N/A'}`;
+                        document.getElementById('totalPaid').textContent = `Total Paid: ${chit.totalPaid || 'N/A'}`; // Display total paid amount
+                        localStorage.setItem('chitId', chit.chitId);
+                        localStorage.setItem('name', chit.name); // Store name in localStorage
+                    }
+                });
+            } catch (error) {
+                console.error('Error fetching Chit ID details:', error);
+                alert('Failed to fetch Chit ID details. Please try again later.');
+            }
+        }
+
+        async function approveChitId() {
+            const chitId = localStorage.getItem('chitId');
+            if (!chitId) {
+                alert('No Chit ID found.');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5001/api/chit-ids/approve', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ chitId })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                alert(result.message);
+            } catch (error) {
+                console.error('Error approving Chit ID:', error);
+                alert('Failed to approve Chit ID. Please try again later.');
+            }
+        }
+
+        async function deleteChitId(id) {
+            if (!confirm('Are you sure you want to delete this Chit ID?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:5001/api/chit-ids/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                alert('Chit ID deleted successfully');
+                loadChitIdDetails(localStorage.getItem('mobile'));
+            } catch (error) {
+                console.error('Error deleting Chit ID:', error);
+                alert('Failed to delete Chit ID. Please try again later.');
+            }
+        }
+
+        document.getElementById('payNowButton').addEventListener('click', () => {
+            const chitId = document.getElementById('chitId').textContent;
+            const mobile = document.getElementById('mobileNumber').textContent.split(': ')[1];
+            const totalBalance = document.getElementById('totalBalance').textContent.split(': ')[1];
+            const totalPaid = document.getElementById('totalPaid').textContent.split(': ')[1];
+            const name = localStorage.getItem('name'); // Retrieve name from localStorage
+            window.location.href = `chitpayment.html?chitId=${chitId}&mobile=${mobile}&totalBalance=${totalBalance}&name=${name}&totalPaid=${totalPaid}`; // Pass name as query parameter
+        });
+    </script>
+</body>
+</html>

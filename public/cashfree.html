@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paytm Payment - Dhanam Chits Pvt. Ltd</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+            animation: gradientBackground 15s ease infinite;
+        }
+        @keyframes gradientBackground {
+            0% { background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%); }
+            50% { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
+            100% { background: linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%); }
+        }
+        header {
+            background: linear-gradient(45deg, #090a0b, #6610f2);
+            color: #fff;
+        }
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .navbar-nav .nav-link {
+            color: #fff !important;
+        }
+        .navbar-nav .nav-link:hover {
+            color: #ffc107 !important;
+            text-decoration: underline;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .details-box {
+            background: linear-gradient(135deg, #ffffff, #e0e0e0);
+            border-radius: 12px;
+            padding: 20px 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .details-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 123, 255, 0.7);
+            background: linear-gradient(135deg, #ffffff, #f0f0f0);
+        }
+        .details-box h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        .details-box p {
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        .details-box img {
+            max-width: 100px;
+            margin-bottom: 10px;
+        }
+        .back-button {
+            display: block;
+            margin: 20px auto 0;
+            width: 100%;
+            padding: 12px;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+            background: #444;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .back-button:hover {
+            background: #333;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #343a40;
+            color: #ccc;
+            margin-top: 40px;
+        }
+        footer a {
+            color: #ffc107;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <a class="navbar-brand" href="#">Dhanam Chits Pvt. Ltd</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="login.html">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="chitty-plans.html">Chits Plans</a></li>
+                    <li class="nav-item"><a class="nav-link" href="payment.html">Payment Form</a></li>
+                    <li class="nav-item"><a class="nav-link" href="home.html">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="details-box">
+            <h2>Paytm Payment</h2>
+            <p>Fill in the details below to proceed with the payment</p>
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label for="chittyPlan">Chitty Plan</label>
+                    <select class="form-control" id="chittyPlan" required>
+                        <option value="1010">1010</option>
+                        <option value="2010">2010</option>
+                        <option value="5010">5010</option>
+                        <option value="5015">5015</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="orderAmount">Chit Amount</label>
+                    <input type="number" class="form-control" id="orderAmount" required>
+                </div>
+                <div class="form-group">
+                    <label for="customerEmail">Customer Email</label>
+                    <input type="email" class="form-control" id="customerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="customerPhone">Customer Phone</label>
+                    <input type="tel" class="form-control" id="customerPhone" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Pay Now</button>
+            </form>
+        </div>
+        <button class="back-button" onclick="window.location.href='home.html'">Back to Home</button>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Dhanam Chits Pvt. Ltd. All Rights Reserved. <a href="#">Privacy Policy</a></p>
+    </footer>
+
+    <script>
+        document.getElementById('paymentForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const chittyPlan = document.getElementById('chittyPlan').value;
+            const orderAmount = document.getElementById('orderAmount').value;
+            const customerEmail = document.getElementById('customerEmail').value;
+            const customerPhone = document.getElementById('customerPhone').value;
+
+            if (!chittyPlan || !orderAmount || !customerEmail || !customerPhone) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            // Create a form to submit to the Paytm payment gateway
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'https://securegw-stage.paytm.in/theia/processTransaction'; // Use the appropriate Paytm URL
+
+            // Add form fields
+            form.innerHTML = `
+                <input type="hidden" name="MID" value="PxqiBX90586201501378">
+                <input type="hidden" name="ORDER_ID" value="${Date.now()}">
+                <input type="hidden" name="CUST_ID" value="${customerEmail}">
+                <input type="hidden" name="MOBILE_NO" value="${customerPhone}">
+                <input type="hidden" name="EMAIL" value="${customerEmail}">
+                <input type="hidden" name="CHANNEL_ID" value="WEB">
+                <input type="hidden" name="TXN_AMOUNT" value="${orderAmount}">
+                <input type="hidden" name="WEBSITE" value="WEBSTAGING">
+                <input type="hidden" name="INDUSTRY_TYPE_ID" value="Retail">
+                <input type="hidden" name="CALLBACK_URL" value="http://localhost:5005/api/paytm-callback">
+            `;
+
+            document.body.appendChild(form);
+            form.submit();
+        });
+    </script>
+</body>
+</html>

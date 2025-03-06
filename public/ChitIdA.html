@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bank Details</title>
+    <title>Admin Chit ID Management - Dhanam Chits Pvt. Ltd</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         /* General Styles */
@@ -17,7 +17,8 @@
         body {
             display: flex;
             height: 100vh;
-            background: #f5f6fa;
+            background: #e0f7fa; /* Changed background color */
+            color: #000000; /* Changed text color to black */
         }
 
         /* Sidebar */
@@ -224,7 +225,7 @@
             transition: 0.3s ease-in-out;
         }
 
-        .btn-edit {
+        .btn-action {
             background: #007bff;
             color: white;
             border: none;
@@ -234,8 +235,22 @@
             transition: background 0.3s ease;
         }
 
-        .btn-edit:hover {
+        .btn-action:hover {
             background: #0056b3;
+        }
+
+        .btn-password {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .btn-password:hover {
+            background: #218838;
         }
 
         .btn-delete {
@@ -251,188 +266,176 @@
         .btn-delete:hover {
             background: #c82333;
         }
+
+        /* Mobile Styles */
+        @media (max-width: 576px) {
+            table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+
+            table th, table td {
+                display: block;
+                text-align: left;
+                padding: 8px;
+                border: none;
+            }
+
+            table th {
+                background-color: rgba(0, 123, 255, 0.7);
+                color: #fff;
+                text-align: center;
+            }
+
+            table tr {
+                display: block;
+                margin-bottom: 10px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            }
+
+            table tr:hover {
+                background-color: rgba(0, 123, 255, 0.2);
+                transition: 0.3s ease-in-out;
+            }
+        }
     </style>
 </head>
 <body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <a class="navbar-brand" href="#">Dhanam Chits Pvt. Ltd</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="sidebar">
+                <h2>Admin Panel</h2>
+                <a href="admin.html"><i class="fas fa-tachometer-alt"></i> <span class="menu-text">Dashboard</span></a>
+                <a href="users.html"><i class="fas fa-users"></i> <span class="menu-text">Users</span></a>
+                <a href="bankdetailA.html"><i class="fas fa-university"></i> <span class="menu-text">Bank Details</span></a>
+                <a href="borrowA.html"><i class="fas fa-hand-holding-usd"></i> <span class="menu-text">Borrows</span></a>
+                <a href="ChitidA.html"><i class="fas fa-university"></i> <span class="menu-text">Chit-ids Approve</span></a>
+                <a href="paymentA.html"><i class="fas fa-credit-card"></i> <span class="menu-text">Payments</span></a>
+                <a href="contactA.html"><i class="fas fa-envelope"></i> <span class="menu-text">Contact Details</span></a>
+                <a href="index.html" class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
+            </div>
+        </nav>
+    </header>
 
-    <!-- Toggle Button -->
-    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <h2>Admin Panel</h2>
-        <a href="admin.html"><i class="fas fa-tachometer-alt"></i> <span class="menu-text">Dashboard</span></a>
-        <a href="users.html"><i class="fas fa-users"></i> <span class="menu-text">Users</span></a>
-        <a href="bankdetailA.html"><i class="fas fa-university"></i> <span class="menu-text">Bank Details</span></a>
-        <a href="borrowA.html"><i class="fas fa-hand-holding-usd"></i> <span class="menu-text">Borrows</span></a>
-        <a href="ChitidA.html"><i class="fas fa-university"></i> <span class="menu-text">Chit-ids Approve</span></a>
-        <a href="paymentA.html"><i class="fas fa-credit-card"></i> <span class="menu-text">Payments</span></a>
-        <a href="contactA.html"><i class="fas fa-envelope"></i> <span class="menu-text">Contact Details</span></a>
-        <a href="index.html" class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
-    </div>
-
-    <!-- Content -->
-    <div class="content">
-        <h1>Bank Details</h1>
-
-        <div class="dashboard-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Account Number</th>
-                        <th>IFSC Code</th>
-                        <th>UPI ID</th>
-                        <th>Bank Name</th>
-                        <th>Mobile</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="bank-details-table">
-                    <!-- Data will be loaded here -->
-                </tbody>
-            </table>
+    <div class="container">
+        <div class="details-box">
+            <h2>Manage Chit IDs</h2>
+            <div class="table-container">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Chit ID</th>
+                            <th>User Email</th>
+                            <th>User Name</th>
+                            <th>Mobile Number</th>
+                            <th>Month</th>
+                            <th>Total Balance</th>
+                            <th>Total Paid</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="chitIdTable">
+                        <!-- Chit ID data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
         </div>
-
-        <button class="btn-logout" onclick="logout()">Logout</button>
+        <button class="back-button" onclick="window.location.href='admin.html'">Back to Dashboard</button>
     </div>
+
+   
 
     <script>
-        async function fetchBankDetails() {
+        async function fetchChitIds() {
             try {
-                const response = await fetch('http://localhost:5001/api/bankdetails'); 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
+                const response = await fetch('http://localhost:5001/api/chit-ids');
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                
                 const data = await response.json();
-                console.log('Fetched bank details:', data); // Add logging
-                const tableBody = document.getElementById('bank-details-table');
+                const tableBody = document.getElementById('chitIdTable');
                 tableBody.innerHTML = '';
 
-                if (!Array.isArray(data)) {
-                    throw new Error('Invalid data format received');
-                }
-
-                data.forEach((bankDetail) => {
+                data.forEach((chit) => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${bankDetail.name}</td>
-                        <td>${bankDetail.accountNumber}</td>
-                        <td>${bankDetail.ifscCode}</td>
-                        <td>${bankDetail.upiId}</td>
-                        <td>${bankDetail.bankName}</td>
-                        <td>${bankDetail.mobile}</td>
+                        <td>${chit.chitId}</td>
+                        <td>${chit.email}</td>
+                        <td>${chit.name}</td>
+                        <td>${chit.mobile}</td>
+                        <td>${chit.month}</td>
                         <td>
-                            <button class="btn-edit" onclick="editBankDetail('${bankDetail._id}')">Edit</button>
-                            <button class="btn-delete" onclick="deleteBankDetail('${bankDetail._id}')">Delete</button>
+                            <input type="number" class="form-control form-control-sm" id="totalBalance-${chit._id}" value="${chit.totalBalance || ''}">
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm" id="totalPaid-${chit._id}" value="${chit.totalPaid || ''}">
+                        </td>
+                        <td>
+                            <select class="form-control form-control-sm" onchange="updateChitStatus('${chit._id}', this.value)">
+                                <option value="Pending" ${chit.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                <option value="Approved" ${chit.status === 'Approved' ? 'selected' : ''}>Approved</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="deleteChitId('${chit._id}')">Delete</button>
                         </td>
                     `;
                     tableBody.appendChild(row);
                 });
             } catch (error) {
-                console.error('Error fetching bank details:', error);
-                alert('Failed to fetch bank details. Please try again later.');
+                console.error('Error fetching Chit IDs:', error);
+                alert('Failed to fetch Chit IDs.');
             }
         }
 
-        async function editBankDetail(id) {
-            const newName = prompt('Enter new name:');
-            const newAccountNumber = prompt('Enter new account number:');
-            const newIfscCode = prompt('Enter new IFSC code:');
-            const newUpiId = prompt('Enter new UPI ID:');
-            const newBankName = prompt('Enter new bank name:');
-            const newMobile = prompt('Enter new mobile number:');
-
-            if (!newName || !newAccountNumber || !newIfscCode || !newUpiId || !newBankName || !newMobile) {
-                return;
-            }
+        async function updateChitStatus(id, status) {
+            const totalBalance = document.getElementById(`totalBalance-${id}`).value;
+            const totalPaid = document.getElementById(`totalPaid-${id}`).value;
 
             try {
-                const response = await fetch(`http://localhost:5001/api/bank-details/${id}`, {
+                const response = await fetch(`http://localhost:5001/api/chit-ids/${id}/status`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        name: newName,
-                        accountNumber: newAccountNumber,
-                        ifscCode: newIfscCode,
-                        upiId: newUpiId,
-                        bankName: newBankName,
-                        mobile: newMobile
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status, totalBalance, totalPaid })
                 });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
 
-                alert('Bank detail updated successfully');
-                fetchBankDetails();
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+                alert('Chit ID status updated successfully');
+                fetchChitIds();
             } catch (error) {
-                console.error('Error updating bank detail:', error);
-                alert('Failed to update bank detail. Please try again later.');
+                console.error('Error updating Chit ID status:', error);
+                alert('Failed to update Chit ID status.');
             }
         }
 
-        async function deleteBankDetail(id) {
-            if (!confirm('Are you sure you want to delete this bank detail?')) {
-                return;
-            }
+        async function deleteChitId(id) {
+            if (!confirm('Are you sure you want to delete this Chit ID?')) return;
 
             try {
-                console.log(`Attempting to delete bank detail with ID: ${id}`); // Add logging
-                const response = await fetch(`http://localhost:5001/api/bank-details/${id}`, {
+                const response = await fetch(`http://localhost:5001/api/chit-ids/${id}`, {
                     method: 'DELETE'
                 });
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error(`HTTP error! Status: ${response.status}, Message: ${errorText}`); // Add logging
-                    throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
-                }
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
-                const result = await response.json();
-                console.log('Delete response:', result); // Add logging
-
-                alert('Bank detail deleted successfully');
-                fetchBankDetails();
+                alert('Chit ID deleted successfully');
+                fetchChitIds();
             } catch (error) {
-                console.error('Error deleting bank detail:', error);
-                alert('Failed to delete bank detail. Please try again later.');
+                console.error('Error deleting Chit ID:', error);
+                alert('Failed to delete Chit ID.');
             }
         }
 
-        function logout() {
-            fetch('http://localhost:4000/logout', {
-                method: 'POST',
-                credentials: 'include',
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message === "Logout successful.") {
-                    window.location.href = "/login.html";
-                }
-            })
-            .catch(error => {
-                console.error('Error logging out:', error);
-            });
-        }
-
-        function toggleSidebar() {
-            let sidebar = document.querySelector('.sidebar');
-            let content = document.querySelector('.content');
-
-            if (sidebar.style.width === "250px" || sidebar.style.width === "") {
-                sidebar.style.width = "60px";
-                content.style.marginLeft = "60px";
-            } else {
-                sidebar.style.width = "250px";
-                content.style.marginLeft = "250px";
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', fetchBankDetails);
+        document.addEventListener('DOMContentLoaded', fetchChitIds);
     </script>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
