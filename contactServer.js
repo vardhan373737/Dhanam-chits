@@ -5,7 +5,6 @@ const cors = require("cors");
 const path = require("path");
 const mongoose = require('mongoose'); // Add this line
 const connectDB = require('./db'); // Import the shared MongoDB connection
-const crypto = require('crypto'); // Add this line
 
 // Initialize Express app
 const app = express();
@@ -14,7 +13,6 @@ const PORT = 5005; // Change port number to 5005
 // Middleware setup
 app.use(bodyParser.json());
 app.use(cors());
-app.use(bodyParser.urlencoded({ extended: true })); // Add this line
 
 // Nodemailer transporter setup
 const transporter = nodemailer.createTransport({
@@ -39,6 +37,18 @@ const contactSchema = new mongoose.Schema({
 
 // Create the contact model
 const Contact = mongoose.model("Contact", contactSchema);
+
+// Define the feedback schema
+const feedbackSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    message: { type: String, required: true },
+    rating: { type: Number, required: true },
+    date: { type: Date, default: Date.now }
+});
+
+// Create the feedback model
+const Feedback = mongoose.model('Feedback', feedbackSchema);
 
 // Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, "public")));
@@ -133,28 +143,34 @@ app.delete('/api/contacts/:id', async (req, res) => {
     }
 });
 
-// Paytm callback endpoint
-app.post('/api/paytm-callback', (req, res) => {
-    const paytmChecksum = req.body.CHECKSUMHASH;
-    delete req.body.CHECKSUMHASH;
+// Endpoint to submit feedback
+app.post('/api/feedback', async (req, res) => {
+    const { name, email, message, rating } = req.body;
 
-    const isVerifySignature = verifySignature(req.body, 'YOUR_ACTUAL_PAYTM_MERCHANT_KEY', paytmChecksum);
-    if (isVerifySignature) {
-        console.log("Checksum Matched");
-        // Process the payment response
-        res.redirect('/payment-success.html');
-    } else {
-        console.log("Checksum Mismatched");
-        res.redirect('/payment-failure.html');
+    if (!name || !email || !message || !rating) {
+        return res.status(400).json({ message: 'All fields are required.' });
+    }
+
+    try {
+        const newFeedback = new Feedback({ name, email, message, rating });
+        await newFeedback.save();
+        res.status(201).json({ message: 'Feedback submitted successfully!' });
+    } catch (error) {
+        console.error('Error saving feedback:', error);
+        res.status(500).json({ message: 'Failed to submit feedback.' });
     }
 });
 
-// Function to verify Paytm checksum
-function verifySignature(params, key, checksum) {
-    const data = Object.keys(params).sort().map(key => `${key}=${params[key]}`).join('&');
-    const hash = crypto.createHmac('sha256', key).update(data).digest('hex');
-    return hash === checksum;
-}
+// Endpoint to fetch all feedback
+app.get('/api/feedback', async (req, res) => {
+    try {
+        const feedbacks = await Feedback.find().sort({ date: -1 });
+        res.json(feedbacks);
+    } catch (error) {
+        console.error('Error fetching feedback:', error);
+        res.status(500).json({ message: 'Failed to fetch feedback.' });
+    }
+});
 
 // Start the server
 app.listen(PORT, () => {

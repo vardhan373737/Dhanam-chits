@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -49,11 +50,11 @@
         .form-container button {
             width: 100%;
             margin: 10px 0;
-            padding: 8px; /* Reduced padding */
+            padding: 8px;
             box-sizing: border-box;
             border-radius: 5px;
             border: none;
-            font-size: 0.9rem; /* Reduced font size */
+            font-size: 0.9rem;
         }
 
         table {
@@ -117,6 +118,34 @@
 
         .delete-button:hover {
             background-color: darkred;
+        }
+
+        footer {
+            background: #343a40;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: #ffc107;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .social-links a {
+            margin: 0 10px;
+            color: white;
+            font-size: 1.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .social-links a:hover {
+            color: #ffc107;
         }
 
         /* Responsive Styles */
@@ -213,6 +242,29 @@
 
     <!-- Back button -->
     <button class="back-button" onclick="window.location.href='home.html'">Back to Home</button>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2025 Dhanam Chits Pvt. Ltd. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+        <p>Contact us: <a href="mailto:support@dhanamchits.com">support@dhanamchits.com</a> | Phone: +91-9876543210</p>
+        <div class="social-links">
+            <a href="https://facebook.com" target="_blank" aria-label="Facebook" class="text-white mx-2">
+                <i class="bi bi-facebook" style="font-size: 1.5rem;"></i>
+            </a>
+            <a href="https://twitter.com" target="_blank" aria-label="Twitter" class="text-white mx-2">
+                <i class="bi bi-twitter" style="font-size: 1.5rem;"></i>
+            </a>
+            <a href="https://instagram.com" target="_blank" aria-label="Instagram" class="text-white mx-2">
+                <i class="bi bi-instagram" style="font-size: 1.5rem;"></i>
+            </a>
+            <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn" class="text-white mx-2">
+                <i class="bi bi-linkedin" style="font-size: 1.5rem;"></i>
+            </a>
+            <a href="https://wa.me/" target="_blank" aria-label="WhatsApp" class="text-white mx-2">
+                <i class="bi bi-whatsapp" style="font-size: 1.5rem;"></i>
+            </a>
+        </div>
+    </footer>
 
     <!-- JavaScript File -->
     <script>
