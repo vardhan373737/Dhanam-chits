@@ -7,13 +7,23 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
-            background: linear-gradient(to right, #6a11cb, #2575fc);
+            background: linear-gradient(45deg, #090a0b, #6610f2); /* Match index.html background */
+            color: #1a0d0d;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             margin: 0;
+        }
+
+        .navbar {
+            background: linear-gradient(45deg, #090a0b, #6610f2); /* Match index.html navbar background */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml;charset=UTF8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='black' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
         }
 
         .container {
@@ -159,22 +169,27 @@
 </head>
 <body>
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(45deg, #090a0b, #6610f2);">
-        <a class="navbar-brand" href="#">Dhanam Chits Pvt. Ltd</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item"><a class="nav-link" href="Login.html">Login</a></li>
-                <li class="nav-item"><a class="nav-link" href="moneyborrow.html">Money Borrow</a></li>
-                <li class="nav-item"><a class="nav-link" href="borrowhistory.html">Borrow History</a></li>
-                <li class="nav-item"><a class="nav-link" href="bankdetails.html">Bank Details</a></li>
-                <li class="nav-item"><a class="nav-link" href="Chitid.html">Chitfunds</a></li>
-                <li class="nav-item"><a class="nav-link" href="profile.html">Profile</a></li>
-            </ul>
-        </div>
-    </nav>
+    <header>
+        <nav class="navbar navbar-expand-lg">
+            <a class="navbar-brand d-flex align-items-center" href="dashboard.html">
+                <img src="logo.jpeg" alt="Logo" style="height: 50px; margin-right: 15px; object-fit: cover; border-radius: 50%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); transition: transform 0.3s ease;">
+                <h1 style="font-size: 1.5rem; margin: 0; color: white;">Dhanam Chits Pvt. Ltd</h1>
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item"><a class="nav-link" href="Login.html">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="moneyborrow.html">Money Borrow</a></li>
+                    <li class="nav-item"><a class="nav-link" href="borrowhistory.html">Borrow History</a></li>
+                    <li class="nav-item"><a class="nav-link" href="bankdetails.html">Bank Details</a></li>
+                    <li class="nav-item"><a class="nav-link" href="Chitid.html">Chitfunds</a></li>
+                    <li class="nav-item"><a class="nav-link" href="profile.html">Profile</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
 
     <!-- Scrolling Notice -->
     <div class="scrolling-notice">

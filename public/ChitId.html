@@ -11,7 +11,8 @@
             margin: 0;
             padding: 0;
             min-height: 100vh;
-            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+            background: linear-gradient(45deg, #090a0b, #6610f2); /* Match index.html background */
+            color: #140202;
             animation: gradientBackground 15s ease infinite;
         }
         @keyframes gradientBackground {
@@ -22,6 +23,10 @@
         header {
             background: linear-gradient(45deg, #090a0b, #6610f2);
             color: #fff;
+        }
+        .navbar {
+            background: linear-gradient(45deg, #090a0b, #6610f2); /* Match index.html navbar background */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
         .navbar-brand {
             font-size: 1.8rem;
@@ -140,11 +145,17 @@
             }
         }
     </style>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(45deg, #090a0b, #6610f2);">
-            <a class="navbar-brand" href="#">Dhanam Chits Pvt. Ltd</a>
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <a class="navbar-brand d-flex align-items-center" href="dashboard.html">
+                <img src="logo.jpeg" alt="Logo" style="height: 50px; margin-right: 15px; object-fit: cover; border-radius: 50%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); transition: transform 0.3s ease;">
+                <h1 style="font-size: 1.5rem; margin: 0; color: white;">Dhanam Chits Pvt. Ltd</h1>
+            </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>

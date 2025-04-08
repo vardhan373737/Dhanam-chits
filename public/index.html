@@ -63,8 +63,53 @@
         }
 
         #hero img {
-            height: 600px; /* Adjust the height as needed */
-            object-fit: cover; /* Ensures the image scales properly */
+            width: 100%; /* Ensure the image takes the full width */
+            height: 600px; /* Increase the height for larger images */
+            object-fit: cover; /* Ensure the image scales properly */
+        }
+
+        @media (max-width: 768px) {
+            #hero {
+                height: 300px; /* Reduce the height of the carousel */
+            }
+
+            #hero img {
+                height: 400px; /* Adjust the height for mobile devices */
+            }
+
+            .carousel-caption {
+                font-size: 0.9rem; /* Reduce font size for captions */
+                text-align: center; /* Center-align text */
+                top: 20%; /* Move text slightly lower for better visibility */
+                transform: translate(-50%, 0); /* Adjust position */
+                z-index: 10; /* Ensure the caption is above other elements */
+                position: absolute; /* Ensure proper stacking context */
+                width: 90%; /* Restrict width to prevent overflow */
+            }
+
+            .carousel-caption h3 {
+                font-size: 1.5rem; /* Adjust heading size */
+                text-align: center; /* Center-align heading */
+                margin-bottom: 10px; /* Add spacing below the heading */
+            }
+
+            .carousel-caption p {
+                font-size: 1rem; /* Adjust paragraph size */
+                margin-bottom: 15px; /* Add spacing below the paragraph */
+            }
+
+            .carousel-caption a {
+                font-size: 1rem; /* Adjust button size for better visibility */
+                padding: 10px 20px; /* Increase button padding */
+                display: inline-block; /* Ensure the button is visible */
+                margin-top: 10px; /* Add spacing above the button */
+                z-index: 11; /* Ensure the button is above other elements */
+                position: relative; /* Ensure proper stacking context */
+                background-color: #007bff; /* Ensure button has a visible background */
+                color: white; /* Ensure text is visible */
+                border-radius: 5px; /* Add rounded corners for better aesthetics */
+                text-decoration: none; /* Remove underline from the button */
+            }
         }
 
         @keyframes fadeIn {
@@ -329,14 +374,86 @@
             font-size: 0.85rem;
             color: #6c757d;
         }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-top: 20px !important; /* Adjust the top margin for mobile devices */
+            }
+        }
+
+        #welcomeBanner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #090a0b, #6610f2);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            z-index: 1050; /* Ensure the banner is above other elements */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #welcomeBanner img {
+            max-width: 30%; /* Adjust image size for web version */
+            height: auto;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        #welcomeBanner span {
+            font-size: 2rem; /* Larger font size for web version */
+            font-weight: bold;
+            text-align: center;
+        }
+
+        #welcomeBanner button {
+            margin-top: 20px;
+            background: none;
+            border: 2px solid white;
+            color: white;
+            font-size: 1.5rem; /* Larger button size for web version */
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+            z-index: 1060; /* Ensure the button is above the banner content */
+        }
+
+        @media (max-width: 768px) {
+            #welcomeBanner img {
+                max-width: 90%; /* Adjust image size for mobile */
+            }
+
+            #welcomeBanner span {
+                font-size: 1.2rem; /* Adjust font size for mobile */
+            }
+
+            #welcomeBanner button {
+                font-size: 1rem; /* Adjust button size for mobile */
+                padding: 8px 16px; /* Adjust padding for mobile */
+            }
+        }
     </style>
 </head>
 
 <body>
+    <!-- Full-Screen Banner Section -->
+    <div id="welcomeBanner">
+        <img src="banner.jpeg" alt="Banner Photo">
+        <span>Welcome to Dhanam Chits Pvt. Ltd! Explore our plans and services.</span>
+        <button id="closeBanner">Close</button>
+    </div>
+
     <header>
         <nav class="navbar navbar-expand-lg">
-            <a class="navbar-brand" href="index.html">
-                <h1>Dhanam Chits Pvt. Ltd</h1>
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <img src="logo.jpeg" alt="Logo" style="height: 50px; margin-right: 15px; object-fit: cover; border-radius: 50%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); transition: transform 0.3s ease;">
+                <h1 style="font-size: 1.5rem; margin: 0; color: white;">Dhanam Chits Pvt. Ltd</h1>
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -375,7 +492,7 @@
         </nav>
     </header>
 
-    <main class="container mt-5">
+    <main class="container mt-5 mt-md-3">
         <section id="hero" class="carousel slide" data-ride="carousel" data-interval="4000" data-wrap="true">
             <div class="carousel-inner">
                 <div class="carousel-item active">
@@ -420,58 +537,58 @@
                 <span class="sr-only">Next</span>
             </a>
         </section>
+    </main>
 
-        <!-- Modal -->
-        <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="imageModalLabel">Dhanam Chits Pvt. Ltd</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body text-center">
-                        <img id="modalImage" src="" class="img-fluid" alt="Preview">
-                    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imageModalLabel">Dhanam Chits Pvt. Ltd</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modalImage" src="" class="img-fluid" alt="Preview">
                 </div>
             </div>
         </div>
+    </div>
 
-        <section id="features" class="mt-5">
-            <h2>Why Choose Us?</h2>
-            <div class="row">
-                <div class="col-12 col-md-4 mb-4">
-                    <img src="Secure Investments.jpg" alt="Feature 1" class="img-fluid rounded">
-                    <h3 class="typing-h4" style="color: black;">Secure Investments</h3>
-                    <p style="color: black;">Your savings are safe with us. We ensure transparency and reliability in every transaction.</p>
-                </div>
-                <div class="col-12 col-md-4 mb-4">
-                    <img src="https://th.bing.com/th/id/OIP.BFj7s0bpHTSH60ex_HqLYQHaFb?w=245&h=180&c=7&r=0&o=5&dpr=1.4&pid=1.7" alt="Feature 2" class="img-fluid rounded">
-                    <h3 class="typing-h4" style="color: black;">Flexible Plans</h3>
-                    <p style="color: black;">Choose from a variety of plans tailored to meet your financial goals and needs.</p>
-                </div>
-                <div class="col-12 col-md-4 mb-4">
-                    <img src="https://th.bing.com/th/id/OIP.zzvc1Za7aq3QCnF5nAMZWwHaEK?w=301&h=180&c=7&r=0&o=5&dpr=1.4&pid=1.7" alt="Feature 3" class="img-fluid rounded">
-                    <h3 class="typing-h4" style="color: black;">High Returns</h3>
-                    <p style="color: black;">Enjoy better returns on your investments compared to traditional savings methods.</p>
-                </div>
-                <div class="col-12 col-md-4 mb-4">
-                    <img src="15.png" alt="Feature 4" class="img-fluid rounded">
-                    <h3 class="typing-h4" style="color: black;">Custom Feature</h3>
-                    <p style="color: black;">Highlight a unique feature or service offered by your company.</p>
-                </div>
-                <div>
-                  ................................................................  
-                </div>
-                <div class="col-12 col-md-4 mb-4">
-                    <img src="12.png" alt="Feature 5" class="img-fluid rounded">
-                    <h3 class="typing-h4" style="color: black;">Empowering Growth</h3>
-                    <p style="color: black;">We help you achieve financial independence with our trusted services.</p>
-                </div>
+    <section id="features" class="mt-5">
+        <h2>Why Choose Us?</h2>
+        <div class="row">
+            <div class="col-12 col-md-4 mb-4">
+                <img src="Secure Investments.jpg" alt="Feature 1" class="img-fluid rounded">
+                <h3 class="typing-h4" style="color: black;">Secure Investments</h3>
+                <p style="color: black;">Your savings are safe with us. We ensure transparency and reliability in every transaction.</p>
             </div>
-        </section>
-    </main>
+            <div class="col-12 col-md-4 mb-4">
+                <img src="https://th.bing.com/th/id/OIP.BFj7s0bpHTSH60ex_HqLYQHaFb?w=245&h=180&c=7&r=0&o=5&dpr=1.4&pid=1.7" alt="Feature 2" class="img-fluid rounded">
+                <h3 class="typing-h4" style="color: black;">Flexible Plans</h3>
+                <p style="color: black;">Choose from a variety of plans tailored to meet your financial goals and needs.</p>
+            </div>
+            <div class="col-12 col-md-4 mb-4">
+                <img src="https://th.bing.com/th/id/OIP.zzvc1Za7aq3QCnF5nAMZWwHaEK?w=301&h=180&c=7&r=0&o=5&dpr=1.4&pid=1.7" alt="Feature 3" class="img-fluid rounded">
+                <h3 class="typing-h4" style="color: black;">High Returns</h3>
+                <p style="color: black;">Enjoy better returns on your investments compared to traditional savings methods.</p>
+            </div>
+            <div class="col-12 col-md-4 mb-4">
+                <img src="15.png" alt="Feature 4" class="img-fluid rounded">
+                <h3 class="typing-h4" style="color: black;">Custom Feature</h3>
+                <p style="color: black;">Highlight a unique feature or service offered by your company.</p>
+            </div>
+            <div>
+              ................................................................  
+            </div>
+            <div class="col-12 col-md-4 mb-4">
+                <img src="12.png" alt="Feature 5" class="img-fluid rounded">
+                <h3 class="typing-h4" style="color: black;">Empowering Growth</h3>
+                <p style="color: black;">We help you achieve financial independence with our trusted services.</p>
+            </div>
+        </div>
+    </section>
 
     <section id="feedback" class="mt-5">
         <div class="container">
@@ -542,6 +659,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
+        document.getElementById('closeBanner').addEventListener('click', function () {
+            document.getElementById('welcomeBanner').style.display = 'none';
+        });
+
         document.getElementById('feedbackForm').addEventListener('submit', async function (event) {
             event.preventDefault();
             const name = document.getElementById('name').value;
