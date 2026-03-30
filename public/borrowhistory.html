@@ -151,7 +151,7 @@
         async function updateBorrowStatus(id, status) {
             document.getElementById('loading').style.display = 'flex';
             try {
-                const response = await fetch(`http://localhost:5000/api/borrow/${id}`, {
+                const response = await fetch(`/api/borrow/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status })
@@ -183,7 +183,7 @@
 
             try {
                 console.log(`Fetching borrow history for user: ${user.mobile}`); // Logging
-                const response = await fetch(`http://localhost:5000/api/borrow-history/${user.mobile}`);
+                const response = await fetch(`/api/borrow-history/${user.mobile}`);
                 console.log(`Response status: ${response.status}`); // Logging
                 const borrowHistory = await response.json();
                 console.log(`Response data: ${JSON.stringify(borrowHistory)}`); // Logging

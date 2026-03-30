@@ -290,7 +290,7 @@
         async function fetchData() {
             document.getElementById('loading').style.display = 'flex';
             try {
-                const response = await fetch('http://localhost:5000/api/bank-details');
+                const response = await fetch('/api/bank-details');
                 const data = await response.json();
                 const tableBody = document.getElementById('payments-table');
                 tableBody.innerHTML = '';

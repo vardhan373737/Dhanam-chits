@@ -257,7 +257,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:5000/api/profile?mobile=${user.mobile}`);
+                const response = await fetch(`/api/profile?mobile=${user.mobile}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
@@ -281,7 +281,7 @@
             const month = document.getElementById('month').value;
 
             try {
-                const response = await fetch('http://localhost:5000/api/chit-ids', {
+                const response = await fetch('/api/chit-ids', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ chitId, email, name, mobile, month })
@@ -302,7 +302,7 @@
 
         async function loadChitIdDetails(mobile) {
             try {
-                const response = await fetch(`http://localhost:5000/api/chit-ids/mobile/${mobile}`);
+                const response = await fetch(`/api/chit-ids/mobile/${mobile}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
@@ -347,7 +347,7 @@
             }
 
             try {
-                const response = await fetch('http://localhost:5000/api/chit-ids/approve', {
+                const response = await fetch('/api/chit-ids/approve', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -373,7 +373,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:5000/api/chit-ids/${id}`, {
+                const response = await fetch(`/api/chit-ids/${id}`, {
                     method: 'DELETE'
                 });
 

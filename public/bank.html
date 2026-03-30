@@ -726,7 +726,7 @@
             const chitsPlan = document.getElementById('chitsPlan').value;
 
             try {
-                const response = await fetch('http://localhost:5000/api/bank-details', {
+                const response = await fetch('/api/bank-details', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, mobile, amount, utrNumber: utr, email, type, chitsPlan })
@@ -756,7 +756,7 @@
             const chitsPlan = document.getElementById('chitsPlan').value;
 
             try {
-                const response = await fetch('http://localhost:5000/api/bank-details', {
+                const response = await fetch('/api/bank-details', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, mobile, amount, utrNumber: utr, email, type, chitsPlan })

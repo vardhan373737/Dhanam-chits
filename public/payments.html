@@ -210,7 +210,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", async () => {
             try {
-                const response = await fetch('http://localhost:5000/api/payments');
+                const response = await fetch('/api/payments');
                 const payments = await response.json();
                 const paymentsTable = document.getElementById('payments-table');
                 paymentsTable.innerHTML = '';
@@ -247,7 +247,7 @@
 
         async function deletePayment(id) {
             try {
-                const response = await fetch(`http://localhost:5000/api/payments/${id}`, {
+                const response = await fetch(`/api/payments/${id}`, {
                     method: 'DELETE'
                 });
                 if (response.ok) {

@@ -548,12 +548,12 @@
     </div>
 
     <script>
-        const PAYMENT_API_BASE = 'http://localhost:5000';
+        const PAYMENT_API_BASE = '';
         let paymentCache = [];
 
         async function fetchData() {
             try {
-                const response = await fetch('http://localhost:5000/api/bank-details');
+                const response = await fetch('/api/bank-details');
                 const data = await response.json();
                 console.log('Fetched payment details:', data); // Add logging
                 const tableBody = document.getElementById('payments-table');
@@ -623,7 +623,7 @@
 
         async function updateStatus(id, status) {
             try {
-                const response = await fetch(`http://localhost:5000/api/bank-details/${id}/status`, {
+                const response = await fetch(`/api/bank-details/${id}/status`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -649,7 +649,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:5000/api/bank-details/${id}`, {
+                const response = await fetch(`/api/bank-details/${id}`, {
                     method: 'DELETE'
                 });
 
@@ -760,7 +760,7 @@
         }
 
         function logout() {
-            fetch('http://localhost:5000/logout', {
+            fetch('/logout', {
                 method: 'POST',
                 credentials: 'include',
             })

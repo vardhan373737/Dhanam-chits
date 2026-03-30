@@ -259,8 +259,8 @@
   </div>
 
   <script>
-    const AUTH_API_BASES = ['http://localhost:5000', 'http://localhost:4000'];
-    const CONTACT_API_BASES = ['http://localhost:5000', 'http://localhost:5005'];
+    const AUTH_API_BASES = ['', ''];
+    const CONTACT_API_BASES = ['', ''];
 
     async function fetchWithFallback(path, bases, options = {}) {
       let lastError = null;
@@ -278,11 +278,11 @@
       try {
         const [usersResponse, bankDetailsResponse, borrowsResponse, paymentsResponse, contactsResponse, chitIdsResponse] = await Promise.all([
           fetchWithFallback('/api/users', AUTH_API_BASES),
-          fetch('http://localhost:5000/api/bankdetails'),
-          fetch('http://localhost:5000/api/borrows'),
-          fetch('http://localhost:5000/api/payments'),
+          fetch('/api/bankdetails'),
+          fetch('/api/borrows'),
+          fetch('/api/payments'),
           fetchWithFallback('/api/contacts', CONTACT_API_BASES),
-          fetch('http://localhost:5000/api/chit-ids')
+          fetch('/api/chit-ids')
         ]);
 
         const users = await usersResponse.json();

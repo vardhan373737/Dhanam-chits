@@ -240,7 +240,7 @@
 
             try {
                 console.log(`Fetching payment history for user: ${user.mobile}`); // Logging
-                const response = await fetch(`http://localhost:5000/api/payments/${user.mobile}`);
+                const response = await fetch(`/api/payments/${user.mobile}`);
                 console.log(`Response status: ${response.status}`); // Logging
                 const payments = await response.json();
                 console.log(`Response data: ${JSON.stringify(payments)}`); // Logging
@@ -278,7 +278,7 @@
 
         async function fetchBankDetails(mobile) {
             try {
-                const response = await fetch(`http://localhost:5000/api/bank-details/${mobile}`);
+                const response = await fetch(`/api/bank-details/${mobile}`);
                 const bankDetails = await response.json();
                 const bankDetailsContainer = document.getElementById("bank-details");
                 bankDetailsContainer.innerHTML = ""; // Clear previous details

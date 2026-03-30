@@ -148,7 +148,7 @@
         
             try {
                 console.log("Sending data:", data);
-                const response = await fetch("http://localhost:5000/api/borrow", {
+                const response = await fetch("/api/borrow", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(data),

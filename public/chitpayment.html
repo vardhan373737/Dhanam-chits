@@ -193,7 +193,7 @@
             const partialPayment = document.getElementById('partialPayment').value;
 
             try {
-                const response = await fetch('http://localhost:5000/api/payments', {
+                const response = await fetch('/api/payments', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ chitId, mobile, name, totalBalance, totalPaid, partialPayment })

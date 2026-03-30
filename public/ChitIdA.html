@@ -524,7 +524,7 @@
     <script>
         async function fetchChitIds() {
             try {
-                const response = await fetch('http://localhost:5000/api/chit-ids');
+                const response = await fetch('/api/chit-ids');
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 
                 const data = await response.json();
@@ -581,7 +581,7 @@
             const totalPaid = document.getElementById(`totalPaid-${id}`).value;
 
             try {
-                const response = await fetch(`http://localhost:5000/api/chit-ids/${id}/status`, {
+                const response = await fetch(`/api/chit-ids/${id}/status`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status, totalBalance, totalPaid })
@@ -601,7 +601,7 @@
             if (!confirm('Are you sure you want to delete this Chit ID?')) return;
 
             try {
-                const response = await fetch(`http://localhost:5000/api/chit-ids/${id}`, {
+                const response = await fetch(`/api/chit-ids/${id}`, {
                     method: 'DELETE'
                 });
 

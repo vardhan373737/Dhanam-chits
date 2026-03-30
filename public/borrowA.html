@@ -431,7 +431,7 @@
     <script>
         async function fetchBorrowHistory() {
             try {
-                const response = await fetch('http://localhost:5000/api/borrows'); 
+                const response = await fetch('/api/borrows'); 
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
@@ -485,7 +485,7 @@
 
             try {
                 console.log(`Attempting to delete borrow entry with ID: ${id}`); // Add logging
-                const response = await fetch(`http://localhost:5000/api/borrow/${id}`, {
+                const response = await fetch(`/api/borrow/${id}`, {
                     method: 'DELETE'
                 });
 
@@ -505,7 +505,7 @@
 
         async function updateStatus(id, status) {
             try {
-                const response = await fetch(`http://localhost:5000/api/borrow/${id}`, {
+                const response = await fetch(`/api/borrow/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'

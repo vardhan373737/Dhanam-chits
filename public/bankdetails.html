@@ -194,7 +194,7 @@
         
             try {
                 console.log("Sending data:", data);
-                const response = await fetch("http://localhost:5000/api/bank-detail", {
+                const response = await fetch("/api/bank-detail", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(data),
@@ -217,7 +217,7 @@
 
         async function fetchBankDetails(mobile) {
             try {
-                const response = await fetch(`http://localhost:5000/api/bank-details/${mobile}`);
+                const response = await fetch(`/api/bank-details/${mobile}`);
                 const bankDetails = await response.json();
                 const bankDetailsContainer = document.getElementById("bank-details");
                 bankDetailsContainer.innerHTML = ""; // Clear previous details

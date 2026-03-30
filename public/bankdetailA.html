@@ -435,7 +435,7 @@
     <script>
         async function fetchBankDetails() {
             try {
-                const response = await fetch('http://localhost:5000/api/bankdetails'); 
+                const response = await fetch('/api/bankdetails'); 
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
@@ -493,7 +493,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:5000/api/bank-details/${id}`, {
+                const response = await fetch(`/api/bank-details/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -527,7 +527,7 @@
 
             try {
                 console.log(`Attempting to delete bank detail with ID: ${id}`); // Add logging
-                const response = await fetch(`http://localhost:5000/api/bank-details/${id}`, {
+                const response = await fetch(`/api/bank-details/${id}`, {
                     method: 'DELETE'
                 });
 
@@ -549,7 +549,7 @@
         }
 
         function logout() {
-            fetch('http://localhost:5000/logout', {
+            fetch('/logout', {
                 method: 'POST',
                 credentials: 'include',
             })
