@@ -288,10 +288,39 @@
     <script>
         function goBack() { window.location.href = 'dashboard.html'; }
 
+        const loggedInUser = JSON.parse(localStorage.getItem('user') || 'null');
+
+        function initializeBankDetailsPage() {
+            const mobileInput = document.getElementById('mobile');
+            const nameInput = document.getElementById('name');
+
+            if (!loggedInUser || !loggedInUser.mobile) {
+                return;
+            }
+
+            const userMobile = String(loggedInUser.mobile).trim();
+            if (!userMobile) {
+                return;
+            }
+
+            mobileInput.value = userMobile;
+            mobileInput.readOnly = true;
+
+            if (!nameInput.value && loggedInUser.fullname) {
+                nameInput.value = String(loggedInUser.fullname);
+            }
+
+            fetchBankDetails(userMobile);
+        }
+
         document.getElementById('bankDetailsForm').addEventListener('submit', async (event) => {
             event.preventDefault();
             const form = event.target;
             const data = Object.fromEntries(new FormData(form).entries());
+
+            if ((!data.mobile || !String(data.mobile).trim()) && loggedInUser && loggedInUser.mobile) {
+                data.mobile = String(loggedInUser.mobile).trim();
+            }
 
             try {
                 const response = await fetch('/api/bank-detail', {
@@ -354,6 +383,8 @@
                 bankDetailsContainer.innerHTML = '<p>Unable to load bank details right now.</p>';
             }
         }
+
+        document.addEventListener('DOMContentLoaded', initializeBankDetailsPage);
     </script>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
