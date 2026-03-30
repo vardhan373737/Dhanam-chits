@@ -270,3 +270,68 @@ footer a:hover,
         margin-bottom: 2rem !important;
     }
 }
+
+/* Shared polish for Login, Contact, Payment, and Dashboard pages */
+.form-container h2,
+.container h1,
+.container h2 {
+    color: #0f2f4e !important;
+    font-family: 'Space Grotesk', sans-serif !important;
+    letter-spacing: 0.2px;
+}
+
+.account-links a,
+.container a {
+    color: #0f4c81;
+    font-weight: 600;
+}
+
+.account-links a:hover,
+.container a:hover {
+    color: #0b607f;
+    text-decoration: none;
+}
+
+.payment-form,
+.form-container,
+#feedback .container,
+#features,
+.container {
+    backdrop-filter: blur(5px);
+}
+
+.table-responsive,
+table {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.table thead th,
+table thead th {
+    background: linear-gradient(110deg, #0b607f, #1f8a70) !important;
+    color: #eef9ff !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.table tbody tr:hover td,
+tbody tr:hover td {
+    background: rgba(213, 236, 255, 0.82) !important;
+}
+
+.logout-button,
+.btn-small,
+button[type='submit'] {
+    background: linear-gradient(120deg, #0b607f, #1f8a70) !important;
+    color: #f4fbff !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+.scrolling-notice,
+.suggested-message {
+    border-radius: 12px;
+    border: 1px solid rgba(13, 27, 42, 0.16);
+    box-shadow: 0 10px 24px rgba(8, 32, 50, 0.16);
+}

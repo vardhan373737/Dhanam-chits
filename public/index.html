@@ -730,6 +730,56 @@
                 <span class="sr-only">Next</span>
             </a>
         </section>
+
+        <section class="premium-search mt-4" aria-label="Quick navigation search">
+            <div class="premium-search__head">
+                <span class="premium-pill">Copilot Search</span>
+                <h2>Search Dhanam Chits like a premium dashboard</h2>
+            </div>
+
+            <form id="quickNavForm" class="premium-search__form" autocomplete="off">
+                <i class="bi bi-search"></i>
+                <input id="quickNavInput" type="text" value="chit plans" placeholder="Search plans, payment, dashboard, contact" aria-label="Quick site search">
+                <button type="submit">Search</button>
+            </form>
+
+            <div class="premium-tabs" role="tablist" aria-label="Search categories">
+                <button type="button" class="is-active">Search</button>
+                <button type="button">Plans</button>
+                <button type="button">Payments</button>
+                <button type="button">Support</button>
+            </div>
+
+            <div class="premium-search__chips">
+                <button type="button" data-target="ChittyPlans.html">Chit Plans</button>
+                <button type="button" data-target="payment.html">Payment</button>
+                <button type="button" data-target="home.html">Dashboard</button>
+                <button type="button" data-target="contact.html">Contact</button>
+            </div>
+
+            <div class="search-results-grid" aria-label="Quick results">
+                <a class="result-card" href="ChittyPlans.html">
+                    <span class="result-card__domain">dhanamchits.com</span>
+                    <h3>Chit Plans for Every Goal</h3>
+                    <p>Explore flexible plans with transparent cycles, trusted payouts, and predictable monthly commitments.</p>
+                </a>
+                <a class="result-card" href="payment.html">
+                    <span class="result-card__domain">dhanamchits.com</span>
+                    <h3>Secure Payment Form</h3>
+                    <p>Pay online using bank or UPI with a smooth form flow and instant submission confirmation.</p>
+                </a>
+                <a class="result-card" href="home.html">
+                    <span class="result-card__domain">dhanamchits.com</span>
+                    <h3>Member Dashboard</h3>
+                    <p>Track submissions, payment entries, and updates from one clean and centralized dashboard view.</p>
+                </a>
+                <a class="result-card" href="contact.html">
+                    <span class="result-card__domain">dhanamchits.com</span>
+                    <h3>Contact and Support</h3>
+                    <p>Reach our support team for account, payment, or plan-related assistance when you need help.</p>
+                </a>
+            </div>
+        </section>
     </main>
 
     <!-- Modal -->
@@ -823,7 +873,7 @@
         </div>
     </div>
     <footer>
-        <p>© 2025 Dhanam Chits Pvt. Ltd. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+        <p>ï¿½ 2025 Dhanam Chits Pvt. Ltd. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
         <p>Contact us: <a href="mailto:support@dhanamchits.com">support@dhanamchits.com</a> | Phone: +91-9876543210</p>
         <div class="social-links">
             <a href="https://facebook.com" target="_blank" aria-label="Facebook" class="text-white mx-2">
@@ -940,6 +990,55 @@
                     document.getElementById('rating').value = rating;
 
                     stars.forEach(s => s.style.color = s.getAttribute('data-value') <= rating ? '#ffc107' : '#ccc');
+                });
+            });
+
+            const quickNavForm = document.getElementById('quickNavForm');
+            const quickNavInput = document.getElementById('quickNavInput');
+            const quickNavChips = document.querySelectorAll('.premium-search__chips button');
+            const quickNavTabs = document.querySelectorAll('.premium-tabs button');
+
+            const routes = [
+                { keywords: ['plan', 'plans', 'chit', 'scheme'], target: 'ChittyPlans.html' },
+                { keywords: ['pay', 'payment', 'upi', 'form'], target: 'payment.html' },
+                { keywords: ['dashboard', 'home', 'account'], target: 'home.html' },
+                { keywords: ['contact', 'support', 'help'], target: 'contact.html' },
+                { keywords: ['login', 'sign in'], target: 'Login.html' }
+            ];
+
+            function resolveRoute(query) {
+                const normalized = query.trim().toLowerCase();
+                if (!normalized) {
+                    return null;
+                }
+
+                const route = routes.find(item => item.keywords.some(keyword => normalized.includes(keyword)));
+                return route ? route.target : 'ChittyPlans.html';
+            }
+
+            if (quickNavForm && quickNavInput) {
+                quickNavForm.addEventListener('submit', (event) => {
+                    event.preventDefault();
+                    const target = resolveRoute(quickNavInput.value);
+                    if (target) {
+                        window.location.href = target;
+                    }
+                });
+            }
+
+            quickNavChips.forEach((chip) => {
+                chip.addEventListener('click', () => {
+                    const target = chip.getAttribute('data-target');
+                    if (target) {
+                        window.location.href = target;
+                    }
+                });
+            });
+
+            quickNavTabs.forEach((tab) => {
+                tab.addEventListener('click', () => {
+                    quickNavTabs.forEach((item) => item.classList.remove('is-active'));
+                    tab.classList.add('is-active');
                 });
             });
         });
