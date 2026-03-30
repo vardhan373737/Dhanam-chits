@@ -7,162 +7,107 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
-            font-family: 'Nunito', sans-serif;
             margin: 0;
-            padding: 0;
             min-height: 100vh;
-            background: linear-gradient(45deg, #090a0b, #6610f2); /* Match index.html background */
-            color: #140202;
-            animation: gradientBackground 15s ease infinite;
+            background: radial-gradient(circle at 12% 16%, rgba(245, 158, 11, 0.28), transparent 34%), radial-gradient(circle at 86% 10%, rgba(8, 145, 178, 0.34), transparent 36%), linear-gradient(145deg, #042534, #0a3c52 46%, #12506f);
+            color: #10213a;
+            display: block;
         }
-        @keyframes gradientBackground {
-            0% { background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%); }
-            50% { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
-            100% { background: linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%); }
-        }
-        header {
-            background: linear-gradient(45deg, #090a0b, #6610f2);
-            color: #fff;
-        }
-        .navbar {
-            background: linear-gradient(45deg, #090a0b, #6610f2); /* Match index.html navbar background */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
-        .navbar-brand {
-            font-size: 1.8rem;
-            font-weight: bold;
-        }
-        .navbar-nav .nav-link {
-            color: #fff !important;
-        }
-        .navbar-nav .nav-link:hover {
-            color: #ffc107 !important;
-            text-decoration: underline;
-        }
+
         .container {
-            max-width: 600px;
-            margin: 40px auto;
-            padding: 20px;
+            width: min(94%, 1140px);
+            margin: 1.4rem auto 2rem;
+            padding: 24px;
+            border-radius: 22px;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.9));
+            box-shadow: 0 30px 70px rgba(10, 20, 40, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.6);
         }
+
         .details-box {
-            background: linear-gradient(135deg, #ffffff, #e0e0e0);
-            border-radius: 12px;
-            padding: 20px 30px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 20px 24px;
+            border: 1px solid rgba(16, 33, 58, 0.1);
+            box-shadow: 0 14px 36px rgba(10, 20, 40, 0.14);
             text-align: center;
-            cursor: pointer;
             margin-bottom: 20px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .details-box:hover {
-            transform: scale(1.05);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 123, 255, 0.7);
-            background: linear-gradient(135deg, #ffffff, #f0f0f0);
-        }
-        .details-box h2 {
-            font-size: 1.8rem;
-            margin-bottom: 10px;
-        }
-        .details-box p {
-            font-size: 1rem;
-            margin-bottom: 10px;
-        }
-        .details-box img {
-            max-width: 100px;
-            margin-bottom: 10px;
-        }
-        .back-button {
-            display: block;
-            margin: 20px auto 0;
-            width: 100%;
-            padding: 12px;
+
+        .details-box h2 { margin-bottom: 8px; color: #0f1f39; }
+
+        .back-button,
+        .approve-button,
+        .pay-now-button,
+        .btn.btn-primary {
+            display: inline-block;
+            margin: 12px 8px 0 0;
+            padding: 10px 14px;
             text-align: center;
-            font-size: 1rem;
-            font-weight: bold;
+            font-weight: 700;
             color: #fff;
-            background: #444;
+            background: linear-gradient(120deg, #0f766e, #0891b2);
             border: none;
-            border-radius: 6px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: background 0.3s ease;
-        }
-        .back-button:hover {
-            background: #333;
-        }
-        .approve-button {
-            display: block;
-            margin: 20px auto 0;
-            width: 100%;
-            padding: 12px;
-            text-align: center;
-            font-size: 1rem;
-            font-weight: bold;
-            color: #fff;
-            background: #28a745;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-        .approve-button:hover {
-            background: #218838;
-        }
-        .pay-now-button {
-            display: block;
-            margin: 20px auto 0;
-            width: 100%;
-            padding: 12px;
-            text-align: center;
-            font-size: 1rem;
-            font-weight: bold;
-            color: #fff;
-            background: #007bff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-        .pay-now-button:hover {
-            background: #0056b3;
-        }
-        footer {
-            text-align: center;
-            padding: 20px;
-            background: #343a40;
-            color: #ccc;
-            margin-top: 40px;
-        }
-        footer a {
-            color: #ffc107;
             text-decoration: none;
         }
-        footer a:hover {
-            text-decoration: underline;
+
+        .approve-button { background: linear-gradient(120deg, #1f8a70, #0b607f); }
+        .back-button { background: linear-gradient(120deg, #2f4f6f, #3a6f8a); }
+
+        .table-responsive {
+            margin-top: 12px;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 16px;
+            border: 1px solid rgba(16, 33, 58, 0.1);
+            box-shadow: 0 14px 36px rgba(10, 20, 40, 0.14);
         }
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
+
+        .table {
+            margin-bottom: 0;
+            min-width: 980px;
+        }
+
+        .table thead th {
+            border-top: 0;
+            background: linear-gradient(105deg, #0f766e, #0891b2);
+            color: #f4fcff;
+            text-transform: uppercase;
+            font-size: 0.86rem;
+            letter-spacing: 0.03em;
+        }
+
+        .table tbody td {
+            white-space: nowrap;
+            color: #1d2f4c;
+            font-weight: 600;
+        }
+
+        .navbar {
+            background: linear-gradient(100deg, rgba(4, 37, 52, 0.92), rgba(10, 60, 82, 0.88), rgba(18, 80, 111, 0.86));
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.18);
         }
     </style>
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="premium-shared.css">
     <link rel="stylesheet" href="index-theme.css">
 </head>
 <body>
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark">
-            <a class="navbar-brand d-flex align-items-center" href="dashboard.html">
+            <a class="navbar-brand d-flex align-items-center" href="Login.html">
                 <img src="logo.jpeg" alt="Logo" style="height: 50px; margin-right: 15px; object-fit: cover; border-radius: 50%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); transition: transform 0.3s ease;">
                 <h1 style="font-size: 1.5rem; margin: 0; color: white;">Dhanam Chits Pvt. Ltd</h1>
             </a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="#navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ml-auto">
-                    <li class="nav-item"><a class="nav-link" href="Login.html">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="moneyborrow.html">Money Borrow</a></li>
                     <li class="nav-item"><a class="nav-link" href="borrowhistory.html">Borrow History</a></li>
                     <li class="nav-item"><a class="nav-link" href="bankdetails.html">Bank Details</a></li>
@@ -179,12 +124,13 @@
             <p id="chitId">Loading...</p>
             <p id="mobileNumber">Loading...</p>
             <p id="totalBalance">Loading...</p>
-            <p id="totalPaid">Loading...</p> <!-- Add total paid amount -->
+            <p id="totalPaid">Loading...</p>
             <button class="pay-now-button" id="payNowButton">Pay Now</button>
         </div>
+
         <form id="chitIdForm">
             <div class="form-group">
-                <label for="chitId">Chit ID</label>
+                <label for="chitIdInput">Chit ID</label>
                 <select class="form-control" id="chitIdInput" name="chitId" required>
                     <option value="1010">1010</option>
                     <option value="2010">2010</option>
@@ -192,87 +138,88 @@
                     <option value="5015">5015</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="email">User Email</label>
-                <input type="email" class="form-control" id="email" name="email" required>
-            </div>
-            <div class="form-group">
-                <label for="name">User Name</label>
-                <input type="text" class="form-control" id="name" name="name" required>
-            </div>
-            <div class="form-group">
-                <label for="mobile">Mobile Number</label>
-                <input type="text" class="form-control" id="mobile" name="mobile" required>
-            </div>
+            <div class="form-group"><label for="email">User Email</label><input type="email" class="form-control" id="email" name="email" required></div>
+            <div class="form-group"><label for="name">User Name</label><input type="text" class="form-control" id="name" name="name" required></div>
+            <div class="form-group"><label for="mobile">Mobile Number</label><input type="text" class="form-control" id="mobile" name="mobile" required></div>
             <div class="form-group">
                 <label for="month">Month</label>
                 <select class="form-control" id="month" name="month" required>
-                    <option value="January">January</option>
-                    <option value="February">February</option>
-                    <option value="March">March</option>
-                    <option value="April">April</option>
-                    <option value="May">May</option>
-                    <option value="June">June</option>
-                    <option value="July">July</option>
-                    <option value="August">August</option>
-                    <option value="September">September</option>
-                    <option value="October">October</option>
-                    <option value="November">November</option>
-                    <option value="December">December</option>
+                    <option value="January">January</option><option value="February">February</option><option value="March">March</option><option value="April">April</option>
+                    <option value="May">May</option><option value="June">June</option><option value="July">July</option><option value="August">August</option>
+                    <option value="September">September</option><option value="October">October</option><option value="November">November</option><option value="December">December</option>
                 </select>
             </div>
             <button type="submit" class="btn btn-primary">Submit Chit ID</button>
         </form>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Chit ID</th>
-                    <th>User Email</th>
-                    <th>User Name</th>
-                    <th>Mobile Number</th>
-                    <th>Month</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="chitIdTable">
-                <!-- Chit ID data will be loaded here -->
-            </tbody>
-        </table>
+
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Chit ID</th>
+                        <th>User Email</th>
+                        <th>User Name</th>
+                        <th>Mobile Number</th>
+                        <th>Month</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="chitIdTable"></tbody>
+            </table>
+        </div>
+
         <button class="back-button" onclick="window.location.href='dashboard.html'">Back to Home</button>
         <button class="approve-button" onclick="approveChitId()">Approve Chit ID</button>
     </div>
 
-    <footer>
-        <p>&copy; 2025 Dhanam Chits Pvt. Ltd. All Rights Reserved. <a href="#">Privacy Policy</a></p>
-    </footer>
-
     <script>
-        document.addEventListener("DOMContentLoaded", async () => {
-            const user = JSON.parse(localStorage.getItem("user"));
+        const CHIT_API_BASES = ['/api', ''];
+
+        async function apiFetch(path, options = {}) {
+            let lastError = null;
+            for (const base of CHIT_API_BASES) {
+                try {
+                    return await fetch(`${base}${path}`, options);
+                } catch (error) {
+                    lastError = error;
+                }
+            }
+            throw lastError || new Error('No backend is reachable');
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
             if (!user) {
-                alert("Please log in to view your profile.");
-                window.location.href = "login.html";
+                alert('Please log in to view your profile.');
+                window.location.href = 'Login.html';
                 return;
             }
 
             try {
-                const response = await fetch(`/api/profile?mobile=${user.mobile}`);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                let mobile = String(user.mobile || '').trim();
+                if (mobile) {
+                    const response = await apiFetch(`/profile?mobile=${encodeURIComponent(mobile)}`);
+                    if (response.ok) {
+                        const userData = await response.json();
+                        mobile = String(userData.mobile || mobile).trim();
+                    }
                 }
-                const userData = await response.json();
-                const mobile = userData.mobile;
+
+                if (!mobile) {
+                    throw new Error('Mobile number is missing in your account.');
+                }
+
                 localStorage.setItem('mobile', mobile);
                 document.getElementById('mobileNumber').textContent = `Mobile Number: ${mobile}`;
                 loadChitIdDetails(mobile);
             } catch (error) {
                 console.error('Error fetching user profile:', error);
-                alert('Failed to fetch user profile. Please try again later.');
+                alert('Failed to load your profile details. Please login again and retry.');
             }
         });
 
-        document.getElementById('chitIdForm').addEventListener('submit', async function(event) {
+        document.getElementById('chitIdForm').addEventListener('submit', async function (event) {
             event.preventDefault();
             const chitId = document.getElementById('chitIdInput').value;
             const email = document.getElementById('email').value;
@@ -281,7 +228,7 @@
             const month = document.getElementById('month').value;
 
             try {
-                const response = await fetch('/api/chit-ids', {
+                const response = await apiFetch('/chit-ids', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ chitId, email, name, mobile, month })
@@ -291,8 +238,8 @@
                     alert('Chit ID submitted successfully!');
                     loadChitIdDetails(mobile);
                 } else {
-                    const errorData = await response.json();
-                    alert(`Error: ${errorData.message}`);
+                    const errorData = await response.json().catch(() => ({}));
+                    alert(`Error: ${errorData.message || 'Failed to submit'}`);
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -302,40 +249,75 @@
 
         async function loadChitIdDetails(mobile) {
             try {
-                const response = await fetch(`/api/chit-ids/mobile/${mobile}`);
+                const payNowButton = document.getElementById('payNowButton');
+                payNowButton.disabled = true;
+                const response = await apiFetch(`/chit-ids/mobile/${encodeURIComponent(mobile)}`);
+                if (response.status === 404) {
+                    document.getElementById('chitId').textContent = 'Not assigned yet';
+                    document.getElementById('totalBalance').textContent = 'Total Balance: N/A';
+                    document.getElementById('totalPaid').textContent = 'Total Paid: N/A';
+                    localStorage.removeItem('chitId');
+                    localStorage.removeItem('name');
+                    document.getElementById('chitIdTable').innerHTML = '<tr><td colspan="7" style="text-align:center; font-weight:600; color:#3f5573;">No Chit ID records found for this mobile number.</td></tr>';
+                    return;
+                }
+
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
+
                 const data = await response.json();
                 const tableBody = document.getElementById('chitIdTable');
                 tableBody.innerHTML = '';
 
+                if (!Array.isArray(data) || data.length === 0) {
+                    document.getElementById('chitId').textContent = 'Not assigned yet';
+                    document.getElementById('totalBalance').textContent = 'Total Balance: N/A';
+                    document.getElementById('totalPaid').textContent = 'Total Paid: N/A';
+                    localStorage.removeItem('chitId');
+                    localStorage.removeItem('name');
+                    tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; font-weight:600; color:#3f5573;">No Chit ID records found for this mobile number.</td></tr>';
+                    return;
+                }
+
+                const latest = data[0];
+                document.getElementById('chitId').textContent = latest.chitId || 'N/A';
+                document.getElementById('totalBalance').textContent = `Total Balance: ${latest.totalBalance || 'N/A'}`;
+                document.getElementById('totalPaid').textContent = `Total Paid: ${latest.totalPaid || 'N/A'}`;
+                localStorage.setItem('name', latest.name || '');
+
+                const approvedChit = data.find((item) => String(item.status || '').toLowerCase() === 'approved');
+                if (approvedChit) {
+                    document.getElementById('chitId').textContent = approvedChit.chitId || 'N/A';
+                    document.getElementById('totalBalance').textContent = `Total Balance: ${approvedChit.totalBalance || 'N/A'}`;
+                    document.getElementById('totalPaid').textContent = `Total Paid: ${approvedChit.totalPaid || 'N/A'}`;
+                    localStorage.setItem('chitId', approvedChit.chitId || '');
+                    localStorage.setItem('name', approvedChit.name || '');
+                    payNowButton.disabled = false;
+                } else {
+                    localStorage.removeItem('chitId');
+                    payNowButton.disabled = true;
+                }
+
                 data.forEach((chit) => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${chit.chitId}</td>
-                        <td>${chit.email}</td>
-                        <td>${chit.name}</td>
-                        <td>${chit.mobile}</td>
-                        <td>${chit.month}</td>
-                        <td>${chit.status}</td>
-                        <td>
-                            <button class="btn btn-danger" onclick="deleteChitId('${chit._id}')">Delete</button>
-                        </td>
+                        <td>${chit.chitId || ''}</td>
+                        <td>${chit.email || ''}</td>
+                        <td>${chit.name || ''}</td>
+                        <td>${chit.mobile || ''}</td>
+                        <td>${chit.month || ''}</td>
+                        <td>${chit.status || ''}</td>
+                        <td><button class="btn btn-danger" onclick="deleteChitId('${chit._id || chit.id}')">Delete</button></td>
                     `;
                     tableBody.appendChild(row);
-
-                    if (chit.status === 'Approved') {
-                        document.getElementById('chitId').textContent = chit.chitId;
-                        document.getElementById('totalBalance').textContent = `Total Balance: ${chit.totalBalance || 'N/A'}`;
-                        document.getElementById('totalPaid').textContent = `Total Paid: ${chit.totalPaid || 'N/A'}`; // Display total paid amount
-                        localStorage.setItem('chitId', chit.chitId);
-                        localStorage.setItem('name', chit.name); // Store name in localStorage
-                    }
                 });
             } catch (error) {
                 console.error('Error fetching Chit ID details:', error);
-                alert('Failed to fetch Chit ID details. Please try again later.');
+                document.getElementById('chitId').textContent = 'Unable to load Chit ID';
+                document.getElementById('totalBalance').textContent = 'Total Balance: N/A';
+                document.getElementById('totalPaid').textContent = 'Total Paid: N/A';
+                alert('Unable to load Chit ID details right now. Please try again.');
             }
         }
 
@@ -347,11 +329,9 @@
             }
 
             try {
-                const response = await fetch('/api/chit-ids/approve', {
+                const response = await apiFetch('/chit-ids/approve', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ chitId })
                 });
 
@@ -360,7 +340,7 @@
                 }
 
                 const result = await response.json();
-                alert(result.message);
+                alert(result.message || 'Approved successfully');
             } catch (error) {
                 console.error('Error approving Chit ID:', error);
                 alert('Failed to approve Chit ID. Please try again later.');
@@ -373,10 +353,7 @@
             }
 
             try {
-                const response = await fetch(`/api/chit-ids/${id}`, {
-                    method: 'DELETE'
-                });
-
+                const response = await apiFetch(`/chit-ids/${id}`, { method: 'DELETE' });
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
@@ -391,12 +368,20 @@
 
         document.getElementById('payNowButton').addEventListener('click', () => {
             const chitId = document.getElementById('chitId').textContent;
-            const mobile = document.getElementById('mobileNumber').textContent.split(': ')[1];
-            const totalBalance = document.getElementById('totalBalance').textContent.split(': ')[1];
-            const totalPaid = document.getElementById('totalPaid').textContent.split(': ')[1];
-            const name = localStorage.getItem('name'); // Retrieve name from localStorage
-            window.location.href = `chitpayment.html?chitId=${chitId}&mobile=${mobile}&totalBalance=${totalBalance}&name=${name}&totalPaid=${totalPaid}`; // Pass name as query parameter
+            if (!chitId || chitId === 'N/A' || chitId === 'Not assigned yet' || chitId === 'Unable to load Chit ID') {
+                alert('Your Chit ID is not approved yet.');
+                return;
+            }
+            const mobile = (document.getElementById('mobileNumber').textContent.split(': ')[1] || '').trim();
+            const totalBalance = (document.getElementById('totalBalance').textContent.split(': ')[1] || '').trim();
+            const totalPaid = (document.getElementById('totalPaid').textContent.split(': ')[1] || '').trim();
+            const name = localStorage.getItem('name') || '';
+            window.location.href = `chitpayment.html?chitId=${encodeURIComponent(chitId)}&mobile=${encodeURIComponent(mobile)}&totalBalance=${encodeURIComponent(totalBalance)}&name=${encodeURIComponent(name)}&totalPaid=${encodeURIComponent(totalPaid)}`;
         });
     </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

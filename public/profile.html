@@ -7,24 +7,22 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
-            background: linear-gradient(45deg, #090a0b, #6610f2); /* Match index.html background */
-            color: #0e0c0c;
+            background: radial-gradient(circle at 12% 16%, rgba(245, 158, 11, 0.28), transparent 34%), radial-gradient(circle at 86% 10%, rgba(8, 145, 178, 0.34), transparent 36%), linear-gradient(145deg, #042534, #0a3c52 46%, #12506f);
+            color: #10213a;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            display: block;
             margin: 0;
         }
 
         .container {
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 15px;
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.9));
+            padding: 28px;
+            border-radius: 22px;
+            width: min(94%, 620px);
+            text-align: left;
+            box-shadow: 0 30px 70px rgba(10, 20, 40, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            margin: 1.4rem auto 2rem;
         }
 
         .container h2 {
@@ -36,19 +34,46 @@
 
         .profile-info {
             text-align: left;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 16px;
+            border: 1px solid rgba(16, 33, 58, 0.1);
+            box-shadow: 0 14px 36px rgba(10, 20, 40, 0.14);
+            padding: 14px;
         }
 
         .profile-info h4 {
             margin-bottom: 10px;
+            color: #111111 !important;
         }
 
-        .profile-info p {
-            margin: 5px 0;
+        .profile-info p { margin: 5px 0; }
+
+        .password-section {
+            margin-top: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 16px;
+            border: 1px solid rgba(16, 33, 58, 0.1);
+            box-shadow: 0 14px 36px rgba(10, 20, 40, 0.14);
+            padding: 14px;
         }
+
+        .password-section h4 {
+            margin-bottom: 10px;
+            color: #111111 !important;
+        }
+
+        .password-message {
+            margin-top: 10px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .password-message.success { color: #0f766e; }
+        .password-message.error { color: #c0392b; }
 
         .back-button {
             display: block;
-            background-color: #007bff;
+            background: linear-gradient(120deg, #0f766e, #0891b2);
             color: #fff;
             border: none;
             cursor: pointer;
@@ -58,25 +83,23 @@
             width: 200px;
             border-radius: 5px;
             text-decoration: none;
-            transition: background-color 0.3s ease;
         }
 
-        .back-button:hover {
-            background-color: #0056b3;
-        }
+        .back-button:hover { filter: brightness(1.06); }
 
         .navbar {
-            background: linear-gradient(45deg, #090a0b, #6610f2); /* Match index.html navbar background */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(100deg, rgba(4, 37, 52, 0.92), rgba(10, 60, 82, 0.88), rgba(18, 80, 111, 0.86));
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.18);
         }
     </style>
+    <link rel="stylesheet" href="premium-shared.css">
     <link rel="stylesheet" href="index-theme.css">
 </head>
 <body>
-    <!-- Navigation Bar -->
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark">
-            <a class="navbar-brand d-flex align-items-center" href="dashboard.html">
+            <a class="navbar-brand d-flex align-items-center" href="Login.html">
                 <img src="logo.jpeg" alt="Logo" style="height: 50px; margin-right: 15px; object-fit: cover; border-radius: 50%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); transition: transform 0.3s ease;">
                 <h1 style="font-size: 1.5rem; margin: 0; color: white;">Dhanam Chits Pvt. Ltd</h1>
             </a>
@@ -85,7 +108,7 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ml-auto">
-                    <li class="nav-item"><a class="nav-link" href="Login.html">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="moneyborrow.html">Money Borrow</a></li>
                     <li class="nav-item"><a class="nav-link" href="borrowhistory.html">Borrow History</a></li>
                     <li class="nav-item"><a class="nav-link" href="bankdetails.html">Bank Details</a></li>
@@ -98,65 +121,130 @@
 
     <div class="container">
         <h2>Profile</h2>
-        <div class="profile-info" id="profile-info">
-            <!-- Profile information will be displayed here -->
+        <div class="profile-info" id="profile-info"></div>
+
+        <div class="password-section">
+            <h4>Update Password</h4>
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label for="currentPassword">Current Password</label>
+                    <input type="password" class="form-control" id="currentPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" class="form-control" id="newPassword" minlength="6" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <input type="password" class="form-control" id="confirmPassword" minlength="6" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Update Password</button>
+                <div id="passwordMessage" class="password-message"></div>
+            </form>
         </div>
+
         <button class="back-button" onclick="goBack()">Back to Dashboard</button>
     </div>
 
     <script>
         function goBack() {
-            window.location.href = "dashboard.html";
+            window.location.href = 'dashboard.html';
         }
 
-        document.addEventListener("DOMContentLoaded", async () => {
-            const user = JSON.parse(localStorage.getItem("user"));
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
             if (!user) {
-                alert("Please log in to view your profile.");
-                window.location.href = "login.html";
+                alert('Please log in to view your profile.');
+                window.location.href = 'Login.html';
                 return;
             }
 
             try {
-                const response = await fetch(`/api/profile?mobile=${user.mobile}`);
+                const response = await fetch(`/api/profile?mobile=${encodeURIComponent(user.mobile)}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
                 const profile = await response.json();
-                const profileInfoContainer = document.getElementById("profile-info");
-                profileInfoContainer.innerHTML = ""; // Clear previous details
+                const profileInfoContainer = document.getElementById('profile-info');
+                profileInfoContainer.innerHTML = '';
 
                 if (profile) {
                     profileInfoContainer.innerHTML = `
                         <h4>Profile Information</h4>
-                        <p><strong>Name:</strong> ${profile.fullname}</p>
-                        <p><strong>Email:</strong> ${profile.email}</p>
-                        <p><strong>Mobile:</strong> ${profile.mobile}</p>
+                        <p><strong>Name:</strong> ${profile.fullname || ''}</p>
+                        <p><strong>Email:</strong> ${profile.email || ''}</p>
+                        <p><strong>Mobile:</strong> ${profile.mobile || ''}</p>
                     `;
                 } else {
-                    profileInfoContainer.innerHTML = "<p>No profile information found.</p>";
+                    profileInfoContainer.innerHTML = '<p>No profile information found.</p>';
                 }
             } catch (error) {
-                console.error("Error fetching profile information:", error);
-                alert("Error fetching profile information.");
+                console.error('Error fetching profile information:', error);
+                alert('Error fetching profile information.');
+            }
+        });
+
+        document.getElementById('passwordForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user || !user.mobile) {
+                alert('Please log in again to update your password.');
+                window.location.href = 'Login.html';
+                return;
+            }
+
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const messageEl = document.getElementById('passwordMessage');
+
+            messageEl.style.display = 'none';
+            messageEl.textContent = '';
+            messageEl.classList.remove('success', 'error');
+
+            if (newPassword !== confirmPassword) {
+                messageEl.textContent = 'New password and confirm password do not match.';
+                messageEl.classList.add('error');
+                messageEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/profile/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        mobile: user.mobile,
+                        currentPassword,
+                        newPassword,
+                        confirmPassword,
+                    }),
+                });
+
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    messageEl.textContent = result.message || 'Failed to update password.';
+                    messageEl.classList.add('error');
+                    messageEl.style.display = 'block';
+                    return;
+                }
+
+                messageEl.textContent = result.message || 'Password updated successfully.';
+                messageEl.classList.add('success');
+                messageEl.style.display = 'block';
+                document.getElementById('passwordForm').reset();
+            } catch (error) {
+                console.error('Error updating password:', error);
+                messageEl.textContent = 'Error connecting to server.';
+                messageEl.classList.add('error');
+                messageEl.style.display = 'block';
             }
         });
     </script>
+
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <!--Start of Tawk.to Script-->
-<script type="text/javascript">
-    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-    (function(){
-    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-    s1.async=true;
-    s1.src='https://embed.tawk.to/67a0a1ce3a84273260790919/1ij5ng3uf';
-    s1.charset='UTF-8';
-    s1.setAttribute('crossorigin','*');
-    s0.parentNode.insertBefore(s1,s0);
-    })();
-    </script>
-    <!--End of Tawk.to Script-->
 </body>
 </html>
