@@ -424,7 +424,7 @@
         <a href="ChitidA.html"><i class="fas fa-university"></i> <span class="menu-text">Chit-ids Approve</span></a>
         <a href="paymentA.html"><i class="fas fa-credit-card"></i> <span class="menu-text">Payments</span></a>
         <a href="contactA.html"><i class="fas fa-envelope"></i> <span class="menu-text">Contact Details</span></a>
-        <a href="index.html" class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
+        <a href="#" class="logout-btn" onclick="return logout(event)"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
     </div>
 
     <!-- Content -->
@@ -604,20 +604,27 @@
             }
         }
 
-        function logout() {
-            fetchAuthApi('/logout', {
-                method: 'POST',
-                credentials: 'include',
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message === "Logout successful.") {
-                    window.location.href = "/login.html";
-                }
-            })
-            .catch(error => {
+        async function logout(event) {
+            if (event) {
+                event.preventDefault();
+            }
+
+            try {
+                await fetchAuthApi('/logout', {
+                    method: 'POST',
+                    credentials: 'include',
+                });
+            } catch (error) {
                 console.error('Error logging out:', error);
-            });
+            } finally {
+                localStorage.removeItem('user');
+                localStorage.removeItem('mobile');
+                localStorage.removeItem('chitId');
+                localStorage.removeItem('name');
+                window.location.href = 'Login.html';
+            }
+
+            return false;
         }
 
         function toggleSidebar() {

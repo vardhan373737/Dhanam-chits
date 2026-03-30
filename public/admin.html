@@ -216,7 +216,7 @@
     <a href="borrowA.html"><i class="fas fa-hand-holding-usd"></i> <span class="menu-text">Borrows</span></a>
     <a href="paymentA.html"><i class="fas fa-credit-card"></i> <span class="menu-text">Payments</span></a>
     <a href="contactA.html"><i class="fas fa-envelope"></i> <span class="menu-text">Contact Details</span></a>
-    <a href="#" class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
+    <a href="#" class="logout-btn" onclick="return logout(event)"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
   </div>
 
   <!-- Content -->
@@ -260,13 +260,26 @@
 
   <script>
     const AUTH_API_BASES = ['/api', ''];
-    const CONTACT_API_BASES = ['', ''];
+    const CONTACT_API_BASES = ['/api', ''];
 
     async function fetchWithFallback(path, bases, options = {}) {
       let lastError = null;
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      const adminMobile = user && user.mobile ? String(user.mobile).trim() : '';
       for (const base of bases) {
         try {
-          return await fetch(`${base}${path}`, options);
+          const response = await fetch(`${base}${path}`, {
+            credentials: 'include',
+            ...options,
+            headers: {
+              ...(options.headers || {}),
+              ...(adminMobile ? { 'x-user-mobile': adminMobile } : {}),
+            },
+          });
+          if (response.ok) {
+            return response;
+          }
+          lastError = new Error(`HTTP error! Status: ${response.status}`);
         } catch (error) {
           lastError = error;
         }
@@ -277,11 +290,11 @@
     async function fetchData() {
       try {
         const [usersResponse, bankDetailsResponse, borrowsResponse, paymentsResponse, contactsResponse, chitIdsResponse] = await Promise.all([
-          fetchWithFallback('/api/users', AUTH_API_BASES),
+          fetchWithFallback('/users', AUTH_API_BASES),
           fetch('/api/bankdetails'),
           fetch('/api/borrows'),
           fetch('/api/payments'),
-          fetchWithFallback('/api/contacts', CONTACT_API_BASES),
+          fetchWithFallback('/contacts', CONTACT_API_BASES),
           fetch('/api/chit-ids')
         ]);
 
@@ -303,20 +316,27 @@
       }
     }
 
-    function logout() {
-      fetchWithFallback('/logout', AUTH_API_BASES, {
-        method: 'POST',
-        credentials: 'include',
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.message === "Logout successful.") {
-          window.location.href = "/login.html";
-        }
-      })
-      .catch(error => {
+    async function logout(event) {
+      if (event) {
+        event.preventDefault();
+      }
+
+      try {
+        await fetchWithFallback('/logout', AUTH_API_BASES, {
+          method: 'POST',
+          credentials: 'include',
+        });
+      } catch (error) {
         console.error('Error logging out:', error);
-      });
+      } finally {
+        localStorage.removeItem('user');
+        localStorage.removeItem('mobile');
+        localStorage.removeItem('chitId');
+        localStorage.removeItem('name');
+        window.location.href = 'Login.html';
+      }
+
+      return false;
     }
 
     function toggleSidebar() {
