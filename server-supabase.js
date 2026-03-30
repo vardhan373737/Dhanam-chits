@@ -283,6 +283,29 @@ async function sendStatementEmail(payment) {
   });
 }
 
+async function sendPasswordChangeAlertEmail({ email, fullname, reason }) {
+  const toEmail = String(email || "").trim();
+  if (!toEmail) {
+    return;
+  }
+
+  const transporter = createMailTransporter();
+  const mailUser = process.env.SMTP_USER || process.env.EMAIL_USER || process.env.GMAIL_USER;
+  if (!transporter || !mailUser) {
+    return;
+  }
+
+  const displayName = String(fullname || "User").trim() || "User";
+  const reasonLine = reason ? `Reason: ${reason}.` : "";
+
+  await transporter.sendMail({
+    from: mailUser,
+    to: toEmail,
+    subject: "Dhanam Chits - Password Changed",
+    text: `Dear ${displayName}, your account password was changed successfully. ${reasonLine} If this was not you, please contact support immediately.`,
+  });
+}
+
 const registerHandler = async (req, res) => {
   try {
     const { fullname, email, mobile, password, confirmPassword, role } = req.body;
@@ -437,12 +460,37 @@ app.put("/api/users/:id/password", requireAdminFlexible, async (req, res) => {
     return res.status(400).json({ message: "Password is required" });
   }
 
+  const { data: targetUser, error: lookupError } = await supabase
+    .from("users")
+    .select("id, email, fullname")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (lookupError) {
+    console.error("change password lookup error", lookupError);
+    return res.status(500).json({ message: "Failed to change password" });
+  }
+
+  if (!targetUser) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
   const password_hash = await bcrypt.hash(password, 10);
   const { error } = await supabase.from("users").update({ password_hash }).eq("id", id);
 
   if (error) {
     console.error("change password error", error);
     return res.status(500).json({ message: "Failed to change password" });
+  }
+
+  try {
+    await sendPasswordChangeAlertEmail({
+      email: targetUser.email,
+      fullname: targetUser.fullname,
+      reason: "Changed by admin",
+    });
+  } catch (mailError) {
+    console.error("change password alert mail error", mailError);
   }
 
   return res.json({ message: "Password changed successfully" });
@@ -511,7 +559,7 @@ app.post("/api/profile/change-password", async (req, res) => {
 
   const { data: user, error: userError } = await supabase
     .from("users")
-    .select("id, password_hash")
+    .select("id, password_hash, email, fullname")
     .eq("mobile", mobile)
     .maybeSingle();
 
@@ -535,6 +583,16 @@ app.post("/api/profile/change-password", async (req, res) => {
   if (updateError) {
     console.error("profile change password update error", updateError);
     return res.status(500).json({ message: "Failed to update password" });
+  }
+
+  try {
+    await sendPasswordChangeAlertEmail({
+      email: user.email,
+      fullname: user.fullname,
+      reason: "Changed from profile page",
+    });
+  } catch (mailError) {
+    console.error("profile change password alert mail error", mailError);
   }
 
   return res.status(200).json({ message: "Password updated successfully" });
@@ -619,7 +677,7 @@ app.post("/api/reset-password", async (req, res) => {
 
   const { data: user, error: userError } = await supabase
     .from("users")
-    .select("id, email")
+    .select("id, email, fullname")
     .eq("id", verified.userId)
     .maybeSingle();
 
@@ -638,6 +696,16 @@ app.post("/api/reset-password", async (req, res) => {
   if (updateError) {
     console.error("reset password update error", updateError);
     return res.status(500).json({ message: "Failed to reset password" });
+  }
+
+  try {
+    await sendPasswordChangeAlertEmail({
+      email: user.email,
+      fullname: user.fullname,
+      reason: "Changed using forgot password OTP",
+    });
+  } catch (mailError) {
+    console.error("reset password alert mail error", mailError);
   }
 
   return res.status(200).json({ message: "Password reset successful. Please login." });
