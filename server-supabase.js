@@ -306,6 +306,29 @@ async function sendPasswordChangeAlertEmail({ email, fullname, reason }) {
   });
 }
 
+async function sendLoginAlertEmail({ email, fullname, mobile, ipAddress, userAgent }) {
+  const toEmail = String(email || "").trim();
+  if (!toEmail) {
+    return;
+  }
+
+  const transporter = createMailTransporter();
+  const mailUser = process.env.SMTP_USER || process.env.EMAIL_USER || process.env.GMAIL_USER;
+  if (!transporter || !mailUser) {
+    return;
+  }
+
+  const displayName = String(fullname || "User").trim() || "User";
+  const loginTime = new Date().toISOString();
+
+  await transporter.sendMail({
+    from: mailUser,
+    to: toEmail,
+    subject: "Dhanam Chits - Login Alert",
+    text: `Dear ${displayName}, your account was logged in successfully.\n\nMobile: ${mobile || "N/A"}\nTime: ${loginTime}\nIP Address: ${ipAddress || "Unknown"}\nDevice: ${userAgent || "Unknown"}\n\nIf this was not you, please reset your password immediately.`,
+  });
+}
+
 const registerHandler = async (req, res) => {
   try {
     const { fullname, email, mobile, password, confirmPassword, role } = req.body;
@@ -396,6 +419,20 @@ const loginHandler = async (req, res) => {
       mobile: user.mobile,
       role: user.role,
     };
+
+    const forwardedFor = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+    const ipAddress = forwardedFor || req.socket?.remoteAddress || "Unknown";
+    const userAgent = req.get("user-agent") || "Unknown";
+
+    sendLoginAlertEmail({
+      email: user.email,
+      fullname: user.fullname,
+      mobile: user.mobile,
+      ipAddress,
+      userAgent,
+    }).catch((mailError) => {
+      console.error("login alert mail error", mailError);
+    });
 
     return res.status(200).json({ message: "Login successful!", user: req.session.user });
   } catch (error) {

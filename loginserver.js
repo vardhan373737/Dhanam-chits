@@ -53,6 +53,23 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+async function sendLoginAlertEmail({ email, fullname, mobile, ipAddress, userAgent }) {
+  const toEmail = String(email || '').trim();
+  if (!toEmail) {
+    return;
+  }
+
+  const displayName = String(fullname || 'User').trim() || 'User';
+  const loginTime = new Date().toISOString();
+
+  await transporter.sendMail({
+    from: 'shekarchandra99311@gmail.com',
+    to: toEmail,
+    subject: 'Dhanam Chits - Login Alert',
+    text: `Dear ${displayName}, your account was logged in successfully.\n\nMobile: ${mobile || 'N/A'}\nTime: ${loginTime}\nIP Address: ${ipAddress || 'Unknown'}\nDevice: ${userAgent || 'Unknown'}\n\nIf this was not you, please reset your password immediately.`
+  });
+}
+
 // ✅ User Schema (with role handling)
 const userSchema = new mongoose.Schema({
   fullname: { type: String, required: true },
@@ -138,6 +155,20 @@ app.post("/Login", async (req, res) => {
       mobile: user.mobile,
       role: user.role // Store user role
     };
+
+    const forwardedFor = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+    const ipAddress = forwardedFor || req.socket?.remoteAddress || 'Unknown';
+    const userAgent = req.get('user-agent') || 'Unknown';
+
+    sendLoginAlertEmail({
+      email: user.email,
+      fullname: user.fullname,
+      mobile: user.mobile,
+      ipAddress,
+      userAgent
+    }).catch((mailError) => {
+      console.error('login alert mail error:', mailError);
+    });
 
     res.status(200).json({ message: "Login successful!", user: req.session.user });
   } catch (err) {
