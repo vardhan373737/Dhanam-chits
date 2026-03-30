@@ -155,7 +155,11 @@
 
     <!-- Login Form Handling Script -->
     <script>
-        const LOGIN_API_BASES = ["", "", ""];
+        const LOGIN_API_BASES = [
+            '/api',
+            '',
+            window.LOGIN_API_BASE || ''
+        ].filter((base, index, arr) => base !== undefined && arr.indexOf(base) === index);
 
         async function postWithFallback(path, payload) {
             let lastError = null;
@@ -167,7 +171,7 @@
                         body: JSON.stringify(payload)
                     });
 
-                    const data = await response.json();
+                    const data = await response.json().catch(() => ({}));
                     return { response, data };
                 } catch (error) {
                     lastError = error;

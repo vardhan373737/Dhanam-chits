@@ -1,5 +1,6 @@
 // public/script.js
-const apiUrl = '/submissions';
+const API_BASE = '/api';
+const apiUrl = `${API_BASE}/submissions`;
 let formData = [];
 
 // Function to fetch submissions from the server

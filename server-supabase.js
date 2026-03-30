@@ -198,7 +198,7 @@ async function sendStatementEmail(payment) {
   });
 }
 
-app.post("/register", async (req, res) => {
+const registerHandler = async (req, res) => {
   try {
     const { fullname, email, mobile, password, confirmPassword, role } = req.body;
 
@@ -246,7 +246,13 @@ app.post("/register", async (req, res) => {
     console.error("register error", error);
     return res.status(500).json({ message: "Internal server error" });
   }
-});
+};
+
+app.post("/register", registerHandler);
+
+app.post("/api/register", registerHandler);
+
+app.post("/api/Register", registerHandler);
 
 const loginHandler = async (req, res) => {
   try {
@@ -294,7 +300,11 @@ app.post("/login", loginHandler);
 
 app.post("/Login", loginHandler);
 
-app.post("/logout", (req, res) => {
+app.post("/api/login", loginHandler);
+
+app.post("/api/Login", loginHandler);
+
+const logoutHandler = (req, res) => {
   req.session.destroy((err) => {
     if (err) {
       return res.status(500).json({ message: "Logout failed. Try again." });
@@ -302,7 +312,13 @@ app.post("/logout", (req, res) => {
     res.clearCookie("connect.sid");
     return res.status(200).json({ message: "Logout successful." });
   });
-});
+};
+
+app.post("/logout", logoutHandler);
+
+app.post("/api/logout", logoutHandler);
+
+app.post("/api/Logout", logoutHandler);
 
 app.get("/api/users", requireAdmin, async (req, res) => {
   const { data, error } = await supabase
@@ -411,6 +427,20 @@ app.get("/submissions", async (_req, res) => {
   return res.json(data.map(mapSubmissionRow));
 });
 
+app.get("/api/submissions", async (_req, res) => {
+  const { data, error } = await supabase
+    .from("submissions")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("submissions list error", error);
+    return res.status(500).json({ error: "Failed to fetch submissions" });
+  }
+
+  return res.json(data.map(mapSubmissionRow));
+});
+
 app.post("/submissions", async (req, res) => {
   const { name, phone, email, chitsPlan, amount, utrNumber } = req.body;
 
@@ -450,7 +480,58 @@ app.post("/submissions", async (req, res) => {
   return res.status(201).json(mapSubmissionRow(data));
 });
 
+app.post("/api/submissions", async (req, res) => {
+  const { name, phone, email, chitsPlan, amount, utrNumber } = req.body;
+
+  const { data: existing, error: existingError } = await supabase
+    .from("submissions")
+    .select("id")
+    .eq("utr_number", utrNumber)
+    .maybeSingle();
+
+  if (existingError) {
+    console.error("submissions duplicate check error", existingError);
+    return res.status(500).json({ error: "Failed to create submission" });
+  }
+
+  if (existing) {
+    return res.status(400).json({ error: "UTR number already exists. Please use a unique UTR number." });
+  }
+
+  const { data, error } = await supabase
+    .from("submissions")
+    .insert({
+      name,
+      phone,
+      email,
+      chits_plan: chitsPlan,
+      amount,
+      utr_number: utrNumber,
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("submission create error", error);
+    return res.status(400).json({ error: "Failed to create submission" });
+  }
+
+  return res.status(201).json(mapSubmissionRow(data));
+});
+
 app.delete("/submissions/:id", async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from("submissions").delete().eq("id", id);
+
+  if (error) {
+    console.error("submission delete error", error);
+    return res.status(500).json({ error: "Failed to delete submission" });
+  }
+
+  return res.json({ message: "Submission deleted successfully" });
+});
+
+app.delete("/api/submissions/:id", async (req, res) => {
   const { id } = req.params;
   const { error } = await supabase.from("submissions").delete().eq("id", id);
 
