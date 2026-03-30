@@ -492,6 +492,56 @@ app.post("/api/profile/change-password", async (req, res) => {
   return res.status(200).json({ message: "Password updated successfully" });
 });
 
+app.post("/api/reset-password", async (req, res) => {
+  const { mobile, email, newPassword, confirmPassword } = req.body || {};
+  const mobileValue = String(mobile || "").trim();
+  const emailValue = String(email || "").trim().toLowerCase();
+
+  if (!mobileValue && !emailValue) {
+    return res.status(400).json({ message: "Mobile number or email is required" });
+  }
+
+  if (!newPassword || !confirmPassword) {
+    return res.status(400).json({ message: "New password and confirm password are required" });
+  }
+
+  if (String(newPassword).length < 6) {
+    return res.status(400).json({ message: "New password must be at least 6 characters" });
+  }
+
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({ message: "New password and confirm password do not match" });
+  }
+
+  let userLookup = supabase.from("users").select("id");
+  if (mobileValue) {
+    userLookup = userLookup.eq("mobile", mobileValue);
+  } else {
+    userLookup = userLookup.eq("email", emailValue);
+  }
+
+  const { data: user, error: userError } = await userLookup.maybeSingle();
+
+  if (userError) {
+    console.error("reset password lookup error", userError);
+    return res.status(500).json({ message: "Failed to reset password" });
+  }
+
+  if (!user) {
+    return res.status(404).json({ message: "Account not found" });
+  }
+
+  const password_hash = await bcrypt.hash(newPassword, 10);
+  const { error: updateError } = await supabase.from("users").update({ password_hash }).eq("id", user.id);
+
+  if (updateError) {
+    console.error("reset password update error", updateError);
+    return res.status(500).json({ message: "Failed to reset password" });
+  }
+
+  return res.status(200).json({ message: "Password reset successful. Please login." });
+});
+
 function mapSubmissionRow(row) {
   return {
     _id: row.id,
