@@ -7,100 +7,247 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
-            background: linear-gradient(45deg, #090a0b, #6610f2); /* Match index.html background */
-            color: #ffffff;
+            background: radial-gradient(circle at 12% 16%, rgba(245, 158, 11, 0.28), transparent 34%), radial-gradient(circle at 86% 10%, rgba(8, 145, 178, 0.34), transparent 36%), linear-gradient(145deg, #042534, #0a3c52 46%, #12506f);
+            color: #10213a;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
             margin: 0;
+            display: block;
         }
 
         .container {
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 15px;
-            width: 100%;
-            max-width: 800px;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.9));
+            padding: 28px;
+            border-radius: 22px;
+            width: min(94%, 1140px);
+            text-align: left;
+            box-shadow: 0 30px 70px rgba(10, 20, 40, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            margin: 1.4rem auto 2rem;
         }
 
-        .container h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-            color: #333;
+        .hero-panel {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px;
+            border-radius: 16px;
+            margin-bottom: 14px;
+            background: linear-gradient(120deg, rgba(11, 96, 127, 0.14), rgba(31, 138, 112, 0.12));
+            border: 1px solid rgba(15, 118, 110, 0.18);
+        }
+
+        .hero-panel h2 {
+            margin: 0;
+            color: #0f1f39;
+            font-size: clamp(1.35rem, 2.8vw, 2rem);
+        }
+
+        .hero-panel p {
+            margin: 4px 0 0;
+            color: #405978;
+            font-weight: 500;
+        }
+
+        .hero-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #0f4b64;
+            background: rgba(8, 145, 178, 0.15);
+            border: 1px solid rgba(8, 145, 178, 0.35);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin: 0 0 14px;
+        }
+
+        .stat-card {
+            border-radius: 14px;
+            padding: 12px;
+            color: #f3fbff;
+            background: linear-gradient(120deg, #0f4f67, #1a7c8c);
+            box-shadow: 0 10px 24px rgba(15, 79, 103, 0.24);
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.78rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            opacity: 0.95;
+            margin-bottom: 2px;
+        }
+
+        .stat-value {
+            font-size: 1.18rem;
+            font-weight: 800;
         }
 
         .table-responsive {
-            margin-top: 20px;
-            overflow-x: auto;
+            margin-top: 8px;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 16px;
+            border: 1px solid rgba(16, 33, 58, 0.1);
+            box-shadow: 0 14px 36px rgba(10, 20, 40, 0.14);
         }
 
-        .table-striped tbody tr {
-            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        .table {
+            margin-bottom: 0;
+            min-width: 980px;
         }
 
-        .table-striped tbody tr:hover {
-            box-shadow: 0 0 15px rgba(0, 123, 255, 0.7);
-            transform: scale(1.02);
+        .table thead th {
+            border-top: 0;
+            background: linear-gradient(105deg, #0f766e, #0891b2);
+            color: #f4fcff;
+            text-transform: uppercase;
+            font-size: 0.86rem;
+            letter-spacing: 0.03em;
+        }
+
+        .table tbody td {
+            white-space: nowrap;
+            color: #1d2f4c;
+            font-weight: 600;
+        }
+
+        .table tbody tr:hover {
+            background: rgba(8, 145, 178, 0.08);
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 96px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: capitalize;
+            letter-spacing: 0.02em;
+            border: 1px solid transparent;
+        }
+
+        .status-pill.approved {
+            color: #0f5d4f;
+            background: rgba(31, 138, 112, 0.15);
+            border-color: rgba(31, 138, 112, 0.35);
+        }
+
+        .status-pill.rejected {
+            color: #8b1f2a;
+            background: rgba(192, 57, 43, 0.14);
+            border-color: rgba(192, 57, 43, 0.35);
+        }
+
+        .status-pill.pending {
+            color: #7a530b;
+            background: rgba(245, 158, 11, 0.16);
+            border-color: rgba(245, 158, 11, 0.35);
+        }
+
+        .status-pill.other {
+            color: #334155;
+            background: rgba(148, 163, 184, 0.18);
+            border-color: rgba(148, 163, 184, 0.35);
+        }
+
+        .action-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
         }
 
         .back-button {
             display: block;
-            background-color: #007bff;
+            background: linear-gradient(120deg, #0f766e, #0891b2);
             color: #fff;
             border: none;
             cursor: pointer;
             padding: 10px;
-            margin: 20px auto;
+            margin: 18px 0 0 auto;
             text-align: center;
-            width: 200px;
-            border-radius: 5px;
+            width: 220px;
+            border-radius: 12px;
             text-decoration: none;
-            transition: background-color 0.3s ease;
+            font-weight: 700;
         }
 
         .back-button:hover {
-            background-color: #0056b3;
+            filter: brightness(1.06);
         }
 
         .approve-button, .reject-button {
-            margin: 5px;
-            padding: 5px 10px;
+            margin: 4px;
+            padding: 6px 10px;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
+            color: #fff;
+            font-weight: 700;
         }
 
-        .approve-button {
-            background-color: #28a745;
-            color: white;
-        }
-
-        .reject-button {
-            background-color: #dc3545;
-            color: white;
-        }
+        .approve-button { background: #1f8a70; }
+        .reject-button { background: #c0392b; }
 
         .navbar {
-            background: linear-gradient(45deg, #090a0b, #6610f2); /* Match index.html navbar background */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(100deg, rgba(4, 37, 52, 0.92), rgba(10, 60, 82, 0.88), rgba(18, 80, 111, 0.86));
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        #loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.45);
+            color: white;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.6rem;
+            z-index: 1000;
+        }
+
+        @media (max-width: 900px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 576px) {
+            .hero-panel {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
+    <link rel="stylesheet" href="premium-shared.css">
     <link rel="stylesheet" href="index-theme.css">
 </head>
 <body>
-    <!-- Loading Indicator -->
-    <div id="loading" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); color: white; display: flex; justify-content: center; align-items: center; font-size: 2rem; z-index: 1000;">
-        Loading...
-    </div>
-    <!-- Navigation Bar -->
+    <div id="loading">Loading...</div>
+
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark">
-            <a class="navbar-brand d-flex align-items-center" href="dashboard.html">
+            <a class="navbar-brand d-flex align-items-center" href="Login.html">
                 <img src="logo.jpeg" alt="Logo" style="height: 50px; margin-right: 15px; object-fit: cover; border-radius: 50%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); transition: transform 0.3s ease;">
                 <h1 style="font-size: 1.5rem; margin: 0; color: white;">Dhanam Chits Pvt. Ltd</h1>
             </a>
@@ -109,7 +256,7 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ml-auto">
-                    <li class="nav-item"><a class="nav-link" href="login.html">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="moneyborrow.html">Money Borrow</a></li>
                     <li class="nav-item"><a class="nav-link" href="borrowhistory.html">Borrow History</a></li>
                     <li class="nav-item"><a class="nav-link" href="bankdetails.html">Bank Details</a></li>
@@ -121,7 +268,33 @@
     </header>
 
     <div class="container">
-        <h2>Borrow History</h2>
+        <div class="hero-panel">
+            <div>
+                <h2>Borrow History</h2>
+                <p>Review your requests and track approvals in real time.</p>
+            </div>
+            <span class="hero-chip" id="current-user-role">Member View</span>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">Total Requests</span>
+                <span class="stat-value" id="stat-total">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Approved</span>
+                <span class="stat-value" id="stat-approved">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Pending</span>
+                <span class="stat-value" id="stat-pending">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Total Amount</span>
+                <span class="stat-value" id="stat-amount">Rs. 0</span>
+            </div>
+        </div>
+
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -135,9 +308,7 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody id="borrow-history">
-                    <!-- Borrow history will be populated here -->
-                </tbody>
+                <tbody id="borrow-history"></tbody>
             </table>
         </div>
         <button class="back-button" onclick="goBack()">Back to Dashboard</button>
@@ -145,7 +316,7 @@
 
     <script>
         function goBack() {
-            window.location.href = "dashboard.html";
+            window.location.href = 'dashboard.html';
         }
 
         async function updateBorrowStatus(id, status) {
@@ -157,86 +328,91 @@
                     body: JSON.stringify({ status })
                 });
 
-                const result = await response.json();
-                if (response.ok) {
-                    alert(result.message);
-                    location.reload();
-                } else {
-                    alert(result.message || 'Failed to update borrow request.');
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to update borrow request');
                 }
+
+                alert(result.message || 'Borrow status updated successfully');
+                location.reload();
             } catch (error) {
                 console.error('Error updating borrow request:', error);
-                alert('Error updating borrow request.');
+                alert(error.message || 'Error updating borrow request.');
             } finally {
                 document.getElementById('loading').style.display = 'none';
             }
         }
 
-        document.addEventListener("DOMContentLoaded", async () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('loading').style.display = 'flex';
-            const user = JSON.parse(localStorage.getItem("user"));
+            const user = JSON.parse(localStorage.getItem('user'));
             if (!user) {
-                alert("Please log in to view your borrow history.");
-                window.location.href = "login.html";
+                alert('Please log in to view your borrow history.');
+                window.location.href = 'Login.html';
                 return;
             }
 
-            try {
-                console.log(`Fetching borrow history for user: ${user.mobile}`); // Logging
-                const response = await fetch(`/api/borrow-history/${user.mobile}`);
-                console.log(`Response status: ${response.status}`); // Logging
-                const borrowHistory = await response.json();
-                console.log(`Response data: ${JSON.stringify(borrowHistory)}`); // Logging
+            document.getElementById('current-user-role').textContent = user.role === 'admin' ? 'Admin View' : 'Member View';
 
-                if (response.ok) {
-                    console.log(`Borrow history received: ${borrowHistory.length}`); // Logging
-                    const borrowHistoryTable = document.getElementById("borrow-history");
-                    borrowHistoryTable.innerHTML = ""; // Clear previous results
-                    borrowHistory.forEach(borrow => {
-                        const row = document.createElement("tr");
-                        row.innerHTML = `
-                            <td>${borrow.fullname}</td>
-                            <td>${borrow.email}</td>
-                            <td>${borrow.mobile}</td>
-                            <td>${borrow.amount}</td>
-                            <td>${new Date(borrow.date).toLocaleDateString()}</td>
-                            <td>${borrow.status}</td>
-                            <td>
-                                ${user.role === 'admin' ? `
-                                    <button class="approve-button" onclick="updateBorrowStatus('${borrow._id}', 'Approved')">Approve</button>
-                                    <button class="reject-button" onclick="updateBorrowStatus('${borrow._id}', 'Rejected')">Reject</button>
-                                ` : ''}
-                            </td>
-                        `;
-                        borrowHistoryTable.appendChild(row);
-                    });
-                } else {
-                    console.error("Error fetching borrow history:", borrowHistory.message);
-                    alert("Error retrieving borrow history. Please try again later.");
+            try {
+                const response = await fetch(`/api/borrow-history/${encodeURIComponent(user.mobile)}`);
+                const borrowHistory = await response.json().catch(() => []);
+
+                if (!response.ok) {
+                    throw new Error(borrowHistory.message || 'Failed to load borrow history');
                 }
+
+                const borrowHistoryTable = document.getElementById('borrow-history');
+                borrowHistoryTable.innerHTML = '';
+
+                const approvedCount = borrowHistory.filter((item) => String(item.status || '').toLowerCase() === 'approved').length;
+                const pendingCount = borrowHistory.filter((item) => String(item.status || '').toLowerCase() === 'pending').length;
+                const totalAmount = borrowHistory.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+
+                document.getElementById('stat-total').textContent = String(borrowHistory.length);
+                document.getElementById('stat-approved').textContent = String(approvedCount);
+                document.getElementById('stat-pending').textContent = String(pendingCount);
+                document.getElementById('stat-amount').textContent = `Rs. ${totalAmount.toLocaleString('en-IN')}`;
+
+                if (!Array.isArray(borrowHistory) || borrowHistory.length === 0) {
+                    borrowHistoryTable.innerHTML = '<tr><td colspan="7" style="text-align:center; font-weight:600; color:#3f5573;">No borrow records found.</td></tr>';
+                    return;
+                }
+
+                borrowHistory.forEach((borrow) => {
+                    const statusText = String(borrow.status || '').trim();
+                    const normalized = statusText.toLowerCase();
+                    const statusClass = normalized === 'approved' ? 'approved' : normalized === 'rejected' ? 'rejected' : normalized === 'pending' ? 'pending' : 'other';
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${borrow.fullname || ''}</td>
+                        <td>${borrow.email || ''}</td>
+                        <td>${borrow.mobile || ''}</td>
+                        <td>${borrow.amount || ''}</td>
+                        <td>${borrow.date ? new Date(borrow.date).toLocaleDateString() : ''}</td>
+                        <td><span class="status-pill ${statusClass}">${statusText || 'N/A'}</span></td>
+                        <td>
+                            ${user.role === 'admin' ? `
+                                <div class="action-wrap">
+                                    <button class="approve-button" onclick="updateBorrowStatus('${borrow._id || borrow.id}', 'Approved')">Approve</button>
+                                    <button class="reject-button" onclick="updateBorrowStatus('${borrow._id || borrow.id}', 'Rejected')">Reject</button>
+                                </div>
+                            ` : '-'}
+                        </td>
+                    `;
+                    borrowHistoryTable.appendChild(row);
+                });
             } catch (error) {
-                console.error("Error retrieving borrow history:", error);
-                alert("Error retrieving borrow history. Please try again later.");
+                console.error('Error retrieving borrow history:', error);
+                alert(error.message || 'Error retrieving borrow history. Please try again later.');
             } finally {
                 document.getElementById('loading').style.display = 'none';
             }
         });
     </script>
+
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <!--Start of Tawk.to Script-->
-<script type="text/javascript">
-    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-    (function(){
-    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-    s1.async=true;
-    s1.src='https://embed.tawk.to/67a0a1ce3a84273260790919/1ij5ng3uf';
-    s1.charset='UTF-8';
-    s1.setAttribute('crossorigin','*');
-    s0.parentNode.insertBefore(s1,s0);
-    })();
-    </script>
-    <!--End of Tawk.to Script-->
 </body>
 </html>
