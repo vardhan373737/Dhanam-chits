@@ -172,19 +172,28 @@ function createMailTransporter() {
 
 function createResetToken({ userId, email, expiresAt, otp }) {
   const secret = process.env.RESET_TOKEN_SECRET || process.env.SESSION_SECRET || "change-me-in-production";
-  const data = `${userId}.${email}.${expiresAt}`;
-  const signature = crypto.createHmac("sha256", secret).update(`${data}.${otp}`).digest("hex");
-  return Buffer.from(`${data}.${signature}`, "utf8").toString("base64url");
+  const payload = Buffer.from(JSON.stringify({ userId, email, expiresAt }), "utf8").toString("base64url");
+  const signature = crypto.createHmac("sha256", secret).update(`${payload}.${otp}`).digest("hex");
+  return `${payload}.${signature}`;
 }
 
 function verifyResetToken(token, otp) {
   const secret = process.env.RESET_TOKEN_SECRET || process.env.SESSION_SECRET || "change-me-in-production";
   try {
-    const decoded = Buffer.from(String(token || ""), "base64url").toString("utf8");
-    const [userId, email, expiresAtRaw, signature] = decoded.split(".");
-    const expiresAt = Number(expiresAtRaw);
+    const tokenValue = String(token || "").trim();
+    const separatorIndex = tokenValue.lastIndexOf(".");
+    if (separatorIndex <= 0 || separatorIndex >= tokenValue.length - 1 || !otp) {
+      return null;
+    }
 
-    if (!userId || !email || !expiresAt || !signature || !otp) {
+    const payload = tokenValue.slice(0, separatorIndex);
+    const signature = tokenValue.slice(separatorIndex + 1);
+    const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    const userId = String(parsed?.userId || "").trim();
+    const email = String(parsed?.email || "").trim();
+    const expiresAt = Number(parsed?.expiresAt);
+
+    if (!userId || !email || !expiresAt || !signature) {
       return null;
     }
 
@@ -192,9 +201,7 @@ function verifyResetToken(token, otp) {
       return null;
     }
 
-    const data = `${userId}.${email}.${expiresAt}`;
-    const expected = crypto.createHmac("sha256", secret).update(`${data}.${otp}`).digest("hex");
-
+    const expected = crypto.createHmac("sha256", secret).update(`${payload}.${otp}`).digest("hex");
     if (expected.length !== signature.length) {
       return null;
     }
