@@ -105,9 +105,14 @@ function mapChitRow(row) {
   };
 }
 
-const invoicesDir = path.join(__dirname, "invoices");
-if (!fs.existsSync(invoicesDir)) {
-  fs.mkdirSync(invoicesDir, { recursive: true });
+const storageBaseDir = process.env.VERCEL === "1" ? "/tmp" : __dirname;
+const invoicesDir = path.join(storageBaseDir, "invoices");
+try {
+  if (!fs.existsSync(invoicesDir)) {
+    fs.mkdirSync(invoicesDir, { recursive: true });
+  }
+} catch (dirError) {
+  console.error("Failed to prepare invoices directory:", dirError);
 }
 
 function createMailTransporter() {
