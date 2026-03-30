@@ -4,6 +4,7 @@ const cors = require("cors");
 const session = require("express-session");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const pdf = require("pdfkit");
@@ -167,6 +168,46 @@ function createMailTransporter() {
       pass: mailPass,
     },
   });
+}
+
+function createResetToken({ userId, email, expiresAt, otp }) {
+  const secret = process.env.RESET_TOKEN_SECRET || process.env.SESSION_SECRET || "change-me-in-production";
+  const data = `${userId}.${email}.${expiresAt}`;
+  const signature = crypto.createHmac("sha256", secret).update(`${data}.${otp}`).digest("hex");
+  return Buffer.from(`${data}.${signature}`, "utf8").toString("base64url");
+}
+
+function verifyResetToken(token, otp) {
+  const secret = process.env.RESET_TOKEN_SECRET || process.env.SESSION_SECRET || "change-me-in-production";
+  try {
+    const decoded = Buffer.from(String(token || ""), "base64url").toString("utf8");
+    const [userId, email, expiresAtRaw, signature] = decoded.split(".");
+    const expiresAt = Number(expiresAtRaw);
+
+    if (!userId || !email || !expiresAt || !signature || !otp) {
+      return null;
+    }
+
+    if (Date.now() > expiresAt) {
+      return null;
+    }
+
+    const data = `${userId}.${email}.${expiresAt}`;
+    const expected = crypto.createHmac("sha256", secret).update(`${data}.${otp}`).digest("hex");
+
+    if (expected.length !== signature.length) {
+      return null;
+    }
+
+    const isValid = crypto.timingSafeEqual(Buffer.from(expected, "utf8"), Buffer.from(signature, "utf8"));
+    if (!isValid) {
+      return null;
+    }
+
+    return { userId, email, expiresAt };
+  } catch (_error) {
+    return null;
+  }
 }
 
 function generateStatementPdf(payment) {
@@ -492,13 +533,64 @@ app.post("/api/profile/change-password", async (req, res) => {
   return res.status(200).json({ message: "Password updated successfully" });
 });
 
-app.post("/api/reset-password", async (req, res) => {
-  const { mobile, email, newPassword, confirmPassword } = req.body || {};
+app.post("/api/reset-password/request", async (req, res) => {
+  const { mobile, email } = req.body || {};
   const mobileValue = String(mobile || "").trim();
   const emailValue = String(email || "").trim().toLowerCase();
 
-  if (!mobileValue && !emailValue) {
-    return res.status(400).json({ message: "Mobile number or email is required" });
+  if (!mobileValue || !emailValue) {
+    return res.status(400).json({ message: "Mobile number and email are required" });
+  }
+
+  const { data: user, error: userError } = await supabase
+    .from("users")
+    .select("id, fullname, email, mobile")
+    .eq("mobile", mobileValue)
+    .eq("email", emailValue)
+    .maybeSingle();
+
+  if (userError) {
+    console.error("reset request lookup error", userError);
+    return res.status(500).json({ message: "Failed to process reset request" });
+  }
+
+  if (!user) {
+    return res.status(404).json({ message: "No account found for the provided mobile and email" });
+  }
+
+  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  const expiresAt = Date.now() + 10 * 60 * 1000;
+  const resetToken = createResetToken({ userId: user.id, email: emailValue, expiresAt, otp });
+
+  const mailUser = process.env.SMTP_USER || process.env.EMAIL_USER || process.env.GMAIL_USER;
+  const transporter = createMailTransporter();
+  if (!transporter) {
+    return res.status(500).json({ message: "Email config missing. Set SMTP_USER/SMTP_PASS in environment." });
+  }
+
+  try {
+    await transporter.sendMail({
+      from: mailUser,
+      to: user.email,
+      subject: "Dhanam Chits Password Reset OTP",
+      text: `Dear ${user.fullname || "User"}, your password reset OTP is ${otp}. It expires in 10 minutes.`,
+    });
+
+    return res.status(200).json({
+      message: "OTP sent to your registered email.",
+      resetToken,
+    });
+  } catch (mailError) {
+    console.error("reset request mail error", mailError);
+    return res.status(500).json({ message: "Failed to send OTP email" });
+  }
+});
+
+app.post("/api/reset-password", async (req, res) => {
+  const { resetToken, otp, newPassword, confirmPassword } = req.body || {};
+
+  if (!resetToken || !otp) {
+    return res.status(400).json({ message: "Reset token and OTP are required" });
   }
 
   if (!newPassword || !confirmPassword) {
@@ -513,22 +605,24 @@ app.post("/api/reset-password", async (req, res) => {
     return res.status(400).json({ message: "New password and confirm password do not match" });
   }
 
-  let userLookup = supabase.from("users").select("id");
-  if (mobileValue) {
-    userLookup = userLookup.eq("mobile", mobileValue);
-  } else {
-    userLookup = userLookup.eq("email", emailValue);
+  const verified = verifyResetToken(resetToken, String(otp).trim());
+  if (!verified) {
+    return res.status(401).json({ message: "Invalid or expired OTP" });
   }
 
-  const { data: user, error: userError } = await userLookup.maybeSingle();
+  const { data: user, error: userError } = await supabase
+    .from("users")
+    .select("id, email")
+    .eq("id", verified.userId)
+    .maybeSingle();
 
   if (userError) {
-    console.error("reset password lookup error", userError);
+    console.error("reset verify lookup error", userError);
     return res.status(500).json({ message: "Failed to reset password" });
   }
 
-  if (!user) {
-    return res.status(404).json({ message: "Account not found" });
+  if (!user || String(user.email || "").toLowerCase() !== String(verified.email || "").toLowerCase()) {
+    return res.status(401).json({ message: "Invalid reset request" });
   }
 
   const password_hash = await bcrypt.hash(newPassword, 10);
