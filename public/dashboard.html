@@ -3,177 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Chit Fund System</title>
+    <title>Dashboard - Dhanam Chits Pvt. Ltd</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
-            background: linear-gradient(45deg, #090a0b, #6610f2); /* Match index.html background */
-            color: #1a0d0d;
+            background: radial-gradient(circle at 12% 16%, rgba(245, 158, 11, 0.28), transparent 34%), radial-gradient(circle at 86% 10%, rgba(8, 145, 178, 0.34), transparent 36%), linear-gradient(145deg, #042534, #0a3c52 46%, #12506f);
+            color: #10213a;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
             margin: 0;
-        }
-
-        .navbar {
-            background: linear-gradient(45deg, #090a0b, #6610f2); /* Match index.html navbar background */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .navbar-toggler-icon {
-            background-image: url("data:image/svg+xml;charset=UTF8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='black' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+            display: block;
         }
 
         .container {
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 15px;
-            width: 100%;
-            max-width: 800px;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.9));
+            padding: 28px;
+            border-radius: 22px;
+            width: min(94%, 1140px);
+            text-align: left;
+            box-shadow: 0 30px 70px rgba(10, 20, 40, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            margin: 1.3rem auto 2rem;
         }
 
-        .container h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-            color: #333;
+        .heading-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .heading-row h2 {
+            margin: 0;
+            font-size: clamp(1.4rem, 2.8vw, 2.1rem);
+            color: #0f1f39;
+        }
+
+        .subtitle {
+            margin: 0;
+            color: #4b5e79;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(140px, 1fr));
+            gap: 14px;
+            margin: 18px 0 20px;
+        }
+
+        .stat-card {
+            border: 1px solid rgba(16, 33, 58, 0.1);
+            border-radius: 16px;
+            padding: 14px;
+            background: #fff;
+            box-shadow: 0 14px 36px rgba(10, 20, 40, 0.14);
+        }
+
+        .stat-label {
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #5f6f88;
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            color: #0f2545;
+            font-weight: 800;
         }
 
         .table-responsive {
-            margin-top: 20px;
-            overflow-x: auto;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 16px;
+            border: 1px solid rgba(16, 33, 58, 0.1);
+            box-shadow: 0 14px 36px rgba(10, 20, 40, 0.14);
         }
 
-        .table-striped tbody tr {
-            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        .table {
+            margin-bottom: 0;
+            min-width: 920px;
         }
 
-        .table-striped tbody tr:hover {
-            box-shadow: 0 0 15px rgba(0, 123, 255, 0.7);
-            transform: scale(1.02);
+        .table thead th {
+            border-top: 0;
+            background: linear-gradient(105deg, #0f766e, #0891b2);
+            color: #f4fcff;
+            font-size: 0.86rem;
+            text-transform: uppercase;
+        }
+
+        .table tbody td { white-space: nowrap; }
+
+        .bank-details {
+            margin-top: 18px;
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid rgba(16, 33, 58, 0.1);
+            padding: 14px;
+            box-shadow: 0 14px 36px rgba(10, 20, 40, 0.14);
         }
 
         .logout-button {
             display: block;
-            background-color: #007bff; /* Change to blue */
+            background: linear-gradient(120deg, #0f766e, #0891b2);
             color: #fff;
             border: none;
             cursor: pointer;
-            padding: 10px;
-            margin: 20px auto;
+            padding: 11px 20px;
+            margin: 18px 0 0 auto;
             text-align: center;
-            width: 200px;
-            border-radius: 5px;
-            text-decoration: none;
-            transition: background-color 0.3s ease;
+            width: 190px;
+            border-radius: 12px;
+            font-weight: 700;
         }
 
-        .logout-button:hover {
-            background-color: #0056b3; /* Darker blue on hover */
-        }
-
-        .bank-details {
-            margin-top: 20px;
-            text-align: left;
-        }
-
-        .bank-details h4 {
-            margin-bottom: 10px;
-        }
-
-        .bank-details p {
-            margin: 5px 0;
-        }
-
-        /* Scrolling notice style */
-        .scrolling-notice {
-            background: #ffeb3b;
-            color: #333;
+        .notice {
+            background: linear-gradient(120deg, #ffe2a4, #ffd58a);
+            color: #543c0b;
             padding: 10px;
-            font-size: 1rem;
-            font-weight: bold;
+            font-size: 0.95rem;
+            font-weight: 700;
             text-align: center;
-            overflow: hidden;
-            position: relative;
-            width: 100%;
-        }
-        .scrolling-notice span {
-            display: inline-block;
-            white-space: nowrap;
-            animation: scroll 10s linear infinite;
-        }
-        @keyframes scroll {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
+            border-radius: 12px;
+            width: min(94%, 1140px);
+            margin: 1.2rem auto 0.8rem;
+            border: 1px solid rgba(245, 158, 11, 0.45);
         }
 
-        /* Suggested message style */
-        .suggested-message {
-            background: #007bff;
-            color: #fff;
-            padding: 10px;
-            font-size: 1rem;
-            font-weight: bold;
-            text-align: center;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-
-        /* Responsive Styles */
         @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-            }
-
-            .container h2 {
-                font-size: 1.5rem;
-            }
-
-            .table th, .table td {
-                font-size: 0.9rem;
-                padding: 8px;
-            }
-
-            .logout-button {
-                width: 150px;
-                padding: 8px;
-                font-size: 0.9rem;
-            }
+            .stats-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+            .logout-button { width: 100%; }
         }
 
         @media (max-width: 576px) {
-            .container {
-                padding: 15px;
-            }
-
-            .container h2 {
-                font-size: 1.2rem;
-            }
-
-            .table th, .table td {
-                font-size: 0.8rem;
-                padding: 6px;
-            }
-
-            .logout-button {
-                width: 120px;
-                padding: 6px;
-                font-size: 0.8rem;
-            }
+            .stats-grid { grid-template-columns: 1fr; }
+            .heading-row { flex-direction: column; align-items: flex-start; }
         }
     </style>
     <link rel="stylesheet" href="premium-shared.css">
     <link rel="stylesheet" href="index-theme.css">
 </head>
 <body>
-    <!-- Navigation Bar -->
     <header>
-        <nav class="navbar navbar-expand-lg">
-            <a class="navbar-brand d-flex align-items-center" href="dashboard.html">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <a class="navbar-brand d-flex align-items-center" href="Login.html">
                 <img src="logo.jpeg" alt="Logo" style="height: 50px; margin-right: 15px; object-fit: cover; border-radius: 50%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); transition: transform 0.3s ease;">
                 <h1 style="font-size: 1.5rem; margin: 0; color: white;">Dhanam Chits Pvt. Ltd</h1>
             </a>
@@ -193,18 +172,21 @@
         </nav>
     </header>
 
-    <!-- Scrolling Notice -->
-    <div class="scrolling-notice">
-        <span>Welcome to Dhanam Chits Pvt. Ltd! Check Your Payment's is showing Correctly!</span>
-    </div>
-
-    <!-- Suggested Message -->
-    <div class="suggested-message">
-        Suggested Message: Please ensure all your payment details are up to date.
-    </div>
+    <div class="notice">Welcome to your dashboard. Review your latest payment status and bank details.</div>
 
     <div class="container">
-        <h2>Dashboard</h2>
+        <div class="heading-row">
+            <h2>Payment Dashboard</h2>
+            <p class="subtitle">Track your installments and account details in one place.</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Total Payments</div><div class="stat-value" id="total-payments">0</div></div>
+            <div class="stat-card"><div class="stat-label">Total Amount</div><div class="stat-value" id="total-amount">Rs. 0</div></div>
+            <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-value" id="approved-count">0</div></div>
+            <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" id="pending-count">0</div></div>
+        </div>
+
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -216,117 +198,127 @@
                         <th>UTR Number</th>
                         <th>Type</th>
                         <th>Status</th>
-
                     </tr>
                 </thead>
-                <tbody id="payment-history">
-                    <!-- Payment history will be populated here -->
-                </tbody>
+                <tbody id="payment-history"></tbody>
             </table>
         </div>
-        <div class="bank-details" id="bank-details">
-            <!-- Bank details will be displayed here -->
-        </div>
-        <button class="logout-button" onclick="logout()">Logout</button>
+
+        <div class="bank-details" id="bank-details"></div>
+        <a href="Login.html" class="logout-button" onclick="return logout(event)">Logout</a>
     </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", async () => {
-            const user = JSON.parse(localStorage.getItem("user"));
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
             if (!user) {
-                alert("Please log in to view your dashboard.");
-                window.location.href = "login.html";
+                alert('Please log in to view your dashboard.');
+                window.location.href = 'Login.html';
                 return;
             }
 
             try {
-                console.log(`Fetching payment history for user: ${user.mobile}`); // Logging
-                const response = await fetch(`/api/payments/${user.mobile}`);
-                console.log(`Response status: ${response.status}`); // Logging
+                const response = await fetch(`/api/payments/${encodeURIComponent(user.mobile)}`);
                 const payments = await response.json();
-                console.log(`Response data: ${JSON.stringify(payments)}`); // Logging
 
-                if (response.ok) {
-                    console.log(`Payments received: ${payments.length}`); // Logging
-                    const paymentHistory = document.getElementById("payment-history");
-                    paymentHistory.innerHTML = ""; // Clear previous results
-                    payments.forEach(payment => {
-                        const row = document.createElement("tr");
-                        row.innerHTML = `
-                            <td>${payment.name}</td>
-                            <td>${payment.mobile}</td>
-                            <td>${payment.chitsPlan}</td>
-                            <td>${payment.amount}</td>
-                            <td>${payment.utrNumber}</td>
-                            <td>${payment.type}</td>
-                            <td>${payment.status}</td>
-
-                        `;
-                        paymentHistory.appendChild(row);
-                    });
-                } else {
-                    console.error("Error fetching payments:", payments.message);
-                    alert("Error retrieving payment history. Please try again later.");
+                if (!response.ok) {
+                    throw new Error(payments.message || 'Failed to fetch payments');
                 }
 
-                // Fetch and display bank details
-                fetchBankDetails(user.mobile);
+                const paymentHistory = document.getElementById('payment-history');
+                paymentHistory.innerHTML = '';
+
+                const totalAmount = payments.reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0);
+                const approvedCount = payments.filter((payment) => String(payment.status || '').toLowerCase() === 'approved').length;
+                const pendingCount = payments.filter((payment) => String(payment.status || '').toLowerCase() !== 'approved').length;
+
+                document.getElementById('total-payments').textContent = payments.length;
+                document.getElementById('total-amount').textContent = `Rs. ${totalAmount.toLocaleString('en-IN')}`;
+                document.getElementById('approved-count').textContent = approvedCount;
+                document.getElementById('pending-count').textContent = pendingCount;
+
+                if (payments.length === 0) {
+                    paymentHistory.innerHTML = '<tr><td colspan="7" style="text-align:center; font-weight:600; color:#3f5573;">No payments found.</td></tr>';
+                }
+
+                payments.forEach((payment) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${payment.name || ''}</td>
+                        <td>${payment.mobile || ''}</td>
+                        <td>${payment.chitsPlan || ''}</td>
+                        <td>${payment.amount || ''}</td>
+                        <td>${payment.utrNumber || ''}</td>
+                        <td>${payment.type || ''}</td>
+                        <td>${payment.status || ''}</td>
+                    `;
+                    paymentHistory.appendChild(row);
+                });
+
+                await fetchBankDetails(user.mobile);
             } catch (error) {
-                console.error("Error retrieving payment history:", error);
-                alert("Error retrieving payment history. Please try again later.");
+                console.error('Dashboard error:', error);
+                alert(error.message || 'Error retrieving dashboard details.');
             }
         });
 
         async function fetchBankDetails(mobile) {
-            try {
-                const response = await fetch(`/api/bank-details/${mobile}`);
-                const bankDetails = await response.json();
-                const bankDetailsContainer = document.getElementById("bank-details");
-                bankDetailsContainer.innerHTML = ""; // Clear previous details
+            const bankDetailsContainer = document.getElementById('bank-details');
+            bankDetailsContainer.innerHTML = '';
 
-                if (response.ok && bankDetails.length > 0) {
-                    bankDetails.forEach(detail => {
-                        const detailDiv = document.createElement("div");
-                        detailDiv.innerHTML = `
-                            <h4>Bank Details</h4>
-                            <p><strong>Name:</strong> ${detail.name}</p>
-                            <p><strong>Account Number:</strong> ${detail.accountNumber}</p>
-                            <p><strong>IFSC Code:</strong> ${detail.ifscCode}</p>
-                            <p><strong>UPI ID:</strong> ${detail.upiId}</p>
-                            <p><strong>Bank Name:</strong> ${detail.bankName}</p>
-                            <p><strong>Mobile:</strong> ${detail.mobile}</p>
-                        `;
-                        bankDetailsContainer.appendChild(detailDiv);
-                    });
-                } else {
-                    bankDetailsContainer.innerHTML = "<p>No bank details found for this mobile number.</p>";
+            try {
+                const response = await fetch(`/api/bank-details/${encodeURIComponent(mobile)}`);
+                const bankDetails = await response.json().catch(() => []);
+
+                if (!response.ok || !Array.isArray(bankDetails) || bankDetails.length === 0) {
+                    bankDetailsContainer.innerHTML = '<p>No bank details found for this mobile number.</p>';
+                    return;
                 }
-            } catch (error) {
-                console.error("Error fetching bank details:", error);
-                alert("Error fetching bank details.");
+
+                bankDetails.forEach((detail) => {
+                    const detailDiv = document.createElement('div');
+                    detailDiv.innerHTML = `
+                        <h4>Bank Details</h4>
+                        <p><strong>Name:</strong> ${detail.name || ''}</p>
+                        <p><strong>Account Number:</strong> ${detail.accountNumber || ''}</p>
+                        <p><strong>IFSC Code:</strong> ${detail.ifscCode || ''}</p>
+                        <p><strong>UPI ID:</strong> ${detail.upiId || ''}</p>
+                        <p><strong>Bank Name:</strong> ${detail.bankName || ''}</p>
+                        <p><strong>Mobile:</strong> ${detail.mobile || ''}</p>
+                    `;
+                    bankDetailsContainer.appendChild(detailDiv);
+                });
+            } catch (_error) {
+                bankDetailsContainer.innerHTML = '<p>Unable to load bank details right now.</p>';
             }
         }
 
-        function logout() {
-            localStorage.removeItem("user");
-            window.location.href = "login.html";
+        async function logout(event) {
+            if (event) {
+                event.preventDefault();
+            }
+
+            const logoutEndpoints = ['/api/logout', '/logout'];
+            for (const endpoint of logoutEndpoints) {
+                try {
+                    await fetch(endpoint, { method: 'POST', credentials: 'include' });
+                    break;
+                } catch (_error) {
+                }
+            }
+
+            localStorage.removeItem('user');
+            localStorage.removeItem('mobile');
+            localStorage.removeItem('chitId');
+            localStorage.removeItem('name');
+            sessionStorage.clear();
+            window.location.href = 'Login.html';
+            return false;
         }
     </script>
+
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-<!--Start of Tawk.to Script-->
-<script type="text/javascript">
-var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-(function(){
-var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-s1.async=true;
-s1.src='https://embed.tawk.to/67a0a1ce3a84273260790919/1ij5ng3uf';
-s1.charset='UTF-8';
-s1.setAttribute('crossorigin','*');
-s0.parentNode.insertBefore(s1,s0);
-})();
-</script>
-<!--End of Tawk.to Script-->
 </body>
 </html>
