@@ -24,6 +24,18 @@
       "dest": "/public/index.html"
     },
     {
+      "src": "/Chitid.html",
+      "dest": "/public/ChitId.html"
+    },
+    {
+      "src": "/ChitidA.html",
+      "dest": "/public/ChitIdA.html"
+    },
+    {
+      "src": "/contactA.html",
+      "dest": "/public/ContactA.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/public/$1"
     }

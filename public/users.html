@@ -472,9 +472,25 @@
 
         async function fetchAuthApi(path, options = {}) {
             let lastError = null;
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            const adminMobile = user && user.mobile ? String(user.mobile).trim() : '';
             for (const base of AUTH_API_BASES) {
                 try {
-                    return await fetch(`${base}${path}`, options);
+                    const response = await fetch(`${base}${path}`, {
+                        credentials: 'include',
+                        ...options,
+                        headers: {
+                            ...(options.headers || {}),
+                            ...(adminMobile ? { 'x-user-mobile': adminMobile } : {}),
+                        },
+                    });
+
+                    if (response.ok) {
+                        return response;
+                    }
+
+                    const errorData = await response.json().catch(() => ({}));
+                    lastError = new Error(errorData.message || `HTTP error! Status: ${response.status}`);
                 } catch (error) {
                     lastError = error;
                 }
@@ -485,9 +501,10 @@
 
         async function fetchUserDetails() {
             try {
-                const response = await fetchAuthApi('/api/users'); 
+                const response = await fetchAuthApi('/users'); 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
                 }
                 const data = await response.json();
                 console.log('Fetched user details:', data); // Add logging
@@ -530,7 +547,7 @@
                 });
             } catch (error) {
                 console.error('Error fetching user details:', error);
-                alert('Failed to fetch user details. Please try again later.');
+                alert(error.message || 'Failed to fetch user details. Please try again later.');
             }
         }
 
@@ -546,7 +563,7 @@
             }
 
             try {
-                const response = await fetchAuthApi(`/api/users/${userId}/password`, {
+                const response = await fetchAuthApi(`/users/${userId}/password`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -571,7 +588,7 @@
             }
 
             try {
-                const response = await fetchAuthApi(`/api/users/${userId}`, {
+                const response = await fetchAuthApi(`/users/${userId}`, {
                     method: 'DELETE'
                 });
 
