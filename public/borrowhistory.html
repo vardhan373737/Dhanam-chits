@@ -90,6 +90,7 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
     </style>
+    <link rel="stylesheet" href="index-theme.css">
 </head>
 <body>
     <!-- Loading Indicator -->
@@ -150,7 +151,7 @@
         async function updateBorrowStatus(id, status) {
             document.getElementById('loading').style.display = 'flex';
             try {
-                const response = await fetch(`http://localhost:5001/api/borrow/${id}`, {
+                const response = await fetch(`http://localhost:5000/api/borrow/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status })
@@ -182,7 +183,7 @@
 
             try {
                 console.log(`Fetching borrow history for user: ${user.mobile}`); // Logging
-                const response = await fetch(`http://localhost:5001/api/borrow-history/${user.mobile}`);
+                const response = await fetch(`http://localhost:5000/api/borrow-history/${user.mobile}`);
                 console.log(`Response status: ${response.status}`); // Logging
                 const borrowHistory = await response.json();
                 console.log(`Response data: ${JSON.stringify(borrowHistory)}`); // Logging

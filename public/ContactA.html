@@ -12,6 +12,12 @@
             min-height: 100vh;
             background: #f8f9fa;
         }
+
+        body {
+            display: block !important;
+            min-height: 100vh;
+            background: #e0f7fa;
+        }
         .sidebar {
             width: 250px;
             height: 100vh;
@@ -78,6 +84,108 @@
             box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
             transform: scale(1.05);
           }
+
+        .contact-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .contact-toolbar h1 {
+            margin: 0;
+            color: #0f2a3f;
+            text-shadow: none;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+        }
+
+        .toolbar-btn {
+            border: none;
+            padding: 9px 14px;
+            border-radius: 10px;
+            background: linear-gradient(120deg, #0b607f, #1f8a70);
+            color: #ffffff;
+            font-weight: 700;
+            box-shadow: 0 8px 18px rgba(10, 43, 64, 0.22);
+        }
+
+        .toolbar-btn:hover {
+            filter: brightness(1.08);
+        }
+
+        .quick-stats {
+            margin-bottom: 14px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: linear-gradient(120deg, rgba(12, 55, 86, 0.94), rgba(24, 119, 145, 0.9));
+            color: #f1f8ff;
+            border-radius: 12px;
+            padding: 12px 14px;
+            box-shadow: 0 8px 20px rgba(9, 40, 65, 0.2);
+        }
+
+        .stat-card .label {
+            display: block;
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .value {
+            font-size: 1.28rem;
+            font-weight: 800;
+        }
+
+        .table-container {
+            background: rgba(255, 255, 255, 0.84);
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            border-radius: 14px;
+            box-shadow: 0 12px 26px rgba(16, 49, 75, 0.16);
+            padding: 10px;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .content {
+            overflow-x: hidden;
+        }
+
+        @media (max-width: 576px) {
+            .contact-toolbar {
+                flex-direction: row;
+                align-items: flex-start;
+                justify-content: space-between;
+            }
+
+            .contact-toolbar h1 {
+                font-size: 2rem;
+                line-height: 1.05;
+                max-width: calc(100% - 120px);
+            }
+
+            .toolbar-btn {
+                margin-left: auto;
+                padding: 8px 12px;
+            }
+
+            .quick-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .table {
+                width: max-content;
+                min-width: 980px;
+                white-space: nowrap;
+            }
+        }
         @media (max-width: 768px) {
             .sidebar {
                 width: 60px;
@@ -102,6 +210,8 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="admin-sidebar.css">
+    <link rel="stylesheet" href="index-theme.css">
 </head>
 <body>
     <!-- Toggle Button -->
@@ -119,7 +229,22 @@
         <a href="index.html" class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
       </div>
     <div class="content">
-        <h1>Contact Submissions</h1>
+        <div class="contact-toolbar">
+            <h1>Contact Submissions</h1>
+            <button class="toolbar-btn" onclick="fetchContactDetails()">Refresh</button>
+        </div>
+
+        <div class="quick-stats">
+            <div class="stat-card">
+                <span class="label">Total Complaints</span>
+                <span class="value" id="total-contacts">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="label">Unique Mobile Numbers</span>
+                <span class="value" id="unique-contact-mobiles">0</span>
+            </div>
+        </div>
+
         <div class="table-container">
             <table class="table table-striped">
                 <thead class="table-dark">
@@ -139,12 +264,40 @@
         </div>
     </div>
     <script>
+        const CONTACT_ADMIN_BASES = ['http://localhost:5000', 'http://localhost:5005'];
+
+        async function fetchContactApi(path, options = {}) {
+            let lastError = null;
+            for (const base of CONTACT_ADMIN_BASES) {
+                try {
+                    return await fetch(`${base}${path}`, options);
+                } catch (error) {
+                    lastError = error;
+                }
+            }
+
+            throw lastError || new Error('No contact backend is reachable');
+        }
+
         async function fetchContactDetails() {
             try {
-                const response = await fetch('http://localhost:5005/api/contacts');
+                const response = await fetchContactApi('/api/contacts');
                 const data = await response.json();
                 const tableBody = document.getElementById('contact-details-table');
                 tableBody.innerHTML = '';
+
+                if (!Array.isArray(data)) {
+                    throw new Error('Invalid data format received');
+                }
+
+                document.getElementById('total-contacts').textContent = data.length;
+                document.getElementById('unique-contact-mobiles').textContent = new Set(data.map((item) => item.mobile)).size;
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; font-weight:600; color:#264653;">No contact submissions found.</td></tr>';
+                    return;
+                }
+
                 data.forEach((contact) => {
                     const row = `<tr>
                         <td>${contact.name}</td>
@@ -163,7 +316,7 @@
         async function deleteContact(id) {
             if (!confirm('Are you sure?')) return;
             try {
-                await fetch(`http://localhost:5005/api/contacts/${id}`, { method: 'DELETE' });
+                await fetchContactApi(`/api/contacts/${id}`, { method: 'DELETE' });
                 fetchContactDetails();
             } catch (error) {
                 alert('Failed to delete contact.');
@@ -174,18 +327,13 @@
             window.location.href = "login.html";
         }
         function toggleSidebar() {
-            const sidebar = document.querySelector('.sidebar');
-            const content = document.querySelector('.content');
-            if (sidebar.style.width === '250px' || sidebar.style.width === '') {
-                sidebar.style.width = '60px';
-                content.style.marginLeft = '60px';
-            } else {
-                sidebar.style.width = '250px';
-                content.style.marginLeft = '250px';
-            }
+            document.body.classList.toggle('sidebar-open');
         }
         document.addEventListener('DOMContentLoaded', fetchContactDetails);
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+
+

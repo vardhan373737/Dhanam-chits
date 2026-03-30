@@ -20,6 +20,12 @@
             background: #f5f6fa;
         }
 
+        body {
+            display: block !important;
+            min-height: 100vh;
+            background: #e0f7fa;
+        }
+
         /* Sidebar */
         .sidebar {
             width: 250px;
@@ -126,39 +132,63 @@
         }
 
         .card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 20px;
+            background: linear-gradient(135deg, #1e88e5, #1976d2);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(33, 150, 243, 0.2);
+            padding: 24px;
             margin: 10px;
             flex: 1;
             min-width: 250px;
             max-width: 300px;
             text-align: center;
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+            transition: left 0.5s ease;
+        }
+
+        .card:hover::before {
+            left: 100%;
         }
 
         .card h3 {
-            margin-bottom: 10px;
-            color: #333;
-            text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+            margin-bottom: 12px;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            font-weight: 700;
+            font-size: 0.95rem;
         }
 
         .card p {
-            font-size: 1.1rem;
-            color: #666;
+            font-size: 1.8rem;
+            color: white;
+            font-weight: 800;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .card i {
             font-size: 2rem;
-            color: #007BFF;
+            color: rgba(255, 255, 255, 0.9);
             margin-bottom: 10px;
-            text-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .card:hover {
-            box-shadow: 0 0 15px rgba(0, 123, 255, 0.7);
-            transform: scale(1.05);
+            box-shadow: 0 12px 32px rgba(33, 150, 243, 0.3);
+            transform: translateY(-6px);
+            background: linear-gradient(135deg, #2196f3, #1e88e5);
         }
 
         /* Responsive Design */
@@ -201,71 +231,249 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
+            background: white;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
         }
 
         table th, table td {
-            padding: 12px;
+            padding: 16px;
             text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #000000; /* Changed text color to black */
+            border: none;
+            color: #333;
         }
 
         table th {
-            background-color: rgba(0, 123, 255, 0.7);
+            background: linear-gradient(135deg, #2196f3, #1976d2);
             color: #fff;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
         }
 
-        table tr:hover {
-            background-color: rgba(0, 123, 255, 0.2);
-            transition: 0.3s ease-in-out;
+        table tbody tr {
+            border-bottom: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        table tbody tr:hover {
+            background-color: rgba(33, 150, 243, 0.05);
+            box-shadow: inset 0 0 0 1px rgba(33, 150, 243, 0.1);
+        }
+
+        table tbody tr:last-child {
+            border-bottom: none;
         }
 
         .btn-status {
-            background: #28a745;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
             color: white;
             border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
+            padding: 8px 16px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background 0.3s ease;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 12px rgba(34, 197, 69, 0.3);
         }
 
         .btn-status:hover {
-            background: #218838;
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(34, 197, 69, 0.4);
         }
 
         .btn-delete {
-            background: #dc3545;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
             color: white;
             border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
+            padding: 8px 16px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background 0.3s ease;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         }
 
         .btn-delete:hover {
-            background: #c82333;
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
         }
 
         .btn-send-statement {
-            background: #007bff;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
             color: white;
             border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
+            padding: 8px 16px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background 0.3s ease;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
         .btn-send-statement:hover {
-            background: #0056b3;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .payment-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .payment-toolbar h1 {
+            margin: 0;
+            color: #0f2a3f;
+            text-shadow: none;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+        }
+
+        .toolbar-btn {
+            border: none;
+            padding: 9px 14px;
+            border-radius: 10px;
+            background: linear-gradient(120deg, #0b607f, #1f8a70);
+            color: #ffffff;
+            font-weight: 700;
+            box-shadow: 0 8px 18px rgba(10, 43, 64, 0.22);
+
+                /* Search Box Premium Styling */
+                .form-control {
+                    border: 1px solid #e0e0e0 !important;
+                    border-radius: 8px !important;
+                    padding: 10px 15px !important;
+                    transition: all 0.3s ease !important;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+                }
+
+                .form-control:focus {
+                    border-color: #2196f3 !important;
+                    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1) !important;
+                    outline: none !important;
+                }
+
+                .form-control::placeholder {
+                    color: #999;
+                }
+
+                /* Send All Statements Button */
+                .btn-primary-custom {
+                    background: linear-gradient(135deg, #2196f3, #1976d2);
+                    color: white;
+                    border: none;
+                    padding: 10px 24px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    font-weight: 700;
+                    font-size: 0.95rem;
+                    box-shadow: 0 6px 20px rgba(33, 150, 243, 0.3);
+                    display: inline-block;
+                    margin: 15px 0;
+                }
+
+                .btn-primary-custom:hover {
+                    background: linear-gradient(135deg, #1976d2, #1565c0);
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 24px rgba(33, 150, 243, 0.4);
+                    color: white;
+                    text-decoration: none;
+                }
+        }
+
+        .toolbar-btn:hover {
+            filter: brightness(1.08);
+        }
+
+        .quick-stats {
+            margin-bottom: 14px;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: linear-gradient(120deg, rgba(12, 55, 86, 0.94), rgba(24, 119, 145, 0.9));
+            color: #f1f8ff;
+            border-radius: 12px;
+            padding: 12px 14px;
+            box-shadow: 0 8px 20px rgba(9, 40, 65, 0.2);
+        }
+
+        .stat-card .label {
+            display: block;
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .value {
+            font-size: 1.28rem;
+            font-weight: 800;
+        }
+
+        .dashboard-container {
+            background: rgba(255, 255, 255, 0.84);
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            border-radius: 14px;
+            box-shadow: 0 12px 26px rgba(16, 49, 75, 0.16);
+            padding: 10px;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .content {
+            overflow-x: hidden;
+        }
+
+        .btn-logout {
+            display: none;
+        }
+
+        @media (max-width: 576px) {
+            .payment-toolbar {
+                flex-direction: row;
+                align-items: flex-start;
+                justify-content: space-between;
+            }
+
+            .payment-toolbar h1 {
+                font-size: 2rem;
+                line-height: 1.05;
+                max-width: calc(100% - 120px);
+            }
+
+            .toolbar-btn {
+                margin-left: auto;
+                padding: 8px 12px;
+            }
+
+            .quick-stats {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                width: max-content;
+                min-width: 1100px;
+                white-space: nowrap;
+            }
         }
     </style>
+    <link rel="stylesheet" href="admin-sidebar.css">
+    <link rel="stylesheet" href="index-theme.css">
 </head>
 <body>
     <!-- Toggle Button -->
@@ -286,11 +494,29 @@
 
     <!-- Content -->
     <div class="content">
-        <h1>Admin Dashboard</h1>
+        <div class="payment-toolbar">
+            <h1>Payments Dashboard</h1>
+            <button class="toolbar-btn" onclick="fetchData()">Refresh</button>
+        </div>
+
+        <div class="quick-stats">
+            <div class="stat-card">
+                <span class="label">Total Payments</span>
+                <span class="value" id="total-payments-count">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="label">Pending Payments</span>
+                <span class="value" id="pending-payments-count">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="label">Total Amount</span>
+                <span class="value" id="total-amount-stat">0</span>
+            </div>
+        </div>
 
         <div class="dashboard-container">
             <input type="text" id="searchInput" placeholder="Search..." class="form-control mb-3" onkeyup="filterTable()">
-            <button class="btn-send-statement" onclick="sendAllStatementsByPhone(document.getElementById('searchInput').value)">Send All Statements</button>
+            <button class="btn-send-statement" onclick="sendAllStatements()">Send All Statements</button>
             <table>
                 <thead>
                     <tr>
@@ -322,14 +548,34 @@
     </div>
 
     <script>
+        const PAYMENT_API_BASE = 'http://localhost:5000';
+        let paymentCache = [];
+
         async function fetchData() {
             try {
-                const response = await fetch('http://localhost:5001/api/bank-details');
+                const response = await fetch('http://localhost:5000/api/bank-details');
                 const data = await response.json();
                 console.log('Fetched payment details:', data); // Add logging
                 const tableBody = document.getElementById('payments-table');
                 tableBody.innerHTML = '';
                 let totalAmount = 0;
+
+                if (!Array.isArray(data)) {
+                    throw new Error('Invalid data format received');
+                }
+
+                paymentCache = data;
+
+                document.getElementById('total-payments-count').textContent = data.length;
+                document.getElementById('pending-payments-count').textContent = data.filter((item) => item.status === 'Pending').length;
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center; font-weight:600; color:#264653;">No payment records found.</td></tr>';
+                    document.getElementById('total-amount').textContent = 'Total Amount: 0';
+                    document.getElementById('total-amount-stat').textContent = '0';
+                    return;
+                }
+
                 data.forEach((payment) => {
                     totalAmount += payment.amount;
                     const row = document.createElement('tr');
@@ -351,6 +597,7 @@
                     tableBody.appendChild(row);
                 });
                 document.getElementById('total-amount').textContent = `Total Amount: ${totalAmount}`;
+                document.getElementById('total-amount-stat').textContent = `${totalAmount}`;
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
@@ -376,7 +623,7 @@
 
         async function updateStatus(id, status) {
             try {
-                const response = await fetch(`http://localhost:5001/api/bank-details/${id}/status`, {
+                const response = await fetch(`http://localhost:5000/api/bank-details/${id}/status`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -402,7 +649,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:5001/api/bank-details/${id}`, {
+                const response = await fetch(`http://localhost:5000/api/bank-details/${id}`, {
                     method: 'DELETE'
                 });
 
@@ -420,40 +667,100 @@
 
         async function sendStatement(id) {
             try {
-                const response = await fetch(`http://localhost:5001/api/bank-details/${id}/send-statement`, {
+                const response = await fetch(`${PAYMENT_API_BASE}/api/bank-details/${id}/send-statement`, {
                     method: 'POST'
                 });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                    let errorMessage = `HTTP error! Status: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        if (errorData && errorData.message) {
+                            errorMessage = errorData.message;
+                        }
+                    } catch (_ignored) {}
+                    throw new Error(errorMessage);
                 }
 
                 alert('Statement sent successfully');
             } catch (error) {
                 console.error('Error sending statement:', error);
-                alert('Failed to send statement. Please try again later.');
+                alert(`Failed to send statement: ${error.message}`);
             }
         }
 
-        async function sendAllStatementsByPhone(mobile) {
-            try {
-                const response = await fetch(`http://localhost:5001/api/payments/send-statements/${mobile}`, {
-                    method: 'POST'
-                });
+        function getFilteredPayments() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase().trim();
+            if (!searchInput) {
+                return paymentCache;
+            }
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+            return paymentCache.filter((payment) => {
+                const combined = [
+                    payment.name,
+                    payment.mobile,
+                    payment.email,
+                    payment.type,
+                    payment.amount,
+                    payment.utrNumber,
+                    payment.chitsPlan,
+                    payment.status,
+                ]
+                    .map((value) => String(value || '').toLowerCase())
+                    .join(' ');
+
+                return combined.includes(searchInput);
+            });
+        }
+
+        async function sendAllStatements() {
+            const filteredPayments = getFilteredPayments().filter((payment) => payment && payment._id);
+
+            if (filteredPayments.length === 0) {
+                alert('No matching payments found to send statements.');
+                return;
+            }
+
+            let successCount = 0;
+            let failureCount = 0;
+
+            for (const payment of filteredPayments) {
+                try {
+                    const response = await fetch(`${PAYMENT_API_BASE}/api/bank-details/${payment._id}/send-statement`, {
+                        method: 'POST'
+                    });
+
+                    if (!response.ok) {
+                        let errorMessage = `HTTP error! Status: ${response.status}`;
+                        try {
+                            const errorData = await response.json();
+                            if (errorData && errorData.message) {
+                                errorMessage = errorData.message;
+                            }
+                        } catch (_ignored) {}
+                        console.error(`Statement send failed for ${payment._id}:`, errorMessage);
+                        failureCount += 1;
+                        continue;
+                    }
+
+                    successCount += 1;
+                } catch (error) {
+                    console.error('Error sending statement for payment:', payment._id, error);
+                    failureCount += 1;
                 }
+            }
 
-                alert('All statements sent successfully');
-            } catch (error) {
-                console.error('Error sending all statements:', error);
-                alert('Failed to send all statements. Please try again later.');
+            if (failureCount === 0) {
+                alert(`All ${successCount} statements sent successfully.`);
+            } else if (successCount === 0) {
+                alert('Failed to send statements. Please try again later.');
+            } else {
+                alert(`Sent ${successCount} statements. Failed ${failureCount}.`);
             }
         }
 
         function logout() {
-            fetch('http://localhost:4000/logout', {
+            fetch('http://localhost:5000/logout', {
                 method: 'POST',
                 credentials: 'include',
             })
@@ -469,16 +776,7 @@
         }
 
         function toggleSidebar() {
-            let sidebar = document.querySelector('.sidebar');
-            let content = document.querySelector('.content');
-
-            if (sidebar.style.width === "250px" || sidebar.style.width === "") {
-                sidebar.style.width = "60px";
-                content.style.marginLeft = "60px";
-            } else {
-                sidebar.style.width = "250px";
-                content.style.marginLeft = "250px";
-            }
+            document.body.classList.toggle('sidebar-open');
         }
 
         document.addEventListener('DOMContentLoaded', fetchData);
@@ -489,3 +787,6 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
+
+
+

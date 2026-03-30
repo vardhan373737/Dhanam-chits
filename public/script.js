@@ -1,5 +1,5 @@
 // public/script.js
-const apiUrl = 'http://localhost:5001/submissions';
+const apiUrl = 'http://localhost:5000/submissions';
 let formData = [];
 
 // Function to fetch submissions from the server

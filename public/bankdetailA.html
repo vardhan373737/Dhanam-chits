@@ -20,6 +20,12 @@
             background: #f5f6fa;
         }
 
+        body {
+            display: block !important;
+            min-height: 100vh;
+            background: #e0f7fa;
+        }
+
         /* Sidebar */
         .sidebar {
             width: 250px;
@@ -251,7 +257,122 @@
         .btn-delete:hover {
             background: #c82333;
         }
+
+        .bank-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .bank-toolbar h1 {
+            margin: 0;
+            color: #0f2a3f;
+            text-shadow: none;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+        }
+
+        .toolbar-btn {
+            border: none;
+            padding: 9px 14px;
+            border-radius: 10px;
+            background: linear-gradient(120deg, #0b607f, #1f8a70);
+            color: #ffffff;
+            font-weight: 700;
+            box-shadow: 0 8px 18px rgba(10, 43, 64, 0.22);
+        }
+
+        .toolbar-btn:hover {
+            filter: brightness(1.08);
+        }
+
+        .quick-stats {
+            margin-bottom: 14px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: linear-gradient(120deg, rgba(12, 55, 86, 0.94), rgba(24, 119, 145, 0.9));
+            color: #f1f8ff;
+            border-radius: 12px;
+            padding: 12px 14px;
+            box-shadow: 0 8px 20px rgba(9, 40, 65, 0.2);
+        }
+
+        .stat-card .label {
+            display: block;
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .value {
+            font-size: 1.28rem;
+            font-weight: 800;
+        }
+
+        .dashboard-container {
+            background: rgba(255, 255, 255, 0.84);
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            border-radius: 14px;
+            box-shadow: 0 12px 26px rgba(16, 49, 75, 0.16);
+            padding: 10px;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .action-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .content {
+            overflow-x: hidden;
+        }
+
+        .btn-logout {
+            display: none;
+        }
+
+        @media (max-width: 576px) {
+            .bank-toolbar {
+                flex-direction: row;
+                align-items: flex-start;
+                justify-content: space-between;
+            }
+
+            .bank-toolbar h1 {
+                font-size: 2rem;
+                line-height: 1.05;
+                max-width: calc(100% - 120px);
+            }
+
+            .toolbar-btn {
+                margin-left: auto;
+                padding: 8px 12px;
+            }
+
+            .quick-stats {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                width: max-content;
+                min-width: 920px;
+                white-space: nowrap;
+            }
+        }
     </style>
+    <link rel="stylesheet" href="admin-sidebar.css">
+    <link rel="stylesheet" href="index-theme.css">
 </head>
 <body>
 
@@ -273,7 +394,21 @@
 
     <!-- Content -->
     <div class="content">
-        <h1>Bank Details</h1>
+        <div class="bank-toolbar">
+            <h1>Bank Details</h1>
+            <button class="toolbar-btn" onclick="fetchBankDetails()">Refresh</button>
+        </div>
+
+        <div class="quick-stats">
+            <div class="stat-card">
+                <span class="label">Total Bank Records</span>
+                <span class="value" id="total-bank-records">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="label">Unique Mobile Numbers</span>
+                <span class="value" id="unique-mobiles">0</span>
+            </div>
+        </div>
 
         <div class="dashboard-container">
             <table>
@@ -300,7 +435,7 @@
     <script>
         async function fetchBankDetails() {
             try {
-                const response = await fetch('http://localhost:5001/api/bankdetails'); 
+                const response = await fetch('http://localhost:5000/api/bankdetails'); 
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
@@ -313,6 +448,14 @@
                     throw new Error('Invalid data format received');
                 }
 
+                document.getElementById('total-bank-records').textContent = data.length;
+                document.getElementById('unique-mobiles').textContent = new Set(data.map((item) => item.mobile)).size;
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; font-weight:600; color:#264653;">No bank records found.</td></tr>';
+                    return;
+                }
+
                 data.forEach((bankDetail) => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
@@ -323,8 +466,10 @@
                         <td>${bankDetail.bankName}</td>
                         <td>${bankDetail.mobile}</td>
                         <td>
-                            <button class="btn-edit" onclick="editBankDetail('${bankDetail._id}')">Edit</button>
-                            <button class="btn-delete" onclick="deleteBankDetail('${bankDetail._id}')">Delete</button>
+                            <div class="action-wrap">
+                                <button class="btn-edit" onclick="editBankDetail('${bankDetail._id}')">Edit</button>
+                                <button class="btn-delete" onclick="deleteBankDetail('${bankDetail._id}')">Delete</button>
+                            </div>
                         </td>
                     `;
                     tableBody.appendChild(row);
@@ -348,7 +493,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:5001/api/bank-details/${id}`, {
+                const response = await fetch(`http://localhost:5000/api/bank-details/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -382,7 +527,7 @@
 
             try {
                 console.log(`Attempting to delete bank detail with ID: ${id}`); // Add logging
-                const response = await fetch(`http://localhost:5001/api/bank-details/${id}`, {
+                const response = await fetch(`http://localhost:5000/api/bank-details/${id}`, {
                     method: 'DELETE'
                 });
 
@@ -404,7 +549,7 @@
         }
 
         function logout() {
-            fetch('http://localhost:4000/logout', {
+            fetch('http://localhost:5000/logout', {
                 method: 'POST',
                 credentials: 'include',
             })
@@ -420,16 +565,7 @@
         }
 
         function toggleSidebar() {
-            let sidebar = document.querySelector('.sidebar');
-            let content = document.querySelector('.content');
-
-            if (sidebar.style.width === "250px" || sidebar.style.width === "") {
-                sidebar.style.width = "60px";
-                content.style.marginLeft = "60px";
-            } else {
-                sidebar.style.width = "250px";
-                content.style.marginLeft = "250px";
-            }
+            document.body.classList.toggle('sidebar-open');
         }
 
         document.addEventListener('DOMContentLoaded', fetchBankDetails);
@@ -440,3 +576,6 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
+
+
+

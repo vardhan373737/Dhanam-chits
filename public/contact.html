@@ -142,6 +142,8 @@
             text-decoration: none;
         }
     </style>
+    <link rel="stylesheet" href="premium-shared.css">
+    <link rel="stylesheet" href="index-theme.css">
 </head>
 
 <body>
@@ -230,6 +232,29 @@
     </footer>
 
     <script>
+        const CONTACT_API_BASES = ['http://localhost:5000', 'http://localhost:5005'];
+
+        async function postContactWithFallback(payload) {
+            let lastError = null;
+            for (const base of CONTACT_API_BASES) {
+                try {
+                    const response = await fetch(`${base}/api/contact`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    return response;
+                } catch (error) {
+                    lastError = error;
+                }
+            }
+
+            throw lastError || new Error('No backend is reachable');
+        }
+
         document.getElementById('contact-form').addEventListener('submit', async function(event) {
             event.preventDefault(); // Prevent the default form submission
 
@@ -238,13 +263,7 @@
             const mobile = document.getElementById('mobile').value;
             const message = document.getElementById('message').value;
 
-            const response = await fetch('http://localhost:5005/api/contact', { // Update port to 5005
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ name, email, mobile, message })
-            });
+            const response = await postContactWithFallback({ name, email, mobile, message });
 
             if (response.ok) {
                 document.getElementById('success-alert').style.display = 'block';

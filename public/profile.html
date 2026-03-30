@@ -70,6 +70,7 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
     </style>
+    <link rel="stylesheet" href="index-theme.css">
 </head>
 <body>
     <!-- Navigation Bar -->
@@ -117,7 +118,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:5001/api/profile?mobile=${user.mobile}`);
+                const response = await fetch(`http://localhost:5000/api/profile?mobile=${user.mobile}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }

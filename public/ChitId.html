@@ -148,6 +148,7 @@
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="index-theme.css">
 </head>
 <body>
     <header>
@@ -256,7 +257,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:5001/api/profile?mobile=${user.mobile}`);
+                const response = await fetch(`http://localhost:5000/api/profile?mobile=${user.mobile}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
@@ -280,7 +281,7 @@
             const month = document.getElementById('month').value;
 
             try {
-                const response = await fetch('http://localhost:5001/api/chit-ids', {
+                const response = await fetch('http://localhost:5000/api/chit-ids', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ chitId, email, name, mobile, month })
@@ -301,7 +302,7 @@
 
         async function loadChitIdDetails(mobile) {
             try {
-                const response = await fetch(`http://localhost:5001/api/chit-ids/mobile/${mobile}`);
+                const response = await fetch(`http://localhost:5000/api/chit-ids/mobile/${mobile}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
@@ -346,7 +347,7 @@
             }
 
             try {
-                const response = await fetch('http://localhost:5001/api/chit-ids/approve', {
+                const response = await fetch('http://localhost:5000/api/chit-ids/approve', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -372,7 +373,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:5001/api/chit-ids/${id}`, {
+                const response = await fetch(`http://localhost:5000/api/chit-ids/${id}`, {
                     method: 'DELETE'
                 });
 

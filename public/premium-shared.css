@@ -1,0 +1,272 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+
+:root {
+    --bg-deep: #082032;
+    --bg-mid: #0f3b52;
+    --bg-soft: #1f8a70;
+    --card-bg: rgba(255, 255, 255, 0.92);
+    --text-main: #0d1b2a;
+    --text-muted: #425466;
+    --brand-accent: #f5a524;
+    --brand-accent-2: #ffcc70;
+    --brand-primary: #0b607f;
+    --line-soft: rgba(13, 27, 42, 0.12);
+    --shadow-lg: 0 20px 55px rgba(8, 32, 50, 0.28);
+    --shadow-md: 0 12px 30px rgba(8, 32, 50, 0.18);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Outfit', sans-serif !important;
+    color: var(--text-main) !important;
+    background: radial-gradient(circle at 8% 18%, rgba(255, 204, 112, 0.35), transparent 35%),
+                radial-gradient(circle at 86% 10%, rgba(31, 138, 112, 0.4), transparent 45%),
+                linear-gradient(145deg, var(--bg-deep), var(--bg-mid) 45%, #12394d) !important;
+    min-height: 100vh;
+    margin: 0;
+    position: relative;
+    overflow-x: hidden;
+    display: block !important;
+}
+
+header {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+}
+
+header .navbar,
+.navbar {
+    background: linear-gradient(110deg, rgba(8, 32, 50, 0.95), rgba(15, 59, 82, 0.94), rgba(31, 138, 112, 0.88)) !important;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+}
+
+.navbar-brand,
+.navbar-brand h1 {
+    font-family: 'Space Grotesk', sans-serif !important;
+    letter-spacing: 0.3px;
+}
+
+.navbar-brand {
+    max-width: calc(100% - 64px);
+}
+
+.navbar-brand h1 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.navbar-nav .nav-link {
+    color: #eff7ff !important;
+    font-weight: 600 !important;
+    border-radius: 999px;
+    padding: 0.45rem 0.95rem !important;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+    color: #06131d !important;
+    background: linear-gradient(120deg, var(--brand-accent), var(--brand-accent-2));
+    text-decoration: none !important;
+    transform: translateY(-1px);
+}
+
+main,
+.container,
+.form-container,
+.payment-form {
+    background: var(--card-bg) !important;
+    color: var(--text-main) !important;
+    border: 1px solid rgba(255, 255, 255, 0.58);
+    border-radius: 20px !important;
+    box-shadow: var(--shadow-lg) !important;
+}
+
+.form-container,
+.payment-form {
+    max-width: 520px !important;
+    margin: 3rem auto !important;
+}
+
+main.form-container {
+    width: min(92%, 520px) !important;
+}
+
+body > header,
+body > header .navbar {
+    width: 100%;
+}
+
+.container {
+    margin-top: 3rem !important;
+    margin-bottom: 2.2rem !important;
+}
+
+h1,
+h2,
+h3,
+h4 {
+    font-family: 'Space Grotesk', sans-serif !important;
+    color: #dae0e5 !important;
+    letter-spacing: 0.2px;
+}
+
+p,
+label,
+small,
+span,
+td,
+th,
+li,
+caption {
+    color: var(--text-muted);
+}
+
+input,
+select,
+textarea,
+.form-control {
+    border: 1px solid var(--line-soft) !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-radius: 12px !important;
+    padding: 0.75rem 0.9rem !important;
+    box-shadow: inset 0 1px 1px rgba(8, 32, 50, 0.05);
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.form-control:focus {
+    border-color: #1695a3 !important;
+    box-shadow: 0 0 0 0.2rem rgba(22, 149, 163, 0.22) !important;
+}
+
+button,
+.btn,
+.btn-primary,
+.back-button {
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    background: linear-gradient(120deg, #0b607f, #1f8a70) !important;
+    color: #f4fbff !important;
+    box-shadow: var(--shadow-md) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+button:hover,
+.btn:hover,
+.btn-primary:hover,
+.back-button:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.08);
+    color: #ffffff !important;
+}
+
+.btn-secondary {
+    background: linear-gradient(120deg, #415a77, #2a4365) !important;
+}
+
+.card {
+    border-radius: 18px !important;
+    border: 1px solid rgba(13, 27, 42, 0.09) !important;
+    box-shadow: var(--shadow-md) !important;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+}
+
+table {
+    border-radius: 16px !important;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+th {
+    color: #e9f6ff !important;
+    background: linear-gradient(100deg, #0b607f, #1b7f6d) !important;
+    border-color: rgba(233, 246, 255, 0.2) !important;
+}
+
+td {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(13, 27, 42, 0.09) !important;
+}
+
+tr:nth-child(even) td {
+    background: rgba(238, 247, 255, 0.85);
+}
+
+.notice,
+.scrolling-notice {
+    margin: 1rem auto;
+    max-width: 920px;
+    border-radius: 12px;
+    background: linear-gradient(120deg, #ffefbd, #ffe1a6) !important;
+    color: #5d4308 !important;
+    border: 1px solid rgba(245, 165, 36, 0.4);
+}
+
+footer {
+    background: linear-gradient(110deg, rgba(8, 32, 50, 0.96), rgba(15, 59, 82, 0.92)) !important;
+    color: #e5f2ff !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+footer p,
+footer a,
+footer i,
+.social-links a {
+    color: #d9ebfb !important;
+}
+
+footer a:hover,
+.social-links a:hover {
+    color: var(--brand-accent-2) !important;
+    text-decoration: none !important;
+}
+
+@media (max-width: 768px) {
+    .form-container,
+    .payment-form,
+    .container {
+        margin-top: 1.5rem !important;
+        border-radius: 16px !important;
+    }
+
+    .navbar-brand h1 {
+        font-size: 1.12rem !important;
+    }
+
+    .navbar-nav {
+        margin-top: 0.8rem;
+        gap: 0.25rem;
+    }
+
+    .navbar-collapse {
+        margin-top: 0.6rem;
+        padding: 0.6rem;
+        border-radius: 12px;
+        background: rgba(8, 32, 50, 0.78);
+    }
+
+    .navbar-nav .nav-link {
+        display: block;
+    }
+
+    main.form-container {
+        margin-top: 1.2rem !important;
+        margin-bottom: 2rem !important;
+    }
+}

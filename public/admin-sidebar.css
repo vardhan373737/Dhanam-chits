@@ -1,0 +1,198 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap');
+
+:root {
+    --admin-navy: #071a2f;
+    --admin-blue: #0f3e66;
+    --admin-teal: #0c8b7c;
+    --admin-gold: #ffd17a;
+    --admin-ice: #ebf6ff;
+    --admin-shadow: 0 18px 40px rgba(5, 20, 35, 0.35);
+}
+
+.sidebar {
+    width: 270px !important;
+    height: 100vh !important;
+    background: linear-gradient(170deg, var(--admin-navy) 0%, var(--admin-blue) 46%, var(--admin-teal) 100%) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: var(--admin-shadow);
+    backdrop-filter: blur(8px);
+    padding: 22px 16px !important;
+    position: fixed;
+    left: 0;
+    top: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.sidebar h2 {
+    color: #ffffff !important;
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin: 0 0 1.2rem;
+    letter-spacing: 0.3px;
+    text-align: left !important;
+    padding: 0.55rem 0.75rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    text-shadow: none !important;
+}
+
+.sidebar a {
+    color: var(--admin-ice) !important;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px !important;
+    margin: 8px 0 !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    background: rgba(255, 255, 255, 0.07);
+    transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    text-shadow: none !important;
+}
+
+.sidebar a i {
+    width: 20px;
+    text-align: center;
+    margin-right: 0 !important;
+    color: var(--admin-gold);
+}
+
+.sidebar a .menu-text {
+    font-family: 'Sora', sans-serif;
+    font-weight: 600;
+    font-size: 0.92rem;
+    letter-spacing: 0.2px;
+    display: inline !important;
+    color: var(--admin-ice) !important;
+}
+
+.sidebar a:hover {
+    transform: translateX(4px);
+    background: rgba(255, 255, 255, 0.16) !important;
+    border-color: rgba(255, 209, 122, 0.45);
+    box-shadow: 0 10px 22px rgba(3, 14, 27, 0.32) !important;
+}
+
+.sidebar a[href$='admin.html'],
+.sidebar a[href$='users.html'],
+.sidebar a[href$='bankdetailA.html'],
+.sidebar a[href$='ChitidA.html'],
+.sidebar a[href$='borrowA.html'],
+.sidebar a[href$='paymentA.html'],
+.sidebar a[href$='contactA.html'] {
+    position: relative;
+}
+
+.sidebar a[href$='admin.html']::after,
+.sidebar a[href$='users.html']::after,
+.sidebar a[href$='bankdetailA.html']::after,
+.sidebar a[href$='ChitidA.html']::after,
+.sidebar a[href$='borrowA.html']::after,
+.sidebar a[href$='paymentA.html']::after,
+.sidebar a[href$='contactA.html']::after {
+    content: '';
+    margin-left: auto;
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: transparent;
+    transition: background-color 0.2s ease;
+}
+
+body:has(a[href='admin.html'][class*='active']) .sidebar a[href$='admin.html']::after,
+body:has(a[href='users.html'][class*='active']) .sidebar a[href$='users.html']::after,
+body:has(a[href='bankdetailA.html'][class*='active']) .sidebar a[href$='bankdetailA.html']::after,
+body:has(a[href='ChitidA.html'][class*='active']) .sidebar a[href$='ChitidA.html']::after,
+body:has(a[href='borrowA.html'][class*='active']) .sidebar a[href$='borrowA.html']::after,
+body:has(a[href='paymentA.html'][class*='active']) .sidebar a[href$='paymentA.html']::after,
+body:has(a[href='contactA.html'][class*='active']) .sidebar a[href$='contactA.html']::after {
+    background: var(--admin-gold);
+}
+
+.logout-btn {
+    background: linear-gradient(120deg, #9f232f, #cf3f4e) !important;
+    border-color: rgba(255, 255, 255, 0.22) !important;
+    justify-content: center;
+    margin-top: 1.1rem !important;
+}
+
+.logout-btn i,
+.logout-btn .menu-text {
+    color: #fff1f2 !important;
+}
+
+.content {
+    margin-left: 270px !important;
+    width: calc(100% - 270px) !important;
+}
+
+.menu-toggle {
+    display: none;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 1200;
+    border: none;
+    border-radius: 10px;
+    padding: 9px 12px;
+    background: linear-gradient(120deg, var(--admin-navy), var(--admin-blue));
+    color: #ffffff;
+    box-shadow: 0 10px 20px rgba(4, 15, 26, 0.35);
+}
+
+@media (max-width: 768px) {
+    .menu-toggle {
+        display: block !important;
+    }
+
+    .sidebar {
+        width: 270px !important;
+        padding: 56px 12px 16px !important;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        z-index: 1100;
+    }
+
+    body.sidebar-open .sidebar {
+        transform: translateX(0);
+    }
+
+    body.sidebar-open::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: rgba(4, 18, 30, 0.34);
+        z-index: 1090;
+    }
+
+    .sidebar h2 {
+        display: block;
+    }
+
+    .sidebar a {
+        justify-content: flex-start;
+    }
+
+    .sidebar a span,
+    .sidebar a .menu-text {
+        display: inline !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .menu-toggle {
+        top: 14px;
+        left: 12px;
+    }
+
+    .content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding-top: 58px !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+}

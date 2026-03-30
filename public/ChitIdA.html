@@ -21,6 +21,12 @@
             color: #000000; /* Changed text color to black */
         }
 
+        /* Prevent double horizontal offset: shared sidebar CSS already positions content. */
+        body {
+            display: block !important;
+            min-height: 100vh;
+        }
+
         /* Sidebar */
         .sidebar {
             width: 250px;
@@ -267,44 +273,186 @@
             background: #c82333;
         }
 
+        .table-container {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 6px;
+            border-radius: 10px;
+        }
+
+        .content,
+        .details-box {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .content {
+            overflow-x: hidden;
+            padding: 20px 8px !important;
+        }
+
+        .details-box {
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+        }
+
+        .details-box h2 {
+            text-align: left;
+            margin: 0 0 16px;
+        }
+
+        .table-container,
+        .table {
+            margin-left: 0 !important;
+        }
+
+        .chit-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .chit-toolbar h2 {
+            margin: 0;
+            color: #0f2a3f;
+            font-weight: 800;
+            text-shadow: none;
+        }
+
+        .toolbar-btn {
+            border: none;
+            padding: 9px 14px;
+            border-radius: 10px;
+            background: linear-gradient(120deg, #0b607f, #1f8a70);
+            color: #ffffff;
+            font-weight: 700;
+            box-shadow: 0 8px 18px rgba(10, 43, 64, 0.22);
+        }
+
+        .toolbar-btn:hover {
+            filter: brightness(1.08);
+        }
+
+        .quick-stats {
+            margin-bottom: 14px;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: linear-gradient(120deg, rgba(12, 55, 86, 0.94), rgba(24, 119, 145, 0.9));
+            color: #f1f8ff;
+            border-radius: 12px;
+            padding: 12px 14px;
+            box-shadow: 0 8px 20px rgba(9, 40, 65, 0.2);
+        }
+
+        .stat-card .label {
+            display: block;
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .value {
+            font-size: 1.28rem;
+            font-weight: 800;
+        }
+
+        .back-button {
+            margin-top: 16px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(120deg, #0b607f, #1f8a70);
+            color: #ffffff;
+            font-weight: 700;
+            box-shadow: 0 10px 20px rgba(10, 43, 64, 0.22);
+            transition: transform 0.2s ease, filter 0.2s ease;
+        }
+
+        .back-button:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.06);
+        }
+
         /* Mobile Styles */
-        @media (max-width: 576px) {
-            table {
-                display: block;
+        @media (max-width: 768px) {
+            .navbar-brand {
+                display: none;
+            }
+
+            .table-container {
                 overflow-x: auto;
+            }
+
+            table {
+                width: max-content;
+                min-width: 760px;
+                display: table !important;
                 white-space: nowrap;
             }
 
-            table th, table td {
-                display: block;
-                text-align: left;
-                padding: 8px;
-                border: none;
+            thead {
+                display: table-header-group !important;
             }
 
-            table th {
-                background-color: rgba(0, 123, 255, 0.7);
-                color: #fff;
-                text-align: center;
+            tbody {
+                display: table-row-group !important;
             }
 
-            table tr {
-                display: block;
-                margin-bottom: 10px;
-                border: 1px solid rgba(255, 255, 255, 0.3);
-                border-radius: 8px;
-                overflow: hidden;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            tr {
+                display: table-row !important;
+                margin-bottom: 0 !important;
+                border: 0 !important;
+                box-shadow: none !important;
             }
 
-            table tr:hover {
-                background-color: rgba(0, 123, 255, 0.2);
-                transition: 0.3s ease-in-out;
+            th,
+            td {
+                display: table-cell !important;
+                text-align: center !important;
+                border: 1px solid rgba(255, 255, 255, 0.3) !important;
+                padding: 7px !important;
+                font-size: 0.86rem;
+            }
+
+            .back-button {
+                width: 100%;
+            }
+
+            .quick-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .chit-toolbar {
+                flex-direction: row;
+                align-items: flex-start;
+                justify-content: space-between;
+            }
+
+            .chit-toolbar h2 {
+                font-size: 2rem;
+                line-height: 1.05;
+                max-width: calc(100% - 120px);
+            }
+
+            .toolbar-btn {
+                margin-left: auto;
+                padding: 8px 12px;
             }
         }
     </style>
+    <link rel="stylesheet" href="admin-sidebar.css">
+    <link rel="stylesheet" href="index-theme.css">
 </head>
 <body>
+    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark">
             <a class="navbar-brand" href="#">Dhanam Chits Pvt. Ltd</a>
@@ -325,9 +473,28 @@
         </nav>
     </header>
 
-    <div class="container">
+    <div class="content">
         <div class="details-box">
-            <h2>Manage Chit IDs</h2>
+            <div class="chit-toolbar">
+                <h2>Manage Chit IDs</h2>
+                <button class="toolbar-btn" onclick="fetchChitIds()">Refresh</button>
+            </div>
+
+            <div class="quick-stats">
+                <div class="stat-card">
+                    <span class="label">Total Chit IDs</span>
+                    <span class="value" id="total-chits">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">Approved Chits</span>
+                    <span class="value" id="approved-chits">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">Pending Chits</span>
+                    <span class="value" id="pending-chits">0</span>
+                </div>
+            </div>
+
             <div class="table-container">
                 <table class="table table-striped">
                     <thead>
@@ -357,12 +524,25 @@
     <script>
         async function fetchChitIds() {
             try {
-                const response = await fetch('http://localhost:5001/api/chit-ids');
+                const response = await fetch('http://localhost:5000/api/chit-ids');
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 
                 const data = await response.json();
                 const tableBody = document.getElementById('chitIdTable');
                 tableBody.innerHTML = '';
+
+                if (!Array.isArray(data)) {
+                    throw new Error('Invalid data format received');
+                }
+
+                document.getElementById('total-chits').textContent = data.length;
+                document.getElementById('approved-chits').textContent = data.filter((item) => item.status === 'Approved').length;
+                document.getElementById('pending-chits').textContent = data.filter((item) => item.status !== 'Approved').length;
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center; font-weight:600; color:#264653;">No Chit IDs found.</td></tr>';
+                    return;
+                }
 
                 data.forEach((chit) => {
                     const row = document.createElement('tr');
@@ -401,7 +581,7 @@
             const totalPaid = document.getElementById(`totalPaid-${id}`).value;
 
             try {
-                const response = await fetch(`http://localhost:5001/api/chit-ids/${id}/status`, {
+                const response = await fetch(`http://localhost:5000/api/chit-ids/${id}/status`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status, totalBalance, totalPaid })
@@ -421,7 +601,7 @@
             if (!confirm('Are you sure you want to delete this Chit ID?')) return;
 
             try {
-                const response = await fetch(`http://localhost:5001/api/chit-ids/${id}`, {
+                const response = await fetch(`http://localhost:5000/api/chit-ids/${id}`, {
                     method: 'DELETE'
                 });
 
@@ -435,6 +615,10 @@
             }
         }
 
+        function toggleSidebar() {
+            document.body.classList.toggle('sidebar-open');
+        }
+
         document.addEventListener('DOMContentLoaded', fetchChitIds);
     </script>
 
@@ -443,3 +627,5 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
+
+

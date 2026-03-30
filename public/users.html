@@ -21,6 +21,12 @@
             color: #000000; /* Changed text color to black */
         }
 
+        /* Shared admin-sidebar.css handles sidebar/content layout; avoid double offsets on mobile. */
+        body {
+            display: block !important;
+            min-height: 100vh;
+        }
+
         /* Sidebar */
         .sidebar {
             width: 250px;
@@ -267,42 +273,141 @@
             background: #c82333;
         }
 
+        .user-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .user-toolbar h1 {
+            margin: 0;
+            color: #0f2a3f;
+            text-shadow: none;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: linear-gradient(120deg, rgba(12, 55, 86, 0.94), rgba(24, 119, 145, 0.9));
+            color: #f1f8ff;
+            border-radius: 12px;
+            padding: 12px 14px;
+            box-shadow: 0 8px 20px rgba(9, 40, 65, 0.2);
+        }
+
+        .stat-card .label {
+            display: block;
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .value {
+            font-size: 1.28rem;
+            font-weight: 800;
+        }
+
+        .dashboard-container {
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 14px;
+            box-shadow: 0 12px 26px rgba(16, 49, 75, 0.16);
+            padding: 10px;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .btn-logout {
+            border: none;
+            padding: 9px 14px;
+            border-radius: 10px;
+            background: linear-gradient(120deg, #0b607f, #1f8a70);
+            color: #ffffff;
+            font-weight: 700;
+            box-shadow: 0 8px 18px rgba(10, 43, 64, 0.22);
+        }
+
+        .user-toolbar .btn-logout {
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 74px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.78rem;
+            text-transform: capitalize;
+            letter-spacing: 0.2px;
+            color: #fff;
+        }
+
+        .role-badge.admin {
+            background: linear-gradient(120deg, #7a1a39, #cf3f4e);
+        }
+
+        .role-badge.user {
+            background: linear-gradient(120deg, #0b607f, #1f8a70);
+        }
+
+        .action-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+        }
+
         /* Mobile Styles */
         @media (max-width: 576px) {
+            .user-toolbar {
+                flex-direction: row;
+                align-items: flex-start;
+                justify-content: space-between;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-container {
+                padding: 8px;
+            }
+
             table {
-                display: block;
-                overflow-x: auto;
+                width: max-content;
+                min-width: 880px;
                 white-space: nowrap;
             }
 
-            table th, table td {
-                display: block;
-                text-align: left;
-                padding: 8px;
-                border: none;
+            .user-toolbar h1 {
+                font-size: 1.95rem;
+                line-height: 1.05;
+                max-width: calc(100% - 120px);
             }
 
-            table th {
-                background-color: rgba(0, 123, 255, 0.7);
-                color: #fff;
-                text-align: center;
-            }
-
-            table tr {
-                display: block;
-                margin-bottom: 10px;
-                border: 1px solid rgba(255, 255, 255, 0.3);
-                border-radius: 8px;
-                overflow: hidden;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-            }
-
-            table tr:hover {
-                background-color: rgba(0, 123, 255, 0.2);
-                transition: 0.3s ease-in-out;
+            .user-toolbar .btn-logout {
+                margin-top: 4px;
+                padding: 8px 12px;
             }
         }
     </style>
+    <link rel="stylesheet" href="admin-sidebar.css">
+    <link rel="stylesheet" href="index-theme.css">
 </head>
 <body>
 
@@ -324,7 +429,25 @@
 
     <!-- Content -->
     <div class="content">
-        <h1>User Details</h1>
+        <div class="user-toolbar">
+            <h1>User & Admin Directory</h1>
+            <button class="btn-logout" onclick="fetchUserDetails()">Refresh</button>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <span class="label">Total Accounts</span>
+                <span class="value" id="total-accounts">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="label">Admins</span>
+                <span class="value" id="total-admins">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="label">Users</span>
+                <span class="value" id="total-users">0</span>
+            </div>
+        </div>
 
         <div class="dashboard-container">
             <table>
@@ -333,6 +456,7 @@
                         <th>Name</th>
                         <th>Email</th>
                         <th>Mobile</th>
+                        <th>Role</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -341,14 +465,27 @@
                 </tbody>
             </table>
         </div>
-
-        <button class="btn-logout" onclick="logout()">Logout</button>
     </div>
 
     <script>
+        const AUTH_API_BASES = ['http://localhost:5000', 'http://localhost:4000'];
+
+        async function fetchAuthApi(path, options = {}) {
+            let lastError = null;
+            for (const base of AUTH_API_BASES) {
+                try {
+                    return await fetch(`${base}${path}`, options);
+                } catch (error) {
+                    lastError = error;
+                }
+            }
+
+            throw lastError || new Error('No auth backend is reachable');
+        }
+
         async function fetchUserDetails() {
             try {
-                const response = await fetch('http://localhost:4000/api/users'); 
+                const response = await fetchAuthApi('/api/users'); 
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
@@ -361,16 +498,32 @@
                     throw new Error('Invalid data format received');
                 }
 
+                const adminCount = data.filter((user) => user.role === 'admin').length;
+                const userCount = data.filter((user) => user.role !== 'admin').length;
+
+                document.getElementById('total-accounts').textContent = data.length;
+                document.getElementById('total-admins').textContent = adminCount;
+                document.getElementById('total-users').textContent = userCount;
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; font-weight:600; color:#264653;">No accounts found.</td></tr>';
+                    return;
+                }
+
                 data.forEach((user) => {
+                    const role = user.role || 'user';
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${user.fullname}</td>
                         <td>${user.email}</td>
                         <td>${user.mobile}</td>
+                        <td><span class="role-badge ${role === 'admin' ? 'admin' : 'user'}">${role}</span></td>
                         <td>
-                            <button class="btn-action" onclick="viewUser('${user._id}')">View</button>
-                            <button class="btn-password" onclick="changePassword('${user._id}')">Change Password</button>
-                            <button class="btn-delete" onclick="deleteUser('${user._id}')">Delete</button>
+                            <div class="action-wrap">
+                                <button class="btn-action" onclick="viewUser('${user._id || user.id}')">View</button>
+                                <button class="btn-password" onclick="changePassword('${user._id || user.id}')">Change Password</button>
+                                <button class="btn-delete" onclick="deleteUser('${user._id || user.id}')">Delete</button>
+                            </div>
                         </td>
                     `;
                     tableBody.appendChild(row);
@@ -393,7 +546,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:4000/api/users/${userId}/password`, {
+                const response = await fetchAuthApi(`/api/users/${userId}/password`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -418,7 +571,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:4000/api/users/${userId}`, {
+                const response = await fetchAuthApi(`/api/users/${userId}`, {
                     method: 'DELETE'
                 });
 
@@ -435,7 +588,7 @@
         }
 
         function logout() {
-            fetch('http://localhost:4000/logout', {
+            fetchAuthApi('/logout', {
                 method: 'POST',
                 credentials: 'include',
             })
@@ -451,16 +604,7 @@
         }
 
         function toggleSidebar() {
-            let sidebar = document.querySelector('.sidebar');
-            let content = document.querySelector('.content');
-
-            if (sidebar.style.width === "250px" || sidebar.style.width === "") {
-                sidebar.style.width = "60px";
-                content.style.marginLeft = "60px";
-            } else {
-                sidebar.style.width = "250px";
-                content.style.marginLeft = "250px";
-            }
+            document.body.classList.toggle('sidebar-open');
         }
 
         document.addEventListener('DOMContentLoaded', fetchUserDetails);
@@ -471,3 +615,6 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
+
+
+
