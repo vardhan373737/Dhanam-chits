@@ -77,10 +77,17 @@ create table if not exists public.borrows (
   email text,
   mobile text not null,
   amount numeric(12,2) not null,
+  aadhaar_document_path text,
+  pan_document_path text,
+  rc_document_path text,
   status public.borrow_status not null default 'Pending',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.borrows add column if not exists aadhaar_document_path text;
+alter table public.borrows add column if not exists pan_document_path text;
+alter table public.borrows add column if not exists rc_document_path text;
 
 create index if not exists idx_borrows_mobile on public.borrows (mobile);
 
@@ -118,6 +125,18 @@ create table if not exists public.feedback (
   rating integer not null check (rating between 1 and 5),
   created_at timestamptz not null default now()
 );
+
+create table if not exists public.auction_chat_messages (
+  id uuid primary key default gen_random_uuid(),
+  mobile text not null,
+  sender_role public.user_role not null,
+  sender_name text,
+  message text not null,
+  topic text not null default 'Chit Auction Lift',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_auction_chat_mobile_created_at on public.auction_chat_messages (mobile, created_at);
 
 drop trigger if exists trg_users_updated_at on public.users;
 create trigger trg_users_updated_at
@@ -164,6 +183,7 @@ alter table public.borrows enable row level security;
 alter table public.chit_ids enable row level security;
 alter table public.contacts enable row level security;
 alter table public.feedback enable row level security;
+alter table public.auction_chat_messages enable row level security;
 
 -- Server-side APIs using service-role key bypass RLS. Keep policy explicit anyway.
 drop policy if exists "service-role-users" on public.users;
@@ -218,6 +238,13 @@ with check (auth.role() = 'service_role');
 drop policy if exists "service-role-feedback" on public.feedback;
 create policy "service-role-feedback"
 on public.feedback
+for all
+using (auth.role() = 'service_role')
+with check (auth.role() = 'service_role');
+
+drop policy if exists "service-role-auction-chat" on public.auction_chat_messages;
+create policy "service-role-auction-chat"
+on public.auction_chat_messages
 for all
 using (auth.role() = 'service_role')
 with check (auth.role() = 'service_role');

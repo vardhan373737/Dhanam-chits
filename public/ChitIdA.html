@@ -381,6 +381,207 @@
             filter: brightness(1.06);
         }
 
+        .chat-admin-panel {
+            margin-top: 18px;
+            border: 1px solid rgba(15, 42, 63, 0.16);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 24px rgba(9, 40, 65, 0.2);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .chat-admin-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 14px;
+            background: linear-gradient(120deg, #0b607f, #1f8a70);
+            color: #f4fcff;
+            font-weight: 800;
+        }
+
+        .chat-admin-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            min-height: 380px;
+        }
+
+        .chat-thread-list {
+            border-right: 1px solid rgba(15, 42, 63, 0.12);
+            padding: 10px;
+            max-height: 460px;
+            overflow-y: auto;
+            background: rgba(8, 145, 178, 0.08);
+        }
+
+        .chat-thread-btn {
+            width: 100%;
+            text-align: left;
+            border: 1px solid rgba(15, 42, 63, 0.14);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #123752;
+            font-weight: 700;
+            padding: 9px;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+
+        .chat-thread-btn.active {
+            border-color: rgba(15, 118, 110, 0.55);
+            background: linear-gradient(120deg, rgba(15, 118, 110, 0.16), rgba(8, 145, 178, 0.16));
+        }
+
+        .chat-area {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .chat-meta {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(15, 42, 63, 0.12);
+            color: #234d69;
+            font-weight: 700;
+        }
+
+        .chat-messages {
+            flex: 1;
+            max-height: 320px;
+            overflow-y: auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: #f7fcff;
+        }
+
+        .chat-bubble {
+            max-width: min(82%, 520px);
+            border-radius: 12px;
+            color: #fff;
+            box-shadow: 0 8px 18px rgba(9, 31, 60, 0.16);
+            padding: 9px 10px;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .chat-bubble.user {
+            align-self: flex-start;
+            background: linear-gradient(120deg, #0f766e, #0891b2);
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-bubble.admin {
+            align-self: flex-end;
+            background: linear-gradient(120deg, #2f4f6f, #3a6f8a);
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-bubble small {
+            display: block;
+            margin-top: 5px;
+            font-size: 0.72rem;
+            opacity: 0.86;
+        }
+
+        .chat-delete-btn {
+            margin-top: 6px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(220, 53, 69, 0.9);
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            cursor: pointer;
+        }
+
+        .chat-poll-box {
+            display: grid;
+            gap: 6px;
+        }
+
+        .chat-poll-options {
+            display: grid;
+            gap: 5px;
+        }
+
+        .chat-poll-option {
+            border: none;
+            border-radius: 8px;
+            padding: 6px 8px;
+            text-align: left;
+            font-weight: 700;
+            color: #103752;
+            background: rgba(255, 255, 255, 0.92);
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .chat-poll-builder {
+            border-bottom: 1px solid rgba(15, 42, 63, 0.12);
+            padding: 10px;
+            display: grid;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.92);
+        }
+
+        .chat-poll-builder input {
+            border: 1px solid rgba(15, 42, 63, 0.18);
+            border-radius: 9px;
+            padding: 8px;
+            color: #123752;
+            font-weight: 600;
+        }
+
+        .chat-poll-builder button {
+            justify-self: start;
+            border: none;
+            border-radius: 9px;
+            background: linear-gradient(120deg, #cc7a00, #f59e0b);
+            color: #fff;
+            font-weight: 700;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .chat-compose {
+            border-top: 1px solid rgba(15, 42, 63, 0.12);
+            padding: 10px;
+            display: flex;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.92);
+        }
+
+        .chat-compose input {
+            flex: 1;
+            border: 1px solid rgba(15, 42, 63, 0.18);
+            border-radius: 10px;
+            padding: 9px;
+            color: #123752;
+            font-weight: 600;
+        }
+
+        .chat-compose button {
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(120deg, #0b607f, #1f8a70);
+            color: #fff;
+            font-weight: 700;
+            padding: 9px 12px;
+            cursor: pointer;
+        }
+
+        .chat-empty {
+            text-align: center;
+            margin-top: 22px;
+            color: #4b6982;
+            font-weight: 700;
+        }
+
         /* Mobile Styles */
         @media (max-width: 768px) {
             .navbar-brand {
@@ -445,6 +646,16 @@
             .toolbar-btn {
                 margin-left: auto;
                 padding: 8px 12px;
+            }
+
+            .chat-admin-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .chat-thread-list {
+                border-right: none;
+                border-bottom: 1px solid rgba(15, 42, 63, 0.12);
+                max-height: 180px;
             }
         }
     </style>
@@ -515,6 +726,29 @@
                     </tbody>
                 </table>
             </div>
+
+            <div class="chat-admin-panel">
+                <div class="chat-admin-head">
+                    <span>Auction Chat - Admin Console</span>
+                    <button class="toolbar-btn" type="button" onclick="loadAdminChatThreads()">Refresh Chat</button>
+                </div>
+                <div class="chat-admin-layout">
+                    <div class="chat-thread-list" id="adminChatThreads"></div>
+                    <div class="chat-area">
+                        <div class="chat-meta" id="adminChatMeta">Select a member thread</div>
+                        <form class="chat-poll-builder" id="adminPollForm">
+                            <input id="adminPollQuestion" type="text" maxlength="240" placeholder="Create poll question for this user" required>
+                            <input id="adminPollOptions" type="text" maxlength="400" placeholder="Options separated by comma (e.g. Lift this month, Lift next month)">
+                            <button type="submit">Create Poll</button>
+                        </form>
+                        <div class="chat-messages" id="adminChatMessages"></div>
+                        <form class="chat-compose" id="adminChatCompose">
+                            <input id="adminChatInput" type="text" maxlength="1200" placeholder="Reply to member about auction lifting..." required>
+                            <button type="submit">Send</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
         <button class="back-button" onclick="window.location.href='admin.html'">Back to Dashboard</button>
     </div>
@@ -522,6 +756,139 @@
    
 
     <script>
+        let activeChatMobile = '';
+        let adminChatPoller = null;
+
+        function getCurrentAdmin() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            return {
+                mobile: String(user.mobile || '').trim(),
+                name: String(user.fullname || user.name || 'Admin').trim(),
+            };
+        }
+
+        function formatChatDate(value) {
+            const d = new Date(value || '');
+            if (Number.isNaN(d.getTime())) {
+                return '';
+            }
+            return d.toLocaleString('en-IN');
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function renderAdminPoll(msg) {
+            const poll = msg.poll || {};
+            const options = Array.isArray(poll.options) ? poll.options : [];
+            const optionsHtml = options.map((opt) => {
+                const votes = Array.isArray(opt.votes) ? opt.votes.length : 0;
+                return `<div class="chat-poll-option"><span>${escapeHtml(opt.label)}</span><span>${votes}</span></div>`;
+            }).join('');
+
+            return `
+                <div class="chat-poll-box">
+                    <strong>${escapeHtml(poll.question || 'Poll')}</strong>
+                    <div class="chat-poll-options">${optionsHtml}</div>
+                </div>
+            `;
+        }
+
+        function renderAdminMessages(messages) {
+            const container = document.getElementById('adminChatMessages');
+            container.innerHTML = '';
+
+            if (!Array.isArray(messages) || messages.length === 0) {
+                container.innerHTML = '<div class="chat-empty">No messages in this thread.</div>';
+                return;
+            }
+
+            messages.forEach((msg) => {
+                const role = String(msg.senderRole || '').toLowerCase() === 'admin' ? 'admin' : 'user';
+                const bubble = document.createElement('div');
+                bubble.className = `chat-bubble ${role}`;
+                const bodyHtml = String(msg.messageType || '') === 'poll' ? renderAdminPoll(msg) : escapeHtml(msg.message || '');
+                bubble.innerHTML = `${bodyHtml}<small>${escapeHtml(msg.senderName || role)} • ${formatChatDate(msg.created_at)}</small><button class="chat-delete-btn" type="button" data-message-id="${escapeHtml(msg.id || msg._id || '')}">Delete</button>`;
+                container.appendChild(bubble);
+            });
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function loadAdminMessages() {
+            if (!activeChatMobile) {
+                renderAdminMessages([]);
+                return;
+            }
+
+            const admin = getCurrentAdmin();
+            const response = await fetch(`/api/chat/messages/${encodeURIComponent(activeChatMobile)}?requesterMobile=${encodeURIComponent(admin.mobile)}`);
+            const data = await response.json().catch(() => []);
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to load chat messages');
+            }
+
+            document.getElementById('adminChatMeta').textContent = `Conversation with: ${activeChatMobile}`;
+            renderAdminMessages(data);
+        }
+
+        async function loadAdminChatThreads() {
+            try {
+                const admin = getCurrentAdmin();
+                if (!admin.mobile) {
+                    document.getElementById('adminChatThreads').innerHTML = '<div class="chat-empty">Admin session missing. Re-login required.</div>';
+                    return;
+                }
+
+                const response = await fetch(`/api/chat/threads?requesterMobile=${encodeURIComponent(admin.mobile)}`);
+                const data = await response.json().catch(() => []);
+                if (!response.ok) {
+                    throw new Error(data.message || 'Failed to load chat threads');
+                }
+
+                const threadsContainer = document.getElementById('adminChatThreads');
+                threadsContainer.innerHTML = '';
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    activeChatMobile = '';
+                    threadsContainer.innerHTML = '<div class="chat-empty">No member chats yet.</div>';
+                    renderAdminMessages([]);
+                    document.getElementById('adminChatMeta').textContent = 'Select a member thread';
+                    return;
+                }
+
+                if (!activeChatMobile) {
+                    activeChatMobile = data[0].mobile;
+                }
+
+                data.forEach((thread) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = `chat-thread-btn ${activeChatMobile === thread.mobile ? 'active' : ''}`;
+                    btn.innerHTML = `<div>${thread.mobile || ''}</div><small>${formatChatDate(thread.lastMessageAt)}</small>`;
+                    btn.addEventListener('click', () => {
+                        activeChatMobile = thread.mobile;
+                        loadAdminChatThreads();
+                        loadAdminMessages().catch((error) => {
+                            console.error('loadAdminMessages error:', error);
+                        });
+                    });
+                    threadsContainer.appendChild(btn);
+                });
+
+                await loadAdminMessages();
+            } catch (error) {
+                console.error('loadAdminChatThreads error:', error);
+                document.getElementById('adminChatThreads').innerHTML = '<div class="chat-empty">Unable to load chat threads.</div>';
+            }
+        }
+
         async function fetchChitIds() {
             try {
                 const response = await fetch('/api/chit-ids');
@@ -619,7 +986,137 @@
             document.body.classList.toggle('sidebar-open');
         }
 
-        document.addEventListener('DOMContentLoaded', fetchChitIds);
+        document.getElementById('adminChatCompose').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const admin = getCurrentAdmin();
+            const input = document.getElementById('adminChatInput');
+            const messageText = String(input.value || '').trim();
+
+            if (!activeChatMobile) {
+                alert('Select a member thread first.');
+                return;
+            }
+
+            if (!admin.mobile || !messageText) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/chat/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        mobile: activeChatMobile,
+                        senderName: admin.name,
+                        requesterMobile: admin.mobile,
+                        topic: 'Chit Auction Lift',
+                        message: messageText,
+                    }),
+                });
+
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to send admin message');
+                }
+
+                input.value = '';
+                await loadAdminChatThreads();
+            } catch (error) {
+                console.error('admin chat send error:', error);
+                alert(error.message || 'Failed to send message.');
+            }
+        });
+
+        document.getElementById('adminPollForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const admin = getCurrentAdmin();
+            const question = String(document.getElementById('adminPollQuestion').value || '').trim();
+            const optionsCsv = String(document.getElementById('adminPollOptions').value || '').trim();
+            const options = optionsCsv.split(',').map((item) => item.trim()).filter(Boolean);
+
+            if (!activeChatMobile) {
+                alert('Select a member thread first.');
+                return;
+            }
+
+            if (!question || options.length < 2) {
+                alert('Enter poll question and at least 2 comma-separated options.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/chat/polls', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        mobile: activeChatMobile,
+                        requesterMobile: admin.mobile,
+                        senderName: admin.name,
+                        question,
+                        options,
+                        topic: 'Chit Auction Lift',
+                    }),
+                });
+
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to create poll');
+                }
+
+                document.getElementById('adminPollQuestion').value = '';
+                document.getElementById('adminPollOptions').value = '';
+                await loadAdminChatThreads();
+            } catch (error) {
+                console.error('admin poll create error:', error);
+                alert(error.message || 'Failed to create poll.');
+            }
+        });
+
+        document.getElementById('adminChatMessages').addEventListener('click', async (event) => {
+            const deleteBtn = event.target.closest('[data-message-id]');
+            if (!deleteBtn) {
+                return;
+            }
+
+            const admin = getCurrentAdmin();
+            const messageId = String(deleteBtn.getAttribute('data-message-id') || '').trim();
+            if (!messageId) {
+                return;
+            }
+
+            if (!confirm('Delete this message?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/chat/messages/${encodeURIComponent(messageId)}?requesterMobile=${encodeURIComponent(admin.mobile)}`, {
+                    method: 'DELETE',
+                });
+
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to delete message');
+                }
+
+                await loadAdminChatThreads();
+            } catch (error) {
+                console.error('admin message delete error:', error);
+                alert(error.message || 'Failed to delete message.');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            fetchChitIds();
+            await loadAdminChatThreads();
+
+            if (adminChatPoller) {
+                clearInterval(adminChatPoller);
+            }
+
+            adminChatPoller = setInterval(() => {
+                loadAdminChatThreads();
+            }, 5000);
+        });
     </script>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>

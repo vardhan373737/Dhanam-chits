@@ -5,36 +5,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chit ID - Dhanam Chits Pvt. Ltd</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --ink: #10213a;
+            --muted: #31506c;
+            --surface: rgba(252, 254, 255, 0.9);
+            --line: rgba(16, 33, 58, 0.12);
+            --brand-a: #0f766e;
+            --brand-b: #0891b2;
+            --brand-c: #1f8a70;
+            --brand-d: #0b607f;
+            --shadow-lg: 0 34px 72px rgba(6, 22, 46, 0.27);
+            --shadow-md: 0 16px 34px rgba(9, 31, 60, 0.16);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
             min-height: 100vh;
-            background: radial-gradient(circle at 12% 16%, rgba(245, 158, 11, 0.28), transparent 34%), radial-gradient(circle at 86% 10%, rgba(8, 145, 178, 0.34), transparent 36%), linear-gradient(145deg, #042534, #0a3c52 46%, #12506f);
-            color: #10213a;
+            font-family: 'Sora', sans-serif;
+            background:
+                radial-gradient(circle at 8% 12%, rgba(245, 158, 11, 0.36), transparent 30%),
+                radial-gradient(circle at 90% 16%, rgba(8, 145, 178, 0.34), transparent 34%),
+                radial-gradient(circle at 78% 84%, rgba(31, 138, 112, 0.24), transparent 38%),
+                linear-gradient(146deg, #031f2c, #0a3951 42%, #12506f 74%, #0d6975);
+            color: var(--ink);
             display: block;
         }
 
         .container {
             width: min(94%, 1140px);
-            margin: 1.4rem auto 2rem;
-            padding: 24px;
-            border-radius: 22px;
-            background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.9));
-            box-shadow: 0 30px 70px rgba(10, 20, 40, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.6);
+            margin: 1.6rem auto 2.4rem;
+            padding: clamp(18px, 2.4vw, 28px);
+            border-radius: 24px;
+            background: linear-gradient(156deg, rgba(255, 255, 255, 0.94), rgba(247, 252, 255, 0.88));
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(6px);
         }
 
         .details-box {
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 20px 24px;
-            border: 1px solid rgba(16, 33, 58, 0.1);
-            box-shadow: 0 14px 36px rgba(10, 20, 40, 0.14);
+            background:
+                linear-gradient(128deg, rgba(8, 145, 178, 0.14), rgba(15, 118, 110, 0.1)),
+                #ffffff;
+            border-radius: 18px;
+            padding: clamp(18px, 3vw, 28px);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow-md);
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 22px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .details-box h2 { margin-bottom: 8px; color: #0f1f39; }
+        .details-box::after {
+            content: '';
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.22), rgba(245, 158, 11, 0));
+            right: -120px;
+            top: -120px;
+            pointer-events: none;
+        }
+
+        .details-box h2 {
+            margin-bottom: 12px;
+            color: #102742;
+            font-family: 'Fraunces', serif;
+            font-size: clamp(1.9rem, 3.8vw, 3rem);
+            letter-spacing: 0.02em;
+        }
+
+        .kpi-line {
+            margin: 9px 0;
+            color: #193955;
+            font-weight: 700;
+            font-size: clamp(0.95rem, 2vw, 1.2rem);
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
 
         .back-button,
         .approve-button,
@@ -42,28 +98,73 @@
         .btn.btn-primary {
             display: inline-block;
             margin: 12px 8px 0 0;
-            padding: 10px 14px;
+            padding: 11px 16px;
             text-align: center;
             font-weight: 700;
             color: #fff;
-            background: linear-gradient(120deg, #0f766e, #0891b2);
+            background: linear-gradient(120deg, var(--brand-a), var(--brand-b));
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
             text-decoration: none;
+            box-shadow: 0 10px 20px rgba(10, 57, 81, 0.22);
+            transition: transform 0.2s ease, filter 0.2s ease;
         }
 
-        .approve-button { background: linear-gradient(120deg, #1f8a70, #0b607f); }
+        .back-button:hover,
+        .approve-button:hover,
+        .pay-now-button:hover,
+        .btn.btn-primary:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.05);
+        }
+
+        .approve-button { background: linear-gradient(120deg, var(--brand-c), var(--brand-d)); }
         .back-button { background: linear-gradient(120deg, #2f4f6f, #3a6f8a); }
+        .chat-button { background: linear-gradient(120deg, #cc7a00, #f59e0b); }
+        .pay-now-button {
+            font-size: 1.05rem;
+            letter-spacing: 0.02em;
+            min-width: 126px;
+        }
+
+        #chitIdForm {
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: var(--surface);
+            padding: clamp(14px, 2vw, 22px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .form-group label {
+            color: #173650;
+            font-weight: 700;
+            margin-bottom: 7px;
+        }
+
+        .form-control {
+            height: 46px;
+            border-radius: 12px;
+            border: 1px solid rgba(19, 54, 79, 0.18);
+            color: #13364f;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.94);
+        }
+
+        .form-control:focus {
+            border-color: var(--brand-b);
+            box-shadow: 0 0 0 0.2rem rgba(8, 145, 178, 0.16);
+        }
 
         .table-responsive {
-            margin-top: 12px;
+            margin-top: 18px;
             overflow-x: auto !important;
             overflow-y: hidden !important;
             -webkit-overflow-scrolling: touch;
-            border-radius: 16px;
-            border: 1px solid rgba(16, 33, 58, 0.1);
-            box-shadow: 0 14px 36px rgba(10, 20, 40, 0.14);
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow-md);
+            background: rgba(255, 255, 255, 0.92);
         }
 
         .table {
@@ -73,7 +174,7 @@
 
         .table thead th {
             border-top: 0;
-            background: linear-gradient(105deg, #0f766e, #0891b2);
+            background: linear-gradient(105deg, #0f766e, #0586a5);
             color: #f4fcff;
             text-transform: uppercase;
             font-size: 0.86rem;
@@ -86,10 +187,229 @@
             font-weight: 600;
         }
 
+        .table tbody tr:nth-child(odd) {
+            background: rgba(8, 145, 178, 0.06);
+        }
+
+        .table tbody tr:hover {
+            background: rgba(8, 145, 178, 0.14);
+        }
+
         .navbar {
             background: linear-gradient(100deg, rgba(4, 37, 52, 0.92), rgba(10, 60, 82, 0.88), rgba(18, 80, 111, 0.86));
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
             border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .action-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .chat-fab {
+            position: fixed;
+            right: 22px;
+            bottom: 24px;
+            z-index: 1200;
+            border: none;
+            border-radius: 999px;
+            padding: 12px 16px;
+            font-weight: 800;
+            color: #fff;
+            background: linear-gradient(120deg, #cc7a00, #f59e0b);
+            box-shadow: 0 18px 30px rgba(41, 21, 2, 0.32);
+            cursor: pointer;
+        }
+
+        .chat-widget {
+            position: fixed;
+            right: 22px;
+            bottom: 78px;
+            width: min(92vw, 380px);
+            height: min(62vh, 440px);
+            border-radius: 16px;
+            border: 1px solid rgba(16, 33, 58, 0.16);
+            background: linear-gradient(158deg, rgba(255, 255, 255, 0.98), rgba(244, 251, 255, 0.95));
+            box-shadow: 0 26px 46px rgba(6, 22, 46, 0.3);
+            z-index: 1250;
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+        }
+
+        .chat-widget.open {
+            display: flex;
+        }
+
+        .chat-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 11px 12px;
+            background: linear-gradient(115deg, #0f766e, #0891b2);
+            color: #f4fcff;
+        }
+
+        .chat-head strong {
+            font-size: 0.95rem;
+            letter-spacing: 0.02em;
+        }
+
+        .chat-head button {
+            border: none;
+            background: rgba(255, 255, 255, 0.22);
+            color: #fff;
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .chat-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background:
+                radial-gradient(circle at 8% 14%, rgba(15, 118, 110, 0.12), transparent 30%),
+                radial-gradient(circle at 88% 76%, rgba(8, 145, 178, 0.09), transparent 28%),
+                #f7fcff;
+        }
+
+        .chat-bubble {
+            max-width: 84%;
+            padding: 10px 11px;
+            color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 18px rgba(12, 31, 55, 0.16);
+            font-weight: 600;
+            line-height: 1.35;
+        }
+
+        .chat-bubble.user {
+            align-self: flex-end;
+            background: linear-gradient(120deg, #0f766e, #0891b2);
+            border-bottom-right-radius: 5px;
+        }
+
+        .chat-bubble.admin {
+            align-self: flex-start;
+            background: linear-gradient(120deg, #2f4f6f, #3a6f8a);
+            border-bottom-left-radius: 5px;
+        }
+
+        .chat-meta {
+            display: block;
+            margin-top: 6px;
+            font-size: 0.72rem;
+            opacity: 0.95;
+            color: rgba(246, 252, 255, 0.95);
+        }
+
+        .chat-poll {
+            display: grid;
+            gap: 6px;
+        }
+
+        .chat-poll strong {
+            font-size: 0.92rem;
+        }
+
+        .chat-poll-options {
+            display: grid;
+            gap: 5px;
+            margin-top: 4px;
+        }
+
+        .chat-poll-option {
+            border: 1px solid rgba(17, 50, 75, 0.14);
+            border-radius: 8px;
+            padding: 6px 8px;
+            color: #11324b;
+            background: rgba(255, 255, 255, 0.96);
+            font-weight: 700;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .chat-poll-option.voted {
+            border-color: rgba(245, 158, 11, 0.9);
+            outline: 2px solid rgba(245, 158, 11, 0.35);
+            background: rgba(255, 236, 190, 0.98);
+        }
+
+        .chat-empty {
+            text-align: center;
+            font-weight: 700;
+            color: #43637d;
+            margin-top: 18px;
+        }
+
+        .chat-compose {
+            border-top: 1px solid rgba(16, 33, 58, 0.12);
+            padding: 10px;
+            display: flex;
+            gap: 7px;
+            background: rgba(255, 255, 255, 0.92);
+        }
+
+        .chat-compose input {
+            flex: 1;
+            border: 1px solid rgba(16, 33, 58, 0.2);
+            border-radius: 10px;
+            padding: 10px;
+            font-weight: 600;
+            color: #173650;
+        }
+
+        .chat-compose button {
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(120deg, #0f766e, #0891b2);
+            color: #fff;
+            font-weight: 700;
+            padding: 10px 12px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: min(96%, 1140px);
+                margin-top: 1.1rem;
+            }
+
+            .details-box h2 {
+                font-size: clamp(1.6rem, 8vw, 2.3rem);
+            }
+
+            .action-row {
+                gap: 8px;
+            }
+
+            .action-row .back-button,
+            .action-row .approve-button {
+                margin-top: 0;
+            }
+
+            .chat-fab {
+                right: 12px;
+                bottom: 12px;
+            }
+
+            .chat-widget {
+                right: 10px;
+                left: 10px;
+                width: auto;
+                bottom: 62px;
+                height: 58vh;
+            }
         }
     </style>
     <link rel="stylesheet" href="premium-shared.css">
@@ -121,10 +441,10 @@
     <div class="container">
         <div class="details-box">
             <h2>Your Chit ID</h2>
-            <p id="chitId">Loading...</p>
-            <p id="mobileNumber">Loading...</p>
-            <p id="totalBalance">Loading...</p>
-            <p id="totalPaid">Loading...</p>
+            <p id="chitId" class="kpi-line">Loading...</p>
+            <p id="mobileNumber" class="kpi-line">Loading...</p>
+            <p id="totalBalance" class="kpi-line">Loading...</p>
+            <p id="totalPaid" class="kpi-line">Loading...</p>
             <button class="pay-now-button" id="payNowButton">Pay Now</button>
         </div>
 
@@ -169,12 +489,29 @@
             </table>
         </div>
 
-        <button class="back-button" onclick="window.location.href='dashboard.html'">Back to Home</button>
-        <button class="approve-button" onclick="approveChitId()">Approve Chit ID</button>
+        <div class="action-row">
+            <button class="back-button" onclick="window.location.href='dashboard.html'">Back to Home</button>
+            <button class="approve-button" onclick="approveChitId()">Approve Chit ID</button>
+            <button class="chat-button" onclick="window.location.href='auction-chat.html'">Auction Chat</button>
+        </div>
+    </div>
+
+    <button class="chat-fab" id="chatFab" type="button">Auction Chat</button>
+    <div class="chat-widget" id="chatWidget" aria-live="polite">
+        <div class="chat-head">
+            <strong>Lift Auction Chat</strong>
+            <button id="chatCloseBtn" type="button">Close</button>
+        </div>
+        <div class="chat-body" id="chatBody"></div>
+        <form class="chat-compose" id="chatComposeForm">
+            <input id="chatMessageInput" type="text" maxlength="1200" placeholder="Type your message to admin..." required>
+            <button type="submit">Send</button>
+        </form>
     </div>
 
     <script>
         const CHIT_API_BASES = ['/api', ''];
+        let chatPollTimer = null;
 
         async function apiFetch(path, options = {}) {
             let lastError = null;
@@ -250,14 +587,18 @@
         async function loadChitIdDetails(mobile) {
             try {
                 const payNowButton = document.getElementById('payNowButton');
-                payNowButton.disabled = true;
+                payNowButton.disabled = false;
+                payNowButton.dataset.approved = 'false';
+                payNowButton.dataset.totalDue = '';
+                payNowButton.dataset.totalPaid = '';
                 const response = await apiFetch(`/chit-ids/mobile/${encodeURIComponent(mobile)}`);
                 if (response.status === 404) {
                     document.getElementById('chitId').textContent = 'Not assigned yet';
-                    document.getElementById('totalBalance').textContent = 'Total Balance: N/A';
+                    document.getElementById('totalBalance').textContent = 'Total Due: N/A';
                     document.getElementById('totalPaid').textContent = 'Total Paid: N/A';
                     localStorage.removeItem('chitId');
                     localStorage.removeItem('name');
+                    payNowButton.dataset.approved = 'false';
                     document.getElementById('chitIdTable').innerHTML = '<tr><td colspan="7" style="text-align:center; font-weight:600; color:#3f5573;">No Chit ID records found for this mobile number.</td></tr>';
                     return;
                 }
@@ -272,31 +613,41 @@
 
                 if (!Array.isArray(data) || data.length === 0) {
                     document.getElementById('chitId').textContent = 'Not assigned yet';
-                    document.getElementById('totalBalance').textContent = 'Total Balance: N/A';
+                    document.getElementById('totalBalance').textContent = 'Total Due: N/A';
                     document.getElementById('totalPaid').textContent = 'Total Paid: N/A';
                     localStorage.removeItem('chitId');
                     localStorage.removeItem('name');
+                    payNowButton.dataset.approved = 'false';
                     tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; font-weight:600; color:#3f5573;">No Chit ID records found for this mobile number.</td></tr>';
                     return;
                 }
 
                 const latest = data[0];
                 document.getElementById('chitId').textContent = latest.chitId || 'N/A';
-                document.getElementById('totalBalance').textContent = `Total Balance: ${latest.totalBalance || 'N/A'}`;
-                document.getElementById('totalPaid').textContent = `Total Paid: ${latest.totalPaid || 'N/A'}`;
+                const latestTotal = Number(latest.totalBalance) || 0;
+                const latestPaid = Number(latest.totalPaid) || 0;
+                const latestDue = Math.max(latestTotal - latestPaid, 0);
+                document.getElementById('totalBalance').textContent = `Total Due: ${latestDue || 0}`;
+                document.getElementById('totalPaid').textContent = `Total Paid: ${latestPaid || 0}`;
                 localStorage.setItem('name', latest.name || '');
 
-                const approvedChit = data.find((item) => String(item.status || '').toLowerCase() === 'approved');
+                const approvedChit = data.find((item) => String(item.status || '').trim().toLowerCase() === 'approved');
                 if (approvedChit) {
+                    const approvedTotal = Number(approvedChit.totalBalance) || 0;
+                    const approvedPaid = Number(approvedChit.totalPaid) || 0;
+                    const approvedDue = Math.max(approvedTotal - approvedPaid, 0);
+
                     document.getElementById('chitId').textContent = approvedChit.chitId || 'N/A';
-                    document.getElementById('totalBalance').textContent = `Total Balance: ${approvedChit.totalBalance || 'N/A'}`;
-                    document.getElementById('totalPaid').textContent = `Total Paid: ${approvedChit.totalPaid || 'N/A'}`;
+                    document.getElementById('totalBalance').textContent = `Total Due: ${approvedDue}`;
+                    document.getElementById('totalPaid').textContent = `Total Paid: ${approvedPaid}`;
                     localStorage.setItem('chitId', approvedChit.chitId || '');
                     localStorage.setItem('name', approvedChit.name || '');
-                    payNowButton.disabled = false;
+                    payNowButton.dataset.totalDue = String(approvedDue);
+                    payNowButton.dataset.totalPaid = String(approvedPaid);
+                    payNowButton.dataset.approved = 'true';
                 } else {
                     localStorage.removeItem('chitId');
-                    payNowButton.disabled = true;
+                    payNowButton.dataset.approved = 'false';
                 }
 
                 data.forEach((chit) => {
@@ -315,8 +666,9 @@
             } catch (error) {
                 console.error('Error fetching Chit ID details:', error);
                 document.getElementById('chitId').textContent = 'Unable to load Chit ID';
-                document.getElementById('totalBalance').textContent = 'Total Balance: N/A';
+                document.getElementById('totalBalance').textContent = 'Total Due: N/A';
                 document.getElementById('totalPaid').textContent = 'Total Paid: N/A';
+                document.getElementById('payNowButton').dataset.approved = 'false';
                 alert('Unable to load Chit ID details right now. Please try again.');
             }
         }
@@ -367,16 +719,207 @@
         }
 
         document.getElementById('payNowButton').addEventListener('click', () => {
-            const chitId = document.getElementById('chitId').textContent;
-            if (!chitId || chitId === 'N/A' || chitId === 'Not assigned yet' || chitId === 'Unable to load Chit ID') {
+            const payNowButton = document.getElementById('payNowButton');
+            const chitId = (localStorage.getItem('chitId') || document.getElementById('chitId').textContent || '').trim();
+            const isApproved = String(payNowButton.dataset.approved || 'false') === 'true';
+            if (!isApproved || !chitId || chitId === 'N/A' || chitId === 'Not assigned yet' || chitId === 'Unable to load Chit ID') {
                 alert('Your Chit ID is not approved yet.');
                 return;
             }
             const mobile = (document.getElementById('mobileNumber').textContent.split(': ')[1] || '').trim();
-            const totalBalance = (document.getElementById('totalBalance').textContent.split(': ')[1] || '').trim();
-            const totalPaid = (document.getElementById('totalPaid').textContent.split(': ')[1] || '').trim();
+            const totalBalance = String(payNowButton.dataset.totalDue || (document.getElementById('totalBalance').textContent.split(': ')[1] || '').trim());
+            const totalPaid = String(payNowButton.dataset.totalPaid || (document.getElementById('totalPaid').textContent.split(': ')[1] || '').trim());
             const name = localStorage.getItem('name') || '';
             window.location.href = `chitpayment.html?chitId=${encodeURIComponent(chitId)}&mobile=${encodeURIComponent(mobile)}&totalBalance=${encodeURIComponent(totalBalance)}&name=${encodeURIComponent(name)}&totalPaid=${encodeURIComponent(totalPaid)}`;
+        });
+
+        function formatChatTime(value) {
+            const dateObj = new Date(value || '');
+            if (Number.isNaN(dateObj.getTime())) {
+                return '';
+            }
+            return dateObj.toLocaleString('en-IN');
+        }
+
+        async function fetchChatMessages() {
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const mobile = String(currentUser.mobile || '').trim();
+            if (!mobile) {
+                return [];
+            }
+
+            const response = await fetch(`/api/chat/messages/${encodeURIComponent(mobile)}?requesterMobile=${encodeURIComponent(mobile)}`);
+            const data = await response.json().catch(() => []);
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to load chat messages');
+            }
+
+            return Array.isArray(data) ? data : [];
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function renderPollHtml(msg, currentMobile) {
+            const poll = msg.poll || {};
+            const options = Array.isArray(poll.options) ? poll.options : [];
+            const optionsHtml = options.map((option) => {
+                const votes = Array.isArray(option.votes) ? option.votes : [];
+                const isVoted = votes.includes(currentMobile);
+                return `
+                    <button class="chat-poll-option ${isVoted ? 'voted' : ''}" type="button" data-poll-id="${escapeHtml(poll.pollId)}" data-option-id="${escapeHtml(option.id)}">
+                        <span>${escapeHtml(option.label)}</span>
+                        <span>${votes.length}</span>
+                    </button>
+                `;
+            }).join('');
+
+            return `
+                <div class="chat-poll">
+                    <strong>${escapeHtml(poll.question || 'Admin Poll')}</strong>
+                    <div class="chat-poll-options">${optionsHtml}</div>
+                </div>
+            `;
+        }
+
+        function renderChatMessages(messages) {
+            const chatBody = document.getElementById('chatBody');
+            chatBody.innerHTML = '';
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const currentMobile = String(currentUser.mobile || '').trim();
+
+            if (!Array.isArray(messages) || messages.length === 0) {
+                chatBody.innerHTML = '<div class="chat-empty">No messages yet. Start your auction lifting conversation.</div>';
+                return;
+            }
+
+            messages.forEach((msg) => {
+                const role = String(msg.senderRole || '').toLowerCase() === 'admin' ? 'admin' : 'user';
+                const bubble = document.createElement('div');
+                bubble.className = `chat-bubble ${role}`;
+                if (String(msg.messageType || '') === 'poll' && msg.poll) {
+                    bubble.innerHTML = `${renderPollHtml(msg, currentMobile)}<span class="chat-meta">${msg.senderName || role} • ${formatChatTime(msg.created_at)}</span>`;
+                } else {
+                    bubble.innerHTML = `${escapeHtml(msg.message || '')}<span class="chat-meta">${escapeHtml(msg.senderName || role)} • ${formatChatTime(msg.created_at)}</span>`;
+                }
+                chatBody.appendChild(bubble);
+            });
+
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        async function refreshChatWidget() {
+            try {
+                const messages = await fetchChatMessages();
+                renderChatMessages(messages);
+            } catch (error) {
+                console.error('Chat refresh error:', error);
+            }
+        }
+
+        function openChatWidget() {
+            const chatWidget = document.getElementById('chatWidget');
+            chatWidget.classList.add('open');
+            refreshChatWidget();
+
+            if (chatPollTimer) {
+                clearInterval(chatPollTimer);
+            }
+
+            chatPollTimer = setInterval(refreshChatWidget, 5000);
+        }
+
+        function closeChatWidget() {
+            const chatWidget = document.getElementById('chatWidget');
+            chatWidget.classList.remove('open');
+            if (chatPollTimer) {
+                clearInterval(chatPollTimer);
+                chatPollTimer = null;
+            }
+        }
+
+        document.getElementById('chatFab').addEventListener('click', openChatWidget);
+        document.getElementById('chatCloseBtn').addEventListener('click', closeChatWidget);
+
+        document.getElementById('chatComposeForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const mobile = String(currentUser.mobile || '').trim();
+            const senderName = String(currentUser.fullname || currentUser.name || 'Member').trim();
+            const inputEl = document.getElementById('chatMessageInput');
+            const text = String(inputEl.value || '').trim();
+
+            if (!mobile || !text) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/chat/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        mobile,
+                        senderName,
+                        requesterMobile: mobile,
+                        topic: 'Chit Auction Lift',
+                        message: text,
+                    }),
+                });
+
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to send message');
+                }
+
+                inputEl.value = '';
+                refreshChatWidget();
+            } catch (error) {
+                console.error('Chat send error:', error);
+                alert(error.message || 'Failed to send message.');
+            }
+        });
+
+        document.getElementById('chatBody').addEventListener('click', async (event) => {
+            const optionBtn = event.target.closest('[data-poll-id][data-option-id]');
+            if (!optionBtn) {
+                return;
+            }
+
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const mobile = String(currentUser.mobile || '').trim();
+            const pollId = String(optionBtn.getAttribute('data-poll-id') || '').trim();
+            const optionId = String(optionBtn.getAttribute('data-option-id') || '').trim();
+            if (!mobile || !pollId || !optionId) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/chat/polls/${encodeURIComponent(pollId)}/react`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        mobile,
+                        requesterMobile: mobile,
+                        optionId,
+                    }),
+                });
+
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to react to poll');
+                }
+
+                refreshChatWidget();
+            } catch (error) {
+                console.error('Poll reaction error:', error);
+                alert(error.message || 'Failed to react to poll.');
+            }
         });
     </script>
 

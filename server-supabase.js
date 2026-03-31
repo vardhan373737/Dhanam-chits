@@ -8,6 +8,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const pdf = require("pdfkit");
+const multer = require("multer");
 const supabase = require("./supabaseClient");
 
 const app = express();
@@ -114,6 +115,7 @@ function mapBankDetailRow(row) {
 }
 
 function mapBorrowRow(row) {
+  const fallbackDocs = getBorrowDocumentPaths(row.id);
   return {
     _id: row.id,
     id: row.id,
@@ -121,6 +123,9 @@ function mapBorrowRow(row) {
     email: row.email,
     mobile: row.mobile,
     amount: row.amount,
+    aadhaarDocumentPath: row.aadhaar_document_path || fallbackDocs.aadhaarDocumentPath,
+    panDocumentPath: row.pan_document_path || fallbackDocs.panDocumentPath,
+    rcDocumentPath: row.rc_document_path || fallbackDocs.rcDocumentPath,
     status: row.status,
     date: row.created_at,
     created_at: row.created_at,
@@ -143,14 +148,397 @@ function mapChitRow(row) {
   };
 }
 
+function mapAuctionChatRow(row) {
+  const pollData = parsePollFromMessage(row.message);
+  return {
+    _id: row.id,
+    id: row.id,
+    mobile: row.mobile,
+    senderRole: row.sender_role,
+    senderName: row.sender_name,
+    message: pollData ? pollData.question : row.message,
+    messageType: pollData ? "poll" : "text",
+    poll: pollData,
+    topic: row.topic,
+    created_at: row.created_at,
+  };
+}
+
+const POLL_PREFIX = "__POLL__:";
+
+function parsePollFromMessage(message) {
+  const text = String(message || "");
+  if (!text.startsWith(POLL_PREFIX)) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(text.slice(POLL_PREFIX.length));
+    if (!payload || typeof payload !== "object") {
+      return null;
+    }
+
+    return {
+      pollId: String(payload.pollId || "").trim(),
+      question: String(payload.question || "").trim(),
+      options: Array.isArray(payload.options) ? payload.options : [],
+      createdBy: String(payload.createdBy || "").trim(),
+      createdAt: payload.createdAt || null,
+    };
+  } catch (_error) {
+    return null;
+  }
+}
+
+function encodePollMessage(pollPayload) {
+  return `${POLL_PREFIX}${JSON.stringify(pollPayload)}`;
+}
+
+function createPollPayload({ question, options, createdBy }) {
+  const normalizedQuestion = String(question || "").trim();
+  const normalizedOptions = (Array.isArray(options) ? options : [])
+    .map((opt) => String(opt || "").trim())
+    .filter(Boolean)
+    .slice(0, 8)
+    .map((label, index) => ({
+      id: `opt-${index + 1}`,
+      label,
+      votes: [],
+    }));
+
+  return {
+    pollId: crypto.randomUUID(),
+    question: normalizedQuestion,
+    options: normalizedOptions,
+    createdBy: String(createdBy || "admin").trim(),
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function reactToPollPayload(pollPayload, optionId, reactorMobile) {
+  const normalizedOptionId = String(optionId || "").trim();
+  const normalizedReactor = String(reactorMobile || "").trim();
+  if (!normalizedOptionId || !normalizedReactor) {
+    return null;
+  }
+
+  const options = (Array.isArray(pollPayload?.options) ? pollPayload.options : []).map((opt) => ({
+    id: String(opt.id || "").trim(),
+    label: String(opt.label || "").trim(),
+    votes: Array.isArray(opt.votes) ? opt.votes.map((m) => String(m || "").trim()).filter(Boolean) : [],
+  }));
+
+  let matched = false;
+  for (const option of options) {
+    option.votes = option.votes.filter((m) => m !== normalizedReactor);
+    if (option.id === normalizedOptionId) {
+      matched = true;
+      if (!option.votes.includes(normalizedReactor)) {
+        option.votes.push(normalizedReactor);
+      }
+    }
+  }
+
+  if (!matched) {
+    return null;
+  }
+
+  return {
+    ...pollPayload,
+    options,
+  };
+}
+
+async function isAdminMobile(mobile) {
+  const normalizedMobile = String(mobile || "").trim();
+  if (!normalizedMobile) {
+    return false;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("users")
+      .select("role")
+      .eq("mobile", normalizedMobile)
+      .maybeSingle();
+
+    if (error) {
+      console.error("isAdminMobile lookup error", error);
+      return false;
+    }
+
+    return String(data?.role || "").toLowerCase() === "admin";
+  } catch (error) {
+    console.error("isAdminMobile exception", error);
+    return false;
+  }
+}
+
 const storageBaseDir = process.env.VERCEL === "1" ? "/tmp" : __dirname;
 const invoicesDir = path.join(storageBaseDir, "invoices");
+const borrowDocsDir = path.join(storageBaseDir, "uploads", "borrow-docs");
+const borrowDocsIndexPath = path.join(storageBaseDir, "uploads", "borrow-docs-index.json");
+const auctionChatFallbackPath = path.join(storageBaseDir, "uploads", "auction-chat-fallback.json");
 try {
   if (!fs.existsSync(invoicesDir)) {
     fs.mkdirSync(invoicesDir, { recursive: true });
   }
+  if (!fs.existsSync(borrowDocsDir)) {
+    fs.mkdirSync(borrowDocsDir, { recursive: true });
+  }
 } catch (dirError) {
   console.error("Failed to prepare invoices directory:", dirError);
+}
+
+app.use("/uploads", express.static(path.join(storageBaseDir, "uploads"), { index: false }));
+
+function readBorrowDocsIndex() {
+  try {
+    if (!fs.existsSync(borrowDocsIndexPath)) {
+      return {};
+    }
+
+    const raw = fs.readFileSync(borrowDocsIndexPath, "utf8");
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (_error) {
+    return {};
+  }
+}
+
+function writeBorrowDocsIndex(indexData) {
+  try {
+    fs.writeFileSync(borrowDocsIndexPath, JSON.stringify(indexData, null, 2), "utf8");
+  } catch (error) {
+    console.error("Failed to save borrow document index:", error);
+  }
+}
+
+function setBorrowDocumentPaths(recordId, paths) {
+  if (!recordId) {
+    return;
+  }
+
+  const indexData = readBorrowDocsIndex();
+  indexData[String(recordId)] = {
+    aadhaarDocumentPath: paths.aadhaarDocumentPath || null,
+    panDocumentPath: paths.panDocumentPath || null,
+    rcDocumentPath: paths.rcDocumentPath || null,
+  };
+  writeBorrowDocsIndex(indexData);
+}
+
+function getBorrowDocumentPaths(recordId) {
+  const blank = {
+    aadhaarDocumentPath: null,
+    panDocumentPath: null,
+    rcDocumentPath: null,
+  };
+
+  if (!recordId) {
+    return blank;
+  }
+
+  const indexData = readBorrowDocsIndex();
+  const stored = indexData[String(recordId)];
+  if (!stored || typeof stored !== "object") {
+    return blank;
+  }
+
+  return {
+    aadhaarDocumentPath: stored.aadhaarDocumentPath || null,
+    panDocumentPath: stored.panDocumentPath || null,
+    rcDocumentPath: stored.rcDocumentPath || null,
+  };
+}
+
+function isAuctionChatTableMissing(error) {
+  if (!error) {
+    return false;
+  }
+
+  const code = String(error.code || "").trim();
+  const message = String(error.message || "");
+  return code === "PGRST205" || message.includes("auction_chat_messages");
+}
+
+function readAuctionChatFallback() {
+  try {
+    if (!fs.existsSync(auctionChatFallbackPath)) {
+      return [];
+    }
+
+    const raw = fs.readFileSync(auctionChatFallbackPath, "utf8");
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_error) {
+    return [];
+  }
+}
+
+function writeAuctionChatFallback(rows) {
+  try {
+    fs.writeFileSync(auctionChatFallbackPath, JSON.stringify(rows, null, 2), "utf8");
+  } catch (error) {
+    console.error("Failed to write auction chat fallback:", error);
+  }
+}
+
+function listAuctionChatMessagesFallback(mobile) {
+  const normalizedMobile = String(mobile || "").trim();
+  return readAuctionChatFallback()
+    .filter((row) => String(row.mobile || "").trim() === normalizedMobile)
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+}
+
+function listAuctionChatThreadsFallback() {
+  const rows = readAuctionChatFallback().sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const seen = new Set();
+  const threads = [];
+
+  for (const row of rows) {
+    const mobile = String(row.mobile || "").trim();
+    if (!mobile || seen.has(mobile)) {
+      continue;
+    }
+
+    seen.add(mobile);
+    threads.push({
+      mobile,
+      lastSenderName: row.sender_name || "",
+      lastMessageAt: row.created_at,
+    });
+  }
+
+  return threads;
+}
+
+function insertAuctionChatFallback({ mobile, senderRole, senderName, message, topic }) {
+  const rows = readAuctionChatFallback();
+  const row = {
+    id: crypto.randomUUID(),
+    mobile,
+    sender_role: senderRole,
+    sender_name: senderName,
+    message,
+    topic,
+    created_at: new Date().toISOString(),
+  };
+  rows.push(row);
+  writeAuctionChatFallback(rows);
+  return row;
+}
+
+function deleteAuctionChatMessageFallback(messageId) {
+  const normalizedId = String(messageId || "").trim();
+  if (!normalizedId) {
+    return null;
+  }
+
+  const rows = readAuctionChatFallback();
+  const idx = rows.findIndex((row) => String(row.id || "").trim() === normalizedId);
+  if (idx < 0) {
+    return null;
+  }
+
+  const [removed] = rows.splice(idx, 1);
+  writeAuctionChatFallback(rows);
+  return removed;
+}
+
+function updateAuctionChatMessageFallback(messageId, updater) {
+  const normalizedId = String(messageId || "").trim();
+  if (!normalizedId || typeof updater !== "function") {
+    return null;
+  }
+
+  const rows = readAuctionChatFallback();
+  const idx = rows.findIndex((row) => String(row.id || "").trim() === normalizedId);
+  if (idx < 0) {
+    return null;
+  }
+
+  const updated = updater({ ...rows[idx] });
+  if (!updated) {
+    return null;
+  }
+
+  rows[idx] = updated;
+  writeAuctionChatFallback(rows);
+  return updated;
+}
+
+const borrowDocsUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, borrowDocsDir),
+    filename: (req, file, cb) => {
+      const mobile = String(req.body?.mobile || "unknown").replace(/\D/g, "").slice(-10) || "unknown";
+      const safeDocType = String(file.fieldname || "doc").replace(/[^a-zA-Z0-9_-]/g, "");
+      const extension = path.extname(file.originalname || "").toLowerCase();
+      cb(null, `${mobile}-${safeDocType}-${Date.now()}${extension}`);
+    },
+  }),
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = new Set([".pdf", ".jpg", ".jpeg", ".png", ".webp"]);
+    const extension = path.extname(file.originalname || "").toLowerCase();
+    if (!allowedTypes.has(extension)) {
+      return cb(new Error("Only PDF, JPG, JPEG, PNG, or WEBP files are allowed"));
+    }
+    return cb(null, true);
+  },
+}).fields([
+  { name: "aadhaarDocument", maxCount: 1 },
+  { name: "panDocument", maxCount: 1 },
+  { name: "rcDocument", maxCount: 1 },
+]);
+
+function runBorrowDocsUpload(req, res, next) {
+  borrowDocsUpload(req, res, (error) => {
+    if (!error) {
+      return next();
+    }
+
+    if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ error: "Each file must be 5MB or smaller" });
+    }
+
+    return res.status(400).json({ error: error.message || "Invalid file upload" });
+  });
+}
+
+function getBorrowUploadedPath(files, fieldName) {
+  const uploadedFile = files?.[fieldName]?.[0];
+  if (!uploadedFile?.filename) {
+    return null;
+  }
+  return path.posix.join("uploads", "borrow-docs", uploadedFile.filename);
+}
+
+function cleanupBorrowUploads(files) {
+  if (!files || typeof files !== "object") {
+    return;
+  }
+
+  Object.values(files)
+    .flat()
+    .forEach((file) => {
+      if (file?.path) {
+        fs.unlink(file.path, () => {});
+      }
+    });
+}
+
+function isBorrowDocColumnMissing(error) {
+  if (!error) {
+    return false;
+  }
+
+  const code = String(error.code || "").trim();
+  const message = String(error.message || "");
+  return code === "42703" || code === "PGRST204" || message.includes("aadhaar_document_path");
 }
 
 function createMailTransporter() {
@@ -1012,7 +1400,11 @@ app.post("/api/bank-details", async (req, res) => {
   const { name, mobile, amount, utrNumber, email, type, chitsPlan } = req.body;
 
   try {
-    if (!name || !mobile || !amount || !utrNumber) {
+    const normalizedMobile = String(mobile || "").trim();
+    const normalizedChitPlan = String(chitsPlan || "").trim();
+    const paymentAmount = Number(amount);
+
+    if (!name || !normalizedMobile || !paymentAmount || paymentAmount <= 0 || !utrNumber) {
       return res.status(400).json({ message: "Name, mobile, amount and UTR number are required." });
     }
 
@@ -1030,12 +1422,12 @@ app.post("/api/bank-details", async (req, res) => {
       .from("payments")
       .insert({
         name,
-        mobile,
-        amount,
+        mobile: normalizedMobile,
+        amount: paymentAmount,
         utr_number: utrNumber,
         email,
         type,
-        chits_plan: chitsPlan,
+        chits_plan: normalizedChitPlan,
       })
       .select("*")
       .single();
@@ -1043,6 +1435,60 @@ app.post("/api/bank-details", async (req, res) => {
     if (error) {
       console.error("create payment error", error);
       return res.status(500).json({ message: "Error saving payment details.", error });
+    }
+
+    if (normalizedChitPlan) {
+      let approvedChit = null;
+
+      const { data: matchedChits, error: chitLookupError } = await supabase
+        .from("chit_ids")
+        .select("id, total_paid")
+        .eq("mobile", normalizedMobile)
+        .eq("chit_id", normalizedChitPlan)
+        .eq("status", "Approved")
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (chitLookupError) {
+        console.error("approved chit lookup error", chitLookupError);
+      } else if (Array.isArray(matchedChits) && matchedChits.length > 0) {
+        approvedChit = matchedChits[0];
+      }
+
+      if (!approvedChit) {
+        const { data: fallbackChits, error: fallbackLookupError } = await supabase
+          .from("chit_ids")
+          .select("id, total_paid")
+          .eq("mobile", normalizedMobile)
+          .eq("status", "Approved")
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (fallbackLookupError) {
+          console.error("approved chit fallback lookup error", fallbackLookupError);
+        } else if (Array.isArray(fallbackChits) && fallbackChits.length > 0) {
+          approvedChit = fallbackChits[0];
+        }
+      }
+
+      if (approvedChit) {
+        const currentPaid = Number(approvedChit.total_paid) || 0;
+        const updatedTotalPaid = currentPaid + paymentAmount;
+
+        const { error: chitUpdateError } = await supabase
+          .from("chit_ids")
+          .update({ total_paid: updatedTotalPaid })
+          .eq("id", approvedChit.id);
+
+        if (chitUpdateError) {
+          console.error("chit paid total update error", chitUpdateError);
+        }
+      } else {
+        console.error("No approved chit found for payment update", {
+          mobile: normalizedMobile,
+          chitPlan: normalizedChitPlan,
+        });
+      }
     }
 
     return res.status(200).json({
@@ -1290,19 +1736,58 @@ app.delete("/api/bank-details/:id", async (req, res) => {
   return res.json({ message: "Bank detail deleted successfully" });
 });
 
-app.post("/api/borrow", async (req, res) => {
+app.post("/api/borrow", runBorrowDocsUpload, async (req, res) => {
   const { fullname, email, mobile, amount, status } = req.body;
-  const { error } = await supabase.from("borrows").insert({
+  const uploadedPaths = {
+    aadhaarDocumentPath: getBorrowUploadedPath(req.files, "aadhaarDocument"),
+    panDocumentPath: getBorrowUploadedPath(req.files, "panDocument"),
+    rcDocumentPath: getBorrowUploadedPath(req.files, "rcDocument"),
+  };
+
+  const borrowPayload = {
     fullname,
     email,
     mobile,
     amount,
     status: status || "Pending",
-  });
+    aadhaar_document_path: uploadedPaths.aadhaarDocumentPath,
+    pan_document_path: uploadedPaths.panDocumentPath,
+    rc_document_path: uploadedPaths.rcDocumentPath,
+  };
 
-  if (error) {
-    console.error("create borrow error", error);
+  let insertData = null;
+  let insertError = null;
+  ({ data: insertData, error: insertError } = await supabase
+    .from("borrows")
+    .insert(borrowPayload)
+    .select("id")
+    .maybeSingle());
+
+  let usedFallbackInsert = false;
+  if (isBorrowDocColumnMissing(insertError)) {
+    usedFallbackInsert = true;
+    const fallbackPayload = {
+      fullname,
+      email,
+      mobile,
+      amount,
+      status: status || "Pending",
+    };
+    ({ data: insertData, error: insertError } = await supabase
+      .from("borrows")
+      .insert(fallbackPayload)
+      .select("id")
+      .maybeSingle());
+  }
+
+  if (insertError) {
+    cleanupBorrowUploads(req.files);
+    console.error("create borrow error", insertError);
     return res.status(500).json({ error: "Failed to submit borrow request" });
+  }
+
+  if (usedFallbackInsert) {
+    setBorrowDocumentPaths(insertData?.id, uploadedPaths);
   }
 
   return res.status(201).json({ message: "Borrow request submitted successfully!" });
@@ -1535,6 +2020,305 @@ app.delete("/api/chit-ids/:id", async (req, res) => {
   }
 
   return res.status(200).json({ message: "Chit ID deleted successfully" });
+});
+
+app.get("/api/chat/threads", async (req, res) => {
+  const requesterMobile = String(req.query.requesterMobile || "").trim();
+  const requesterIsAdmin = await isAdminMobile(requesterMobile);
+
+  if (!requesterIsAdmin) {
+    return res.status(403).json({ message: "Only admins can view chat threads" });
+  }
+
+  const { data, error } = await supabase
+    .from("auction_chat_messages")
+    .select("mobile, sender_name, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    if (isAuctionChatTableMissing(error)) {
+      return res.json(listAuctionChatThreadsFallback());
+    }
+
+    console.error("chat threads error", error);
+    return res.status(500).json({ message: "Failed to fetch chat threads" });
+  }
+
+  const seen = new Set();
+  const threads = [];
+  for (const row of data || []) {
+    const mobile = String(row.mobile || "").trim();
+    if (!mobile || seen.has(mobile)) {
+      continue;
+    }
+
+    seen.add(mobile);
+    threads.push({
+      mobile,
+      lastSenderName: row.sender_name || "",
+      lastMessageAt: row.created_at,
+    });
+  }
+
+  return res.json(threads);
+});
+
+app.get("/api/chat/messages/:mobile", async (req, res) => {
+  const targetMobile = String(req.params.mobile || "").trim();
+  const requesterMobile = String(req.query.requesterMobile || "").trim();
+  const requesterIsAdmin = await isAdminMobile(requesterMobile);
+
+  if (!targetMobile) {
+    return res.status(400).json({ message: "Mobile is required" });
+  }
+
+  if (!requesterIsAdmin && requesterMobile !== targetMobile) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  const { data, error } = await supabase
+    .from("auction_chat_messages")
+    .select("*")
+    .eq("mobile", targetMobile)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    if (isAuctionChatTableMissing(error)) {
+      return res.json(listAuctionChatMessagesFallback(targetMobile).map(mapAuctionChatRow));
+    }
+
+    console.error("chat messages error", error);
+    return res.status(500).json({ message: "Failed to fetch chat messages" });
+  }
+
+  return res.json((data || []).map(mapAuctionChatRow));
+});
+
+app.post("/api/chat/messages", async (req, res) => {
+  const { mobile, senderName, message, requesterMobile, topic } = req.body;
+  const normalizedMobile = String(mobile || "").trim();
+  const normalizedSenderName = String(senderName || "").trim();
+  const normalizedMessage = String(message || "").trim();
+  const normalizedRequesterMobile = String(requesterMobile || "").trim();
+  const normalizedTopic = String(topic || "Chit Auction Lift").trim();
+
+  if (!normalizedMobile || !normalizedMessage || !normalizedRequesterMobile) {
+    return res.status(400).json({ message: "Mobile, requesterMobile, and message are required" });
+  }
+
+  const requesterIsAdmin = await isAdminMobile(normalizedRequesterMobile);
+  if (!requesterIsAdmin && normalizedRequesterMobile !== normalizedMobile) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  const senderRole = requesterIsAdmin ? "admin" : "user";
+
+  const { data, error } = await supabase
+    .from("auction_chat_messages")
+    .insert({
+      mobile: normalizedMobile,
+      sender_role: senderRole,
+      sender_name: normalizedSenderName || (senderRole === "admin" ? "Admin" : "Member"),
+      message: normalizedMessage,
+      topic: normalizedTopic,
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    if (isAuctionChatTableMissing(error)) {
+      const fallbackRow = insertAuctionChatFallback({
+        mobile: normalizedMobile,
+        senderRole,
+        senderName: normalizedSenderName || (senderRole === "admin" ? "Admin" : "Member"),
+        message: normalizedMessage,
+        topic: normalizedTopic,
+      });
+      return res.status(201).json(mapAuctionChatRow(fallbackRow));
+    }
+
+    console.error("create chat message error", error);
+    return res.status(500).json({ message: "Failed to send message" });
+  }
+
+  return res.status(201).json(mapAuctionChatRow(data));
+});
+
+app.delete("/api/chat/messages/:id", async (req, res) => {
+  const messageId = String(req.params.id || "").trim();
+  const requesterMobile = String(req.query.requesterMobile || "").trim();
+  const requesterIsAdmin = await isAdminMobile(requesterMobile);
+
+  if (!requesterIsAdmin) {
+    return res.status(403).json({ message: "Only admins can delete messages" });
+  }
+
+  if (!messageId) {
+    return res.status(400).json({ message: "Message id is required" });
+  }
+
+  const { data, error } = await supabase
+    .from("auction_chat_messages")
+    .delete()
+    .eq("id", messageId)
+    .select("*")
+    .maybeSingle();
+
+  if (error) {
+    if (isAuctionChatTableMissing(error)) {
+      const fallbackDeleted = deleteAuctionChatMessageFallback(messageId);
+      if (!fallbackDeleted) {
+        return res.status(404).json({ message: "Message not found" });
+      }
+      return res.json({ message: "Message deleted successfully" });
+    }
+
+    console.error("delete chat message error", error);
+    return res.status(500).json({ message: "Failed to delete message" });
+  }
+
+  if (!data) {
+    return res.status(404).json({ message: "Message not found" });
+  }
+
+  return res.json({ message: "Message deleted successfully" });
+});
+
+app.post("/api/chat/polls", async (req, res) => {
+  const { mobile, requesterMobile, senderName, question, options, topic } = req.body;
+  const normalizedMobile = String(mobile || "").trim();
+  const normalizedRequesterMobile = String(requesterMobile || "").trim();
+  const normalizedSenderName = String(senderName || "Admin").trim();
+  const normalizedTopic = String(topic || "Chit Auction Lift").trim();
+  const requesterIsAdmin = await isAdminMobile(normalizedRequesterMobile);
+
+  if (!requesterIsAdmin) {
+    return res.status(403).json({ message: "Only admins can create polls" });
+  }
+
+  if (!normalizedMobile) {
+    return res.status(400).json({ message: "Target mobile is required" });
+  }
+
+  const pollPayload = createPollPayload({ question, options, createdBy: normalizedSenderName || "Admin" });
+  if (!pollPayload.question || pollPayload.options.length < 2) {
+    return res.status(400).json({ message: "Poll question and at least 2 options are required" });
+  }
+
+  const encodedPoll = encodePollMessage(pollPayload);
+  const { data, error } = await supabase
+    .from("auction_chat_messages")
+    .insert({
+      mobile: normalizedMobile,
+      sender_role: "admin",
+      sender_name: normalizedSenderName || "Admin",
+      message: encodedPoll,
+      topic: normalizedTopic,
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    if (isAuctionChatTableMissing(error)) {
+      const fallbackRow = insertAuctionChatFallback({
+        mobile: normalizedMobile,
+        senderRole: "admin",
+        senderName: normalizedSenderName || "Admin",
+        message: encodedPoll,
+        topic: normalizedTopic,
+      });
+      return res.status(201).json(mapAuctionChatRow(fallbackRow));
+    }
+
+    console.error("create poll error", error);
+    return res.status(500).json({ message: "Failed to create poll" });
+  }
+
+  return res.status(201).json(mapAuctionChatRow(data));
+});
+
+app.post("/api/chat/polls/:pollId/react", async (req, res) => {
+  const pollId = String(req.params.pollId || "").trim();
+  const { mobile, requesterMobile, optionId } = req.body;
+  const normalizedMobile = String(mobile || "").trim();
+  const normalizedRequesterMobile = String(requesterMobile || "").trim();
+  const normalizedOptionId = String(optionId || "").trim();
+
+  if (!pollId || !normalizedMobile || !normalizedRequesterMobile || !normalizedOptionId) {
+    return res.status(400).json({ message: "pollId, mobile, requesterMobile and optionId are required" });
+  }
+
+  const requesterIsAdmin = await isAdminMobile(normalizedRequesterMobile);
+  if (!requesterIsAdmin && normalizedRequesterMobile !== normalizedMobile) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  const { data, error } = await supabase
+    .from("auction_chat_messages")
+    .select("*")
+    .eq("mobile", normalizedMobile)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    if (isAuctionChatTableMissing(error)) {
+      const fallbackMessages = listAuctionChatMessagesFallback(normalizedMobile);
+      const targetFallback = fallbackMessages.find((row) => parsePollFromMessage(row.message)?.pollId === pollId);
+      if (!targetFallback) {
+        return res.status(404).json({ message: "Poll not found" });
+      }
+
+      const updatedFallbackRow = updateAuctionChatMessageFallback(targetFallback.id, (row) => {
+        const parsed = parsePollFromMessage(row.message);
+        if (!parsed || parsed.pollId !== pollId) {
+          return null;
+        }
+
+        const updatedPoll = reactToPollPayload(parsed, normalizedOptionId, normalizedRequesterMobile);
+        if (!updatedPoll) {
+          return null;
+        }
+
+        return {
+          ...row,
+          message: encodePollMessage(updatedPoll),
+        };
+      });
+
+      if (!updatedFallbackRow) {
+        return res.status(400).json({ message: "Invalid poll option" });
+      }
+
+      return res.json(mapAuctionChatRow(updatedFallbackRow));
+    }
+
+    console.error("poll reaction query error", error);
+    return res.status(500).json({ message: "Failed to react to poll" });
+  }
+
+  const targetRow = (data || []).find((row) => parsePollFromMessage(row.message)?.pollId === pollId);
+  if (!targetRow) {
+    return res.status(404).json({ message: "Poll not found" });
+  }
+
+  const parsedPoll = parsePollFromMessage(targetRow.message);
+  const updatedPoll = reactToPollPayload(parsedPoll, normalizedOptionId, normalizedRequesterMobile);
+  if (!updatedPoll) {
+    return res.status(400).json({ message: "Invalid poll option" });
+  }
+
+  const { data: updatedData, error: updateError } = await supabase
+    .from("auction_chat_messages")
+    .update({ message: encodePollMessage(updatedPoll) })
+    .eq("id", targetRow.id)
+    .select("*")
+    .single();
+
+  if (updateError) {
+    console.error("poll reaction update error", updateError);
+    return res.status(500).json({ message: "Failed to react to poll" });
+  }
+
+  return res.json(mapAuctionChatRow(updatedData));
 });
 
 app.get("/health", (_req, res) => {

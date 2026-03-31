@@ -414,6 +414,7 @@
                         <th>Email</th>
                         <th>Mobile</th>
                         <th>Amount</th>
+                        <th>Documents</th>
                         <th>Status</th>
                         <th>Date</th>
                         <th>Action</th>
@@ -429,6 +430,34 @@
     </div>
 
     <script>
+        function normalizeDocPath(pathValue) {
+            const pathText = String(pathValue || '').trim();
+            if (!pathText) {
+                return '';
+            }
+
+            return pathText.startsWith('/') ? pathText : `/${pathText}`;
+        }
+
+        function renderBorrowDocumentsCell(borrow) {
+            const aadhaar = normalizeDocPath(borrow.aadhaarDocumentPath);
+            const pan = normalizeDocPath(borrow.panDocumentPath);
+            const rc = normalizeDocPath(borrow.rcDocumentPath);
+
+            const links = [];
+            if (aadhaar) {
+                links.push(`<a href="${aadhaar}" target="_blank" rel="noopener noreferrer">Aadhaar</a>`);
+            }
+            if (pan) {
+                links.push(`<a href="${pan}" target="_blank" rel="noopener noreferrer">PAN</a>`);
+            }
+            if (rc) {
+                links.push(`<a href="${rc}" target="_blank" rel="noopener noreferrer">RC</a>`);
+            }
+
+            return links.length ? links.join(' | ') : 'Not uploaded';
+        }
+
         async function fetchBorrowHistory() {
             try {
                 const response = await fetch('/api/borrows'); 
@@ -449,7 +478,7 @@
                 document.getElementById('approved-borrows').textContent = data.filter((item) => item.status === 'Approved').length;
 
                 if (data.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; font-weight:600; color:#264653;">No borrow records found.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; font-weight:600; color:#264653;">No borrow records found.</td></tr>';
                     return;
                 }
 
@@ -460,6 +489,7 @@
                         <td>${borrow.email}</td>
                         <td>${borrow.mobile}</td>
                         <td>${borrow.amount}</td>
+                        <td>${renderBorrowDocumentsCell(borrow)}</td>
                         <td>
                             <select onchange="updateStatus('${borrow._id}', this.value)">
                                 <option value="Pending" ${borrow.status === 'Pending' ? 'selected' : ''}>Pending</option>

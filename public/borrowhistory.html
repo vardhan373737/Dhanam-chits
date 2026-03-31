@@ -310,6 +310,7 @@
                         <th>Mobile</th>
                         <th>Amount</th>
                         <th>Date</th>
+                        <th>Documents</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -323,6 +324,34 @@
     <script>
         function goBack() {
             window.location.href = 'dashboard.html';
+        }
+
+        function normalizeDocPath(pathValue) {
+            const pathText = String(pathValue || '').trim();
+            if (!pathText) {
+                return '';
+            }
+
+            return pathText.startsWith('/') ? pathText : `/${pathText}`;
+        }
+
+        function renderBorrowDocumentsCell(borrow) {
+            const aadhaar = normalizeDocPath(borrow.aadhaarDocumentPath);
+            const pan = normalizeDocPath(borrow.panDocumentPath);
+            const rc = normalizeDocPath(borrow.rcDocumentPath);
+
+            const links = [];
+            if (aadhaar) {
+                links.push(`<a href="${aadhaar}" target="_blank" rel="noopener noreferrer">Aadhaar</a>`);
+            }
+            if (pan) {
+                links.push(`<a href="${pan}" target="_blank" rel="noopener noreferrer">PAN</a>`);
+            }
+            if (rc) {
+                links.push(`<a href="${rc}" target="_blank" rel="noopener noreferrer">RC</a>`);
+            }
+
+            return links.length ? links.join(' | ') : 'Not uploaded';
         }
 
         async function updateBorrowStatus(id, status) {
@@ -381,7 +410,7 @@
                 document.getElementById('stat-amount').textContent = `Rs. ${totalAmount.toLocaleString('en-IN')}`;
 
                 if (!Array.isArray(borrowHistory) || borrowHistory.length === 0) {
-                    borrowHistoryTable.innerHTML = '<tr><td colspan="7" style="text-align:center; font-weight:600; color:#3f5573;">No borrow records found.</td></tr>';
+                    borrowHistoryTable.innerHTML = '<tr><td colspan="8" style="text-align:center; font-weight:600; color:#3f5573;">No borrow records found.</td></tr>';
                     return;
                 }
 
@@ -396,6 +425,7 @@
                         <td>${borrow.mobile || ''}</td>
                         <td>${borrow.amount || ''}</td>
                         <td>${borrow.date ? new Date(borrow.date).toLocaleDateString() : ''}</td>
+                        <td>${renderBorrowDocumentsCell(borrow)}</td>
                         <td><span class="status-pill ${statusClass}">${statusText || 'N/A'}</span></td>
                         <td>
                             ${user.role === 'admin' ? `

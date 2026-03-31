@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auction Chat - Dhanam Chits Pvt. Ltd</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #0d2940;
+      --muted: #355972;
+      --bg1: #062537;
+      --bg2: #0b4a5e;
+      --accentA: #0f766e;
+      --accentB: #0891b2;
+      --bubbleUser: linear-gradient(120deg, #0f766e, #0891b2);
+      --bubbleAdmin: linear-gradient(120deg, #16445f, #2a6f8f);
+      --line: rgba(13, 41, 64, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Sora', sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 12%, rgba(245, 158, 11, 0.34), transparent 32%),
+        radial-gradient(circle at 88% 14%, rgba(8, 145, 178, 0.34), transparent 36%),
+        linear-gradient(146deg, var(--bg1), var(--bg2) 46%, #136b79);
+    }
+
+    .shell {
+      width: min(96%, 1220px);
+      margin: 1.2rem auto 1.8rem;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.35);
+      background: linear-gradient(156deg, rgba(255,255,255,0.94), rgba(245,251,255,0.9));
+      box-shadow: 0 34px 70px rgba(8, 20, 45, 0.28);
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 20px;
+      background: linear-gradient(100deg, rgba(7, 36, 56, 0.95), rgba(9, 78, 105, 0.9));
+      color: #f4fcff;
+    }
+
+    .topbar h1 {
+      margin: 0;
+      font-family: 'Fraunces', serif;
+      font-size: clamp(1.3rem, 2.6vw, 2rem);
+      letter-spacing: 0.02em;
+    }
+
+    .top-meta {
+      font-weight: 700;
+      font-size: 0.86rem;
+      color: #d3f3ff;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 72vh;
+    }
+
+    .layout.member-mode {
+      grid-template-columns: 1fr;
+    }
+
+    .threads {
+      border-right: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(8,145,178,0.1), rgba(8,145,178,0.04));
+      padding: 14px;
+      overflow-y: auto;
+    }
+
+    .threads h2 {
+      margin: 0 0 10px;
+      font-size: 0.95rem;
+      color: #103952;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .thread-btn {
+      width: 100%;
+      text-align: left;
+      border: 1px solid rgba(13,41,64,0.14);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.86);
+      padding: 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      color: #194863;
+    }
+
+    .thread-btn.active {
+      border-color: rgba(15,118,110,0.55);
+      background: linear-gradient(120deg, rgba(15,118,110,0.15), rgba(8,145,178,0.14));
+    }
+
+    .chat {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .chat-head {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .chat-head .label {
+      font-size: 0.9rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background:
+        radial-gradient(circle at 14% 18%, rgba(15, 118, 110, 0.07), transparent 24%),
+        radial-gradient(circle at 86% 74%, rgba(8, 145, 178, 0.08), transparent 25%),
+        #f9fdff;
+    }
+
+    .bubble {
+      max-width: min(72%, 620px);
+      padding: 10px 12px;
+      border-radius: 14px;
+      color: #fff;
+      box-shadow: 0 10px 20px rgba(9, 32, 58, 0.16);
+    }
+
+    .bubble.user {
+      align-self: flex-end;
+      background: var(--bubbleUser);
+      border-bottom-right-radius: 4px;
+    }
+
+    .bubble.admin {
+      align-self: flex-start;
+      background: var(--bubbleAdmin);
+      border-bottom-left-radius: 4px;
+    }
+
+    .bubble .meta {
+      font-size: 0.72rem;
+      opacity: 0.85;
+      margin-top: 6px;
+      display: block;
+    }
+
+    .compose {
+      border-top: 1px solid var(--line);
+      padding: 12px;
+      display: flex;
+      gap: 8px;
+      background: rgba(255,255,255,0.9);
+    }
+
+    .compose input {
+      flex: 1;
+      border-radius: 11px;
+      border: 1px solid rgba(13,41,64,0.2);
+      padding: 11px 12px;
+      font-weight: 600;
+      color: #153b56;
+    }
+
+    .compose button,
+    .back-btn {
+      border: none;
+      border-radius: 11px;
+      padding: 11px 14px;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      background: linear-gradient(120deg, var(--accentA), var(--accentB));
+    }
+
+    .back-btn {
+      background: linear-gradient(120deg, #2f4f6f, #3a6f8a);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .empty {
+      color: #466681;
+      font-weight: 700;
+      text-align: center;
+      margin-top: 26px;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .threads {
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+        max-height: 180px;
+      }
+
+      .bubble {
+        max-width: 88%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div>
+        <h1>Auction Lift Chat</h1>
+        <div class="top-meta">Premium support channel between Member and Admin</div>
+      </div>
+      <a class="back-btn" href="ChitId.html">Back to Chit ID</a>
+    </div>
+
+    <div class="layout">
+      <aside class="threads" id="threadsPanel">
+        <h2>Member Threads</h2>
+        <div id="threadsList"></div>
+      </aside>
+
+      <section class="chat">
+        <div class="chat-head">
+          <div class="label" id="chatTitle">Conversation</div>
+          <div class="label" id="chatTopic">Topic: Chit Auction Lift</div>
+        </div>
+
+        <div class="messages" id="messages"></div>
+
+        <form class="compose" id="composeForm">
+          <input id="messageInput" type="text" placeholder="Type your message about auction lifting..." maxlength="1200" required>
+          <button type="submit">Send</button>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const isAdmin = String(user.role || '').toLowerCase() === 'admin';
+    const requesterMobile = String(user.mobile || '').trim();
+    const requesterName = String(user.fullname || user.name || (isAdmin ? 'Admin' : 'Member')).trim();
+
+    const messagesEl = document.getElementById('messages');
+    const threadsPanel = document.getElementById('threadsPanel');
+    const threadsList = document.getElementById('threadsList');
+    const chatTitle = document.getElementById('chatTitle');
+
+    let activeMobile = '';
+    let pollHandle = null;
+
+    if (!requesterMobile) {
+      alert('Please login first.');
+      window.location.href = 'Login.html';
+    }
+
+    if (!isAdmin) {
+      threadsPanel.style.display = 'none';
+      document.querySelector('.layout').classList.add('member-mode');
+      activeMobile = requesterMobile;
+    }
+
+    function fmtTime(value) {
+      if (!value) {
+        return '';
+      }
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) {
+        return '';
+      }
+      return d.toLocaleString('en-IN');
+    }
+
+    function renderMessages(messages) {
+      messagesEl.innerHTML = '';
+      if (!Array.isArray(messages) || messages.length === 0) {
+        messagesEl.innerHTML = '<div class="empty">No messages yet. Start the auction discussion.</div>';
+        return;
+      }
+
+      messages.forEach((msg) => {
+        const role = String(msg.senderRole || '').toLowerCase() === 'admin' ? 'admin' : 'user';
+        const bubble = document.createElement('div');
+        bubble.className = `bubble ${role}`;
+        bubble.innerHTML = `
+          <div>${msg.message || ''}</div>
+          <span class="meta">${msg.senderName || role} • ${fmtTime(msg.created_at)}</span>
+        `;
+        messagesEl.appendChild(bubble);
+      });
+
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    async function loadMessages() {
+      if (!activeMobile) {
+        renderMessages([]);
+        return;
+      }
+
+      const response = await fetch(`/api/chat/messages/${encodeURIComponent(activeMobile)}?requesterMobile=${encodeURIComponent(requesterMobile)}`);
+      const data = await response.json().catch(() => []);
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to load chat messages');
+      }
+
+      chatTitle.textContent = `Conversation: ${activeMobile}`;
+      renderMessages(data);
+    }
+
+    async function loadThreads() {
+      if (!isAdmin) {
+        return;
+      }
+
+      const response = await fetch(`/api/chat/threads?requesterMobile=${encodeURIComponent(requesterMobile)}`);
+      const data = await response.json().catch(() => []);
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to load threads');
+      }
+
+      threadsList.innerHTML = '';
+      if (!Array.isArray(data) || data.length === 0) {
+        threadsList.innerHTML = '<div class="empty">No user chats yet.</div>';
+        activeMobile = '';
+        return;
+      }
+
+      data.forEach((thread) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `thread-btn ${activeMobile === thread.mobile ? 'active' : ''}`;
+        btn.innerHTML = `<div>${thread.mobile}</div><small>${fmtTime(thread.lastMessageAt)}</small>`;
+        btn.addEventListener('click', () => {
+          activeMobile = thread.mobile;
+          loadThreads().catch(console.error);
+          loadMessages().catch(console.error);
+        });
+        threadsList.appendChild(btn);
+      });
+
+      if (!activeMobile) {
+        activeMobile = data[0].mobile;
+      }
+    }
+
+    async function sendMessage(text) {
+      if (!activeMobile) {
+        throw new Error('No active conversation selected');
+      }
+
+      const response = await fetch('/api/chat/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mobile: activeMobile,
+          senderName: requesterName,
+          requesterMobile,
+          topic: 'Chit Auction Lift',
+          message: text,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send message');
+      }
+
+      return data;
+    }
+
+    document.getElementById('composeForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const input = document.getElementById('messageInput');
+      const text = String(input.value || '').trim();
+      if (!text) {
+        return;
+      }
+
+      try {
+        await sendMessage(text);
+        input.value = '';
+        await loadMessages();
+        await loadThreads();
+      } catch (error) {
+        alert(error.message || 'Unable to send message');
+      }
+    });
+
+    async function init() {
+      try {
+        await loadThreads();
+        await loadMessages();
+
+        if (pollHandle) {
+          clearInterval(pollHandle);
+        }
+        pollHandle = setInterval(() => {
+          loadMessages().catch(() => {});
+          if (isAdmin) {
+            loadThreads().catch(() => {});
+          }
+        }, 5000);
+      } catch (error) {
+        alert(error.message || 'Unable to load chat');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

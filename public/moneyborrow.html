@@ -134,6 +134,18 @@
                 <label for="amount">Amount</label>
                 <input type="number" class="form-control" id="amount" name="amount" required>
             </div>
+            <div class="form-group">
+                <label for="aadhaarDocument">Aadhaar Card (PDF/JPG/PNG)</label>
+                <input type="file" class="form-control" id="aadhaarDocument" name="aadhaarDocument" accept=".pdf,.jpg,.jpeg,.png,.webp" required>
+            </div>
+            <div class="form-group">
+                <label for="panDocument">PAN Card (PDF/JPG/PNG)</label>
+                <input type="file" class="form-control" id="panDocument" name="panDocument" accept=".pdf,.jpg,.jpeg,.png,.webp" required>
+            </div>
+            <div class="form-group">
+                <label for="rcDocument">RC Document (PDF/JPG/PNG)</label>
+                <input type="file" class="form-control" id="rcDocument" name="rcDocument" accept=".pdf,.jpg,.jpeg,.png,.webp" required>
+            </div>
             <button type="submit" class="btn btn-primary btn-block">Submit</button>
         </form>
         <button class="back-button" onclick="goBack()">Back to Dashboard</button>
@@ -149,16 +161,12 @@
             
             const form = event.target;
             const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-        
-            data.mobile = String(data.mobile); // Ensure mobile is a string
+            formData.set("mobile", String(formData.get("mobile") || ""));
         
             try {
-                console.log("Sending data:", data);
                 const response = await fetch("/api/borrow", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(data),
+                    body: formData,
                 });
         
                 const result = await response.json();
