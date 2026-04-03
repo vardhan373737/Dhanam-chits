@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Dhanam Chits Pvt. Ltd</title>
-    <meta name="description" content="Your personal dashboard to manage your chit plans and payments.">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <style>
@@ -81,21 +80,16 @@
             padding: 10px 20px;
             font-weight: bold;
             border-radius: 8px;
-            transition: transform 0.2s ease;
             color: white;
             text-decoration: none;
             display: inline-block;
+            margin: 0 10px;
         }
 
         .btn-primary:hover {
             background: linear-gradient(45deg, #764ba2, #667eea);
-            transform: scale(1.05);
             color: white;
             text-decoration: none;
-        }
-
-        .login-prompt .btn {
-            margin: 0 10px;
         }
 
         .info-section {
@@ -104,6 +98,7 @@
             padding: 30px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             margin-bottom: 30px;
+            margin-top: 40px;
         }
 
         .info-section h3 {
@@ -154,16 +149,8 @@
         }
 
         @media (max-width: 768px) {
-            body {
-                padding-top: 60px;
-            }
-
             .login-prompt {
                 padding: 20px;
-            }
-
-            .login-prompt h2 {
-                font-size: 1.8rem;
             }
 
             .navbar-nav .nav-link {
@@ -202,44 +189,30 @@
             <p>Please log in to view your chit plans, payment history, and account information.</p>
             <div>
                 <a href="Login.html" class="btn btn-primary">Login</a>
-                <a href="register.html" class="btn btn-primary" style="background: linear-gradient(45deg, #764ba2, #667eea);">Sign Up</a>
+                <a href="register.html" class="btn btn-primary">Sign Up</a>
             </div>
         </div>
 
-        <div style="margin-top: 40px;">
-            <div class="info-section">
-                <h3><i class="bi bi-info-circle"></i> What You Can Do Here</h3>
-                <ul class="info-list">
-                    <li><i class="bi bi-credit-card"></i> <strong>View Your Plans</strong> - See all your active and completed chit plans with detailed information</li>
-                    <li><i class="bi bi-calendar-check"></i> <strong>Payment History</strong> - Track all your payments and upcoming due dates</li>
-                    <li><i class="bi bi-graph-up"></i> <strong>Investment Returns</strong> - Monitor your returns and earnings from chit plans</li>
-                    <li><i class="bi bi-bell"></i> <strong>Notifications</strong> - Receive alerts about payment due dates and winnings</li>
-                    <li><i class="bi bi-gear"></i> <strong>Account Settings</strong> - Update your profile and manage your preferences</li>
-                    <li><i class="bi bi-download"></i> <strong>Download Reports</strong> - Generate and download your account statements</li>
-                </ul>
-            </div>
+        <div class="info-section">
+            <h3><i class="bi bi-info-circle"></i> What You Can Do Here</h3>
+            <ul class="info-list">
+                <li><i class="bi bi-credit-card"></i> <strong>View Your Plans</strong> - See all your active and completed chit plans</li>
+                <li><i class="bi bi-calendar-check"></i> <strong>Payment History</strong> - Track all your payments and due dates</li>
+                <li><i class="bi bi-graph-up"></i> <strong>Investment Returns</strong> - Monitor your returns from chit plans</li>
+                <li><i class="bi bi-bell"></i> <strong>Notifications</strong> - Receive alerts about important updates</li>
+                <li><i class="bi bi-gear"></i> <strong>Account Settings</strong> - Update your profile and preferences</li>
+            </ul>
+        </div>
 
-            <div class="info-section">
-                <h3><i class="bi bi-question-circle"></i> Getting Started</h3>
-                <ol style="list-style: decimal; margin-left: 20px; color: #666;">
-                    <li style="padding: 10px 0;"><strong>Create an Account</strong> - Sign up with your email and phone number</li>
-                    <li style="padding: 10px 0;"><strong>Complete Verification</strong> - Verify your identity through our simple process</li>
-                    <li style="padding: 10px 0;"><strong>Choose a Plan</strong> - Select from our diverse chit plans</li>
-                    <li style="padding: 10px 0;"><strong>Make Your First Payment</strong> - Secure payment through multiple channels</li>
-                    <li style="padding: 10px 0;"><strong>Manage Your Account</strong> - Use your dashboard to monitor everything</li>
-                </ol>
-            </div>
-
-            <div class="info-section">
-                <h3><i class="bi bi-shield-lock"></i> Security & Privacy</h3>
-                <p style="color: #666; margin-bottom: 15px;">Your information and funds are protected with bank-level security:</p>
-                <ul class="info-list">
-                    <li><i class="bi bi-check-circle"></i> Secure SSL encryption for all transactions</li>
-                    <li><i class="bi bi-check-circle"></i> Two-factor authentication for account security</li>
-                    <li><i class="bi bi-check-circle"></i> Compliance with financial regulations</li>
-                    <li><i class="bi bi-check-circle"></i> Regular security audits and updates</li>
-                </ul>
-            </div>
+        <div class="info-section">
+            <h3><i class="bi bi-shield-lock"></i> Security & Privacy</h3>
+            <p style="color: #666; margin-bottom: 15px;">Your information is protected with bank-level security:</p>
+            <ul class="info-list">
+                <li><i class="bi bi-check-circle"></i> Secure SSL encryption for all transactions</li>
+                <li><i class="bi bi-check-circle"></i> Two-factor authentication for account security</li>
+                <li><i class="bi bi-check-circle"></i> Compliance with financial regulations</li>
+                <li><i class="bi bi-check-circle"></i> Regular security audits and updates</li>
+            </ul>
         </div>
     </div>
 
@@ -255,595 +228,6 @@
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
-
-        /* Sidebar */
-        .sidebar {
-            width: 250px;
-            height: 100%;
-            background: #2c3e50;
-            padding: 20px;
-            position: fixed;
-            left: 0;
-            top: 0;
-            transition: width 0.3s;
-            overflow: hidden;
-        }
-
-        .sidebar h2 {
-            color: white;
-            text-align: center;
-            margin-bottom: 30px;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
-        }
-
-        .sidebar a {
-            display: flex;
-            align-items: center;
-            color: white;
-            text-decoration: none;
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 5px;
-            transition: 0.3s;
-            white-space: nowrap;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
-        }
-
-        .sidebar a i {
-            margin-right: 10px;
-            font-size: 18px;
-        }
-
-        .sidebar a:hover {
-            background: #34495e;
-            box-shadow: 0 0 15px rgba(0, 123, 255, 0.7);
-            transform: scale(1.05);
-        }
-
-        .logout-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #e74c3c;
-            text-align: center;
-            padding: 12px;
-            border-radius: 5px;
-            margin-top: 50px;
-            color: white;
-            font-weight: bold;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
-        }
-
-        .logout-btn:hover {
-            background: #c0392b;
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
-            transform: scale(1.05);
-        }
-
-        /* Toggle Button */
-        .menu-toggle {
-            display: none;
-            position: fixed;
-            left: 10px;
-            top: 10px;
-            background: #2c3e50;
-            color: white;
-            border: none;
-            padding: 10px;
-            cursor: pointer;
-            border-radius: 5px;
-            z-index: 1000;
-        }
-
-        /* Content */
-        .content {
-            margin-left: 250px;
-            width: calc(100% - 250px);
-            padding: 20px;
-            transition: margin-left 0.3s;
-        }
-
-        .content h1 {
-            color: #333;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
-        }
-
-        .content p {
-            font-size: 1.2rem;
-            color: #666;
-        }
-
-        .dashboard-cards {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            margin-top: 20px;
-        }
-
-        .card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin: 10px;
-            flex: 1;
-            min-width: 250px;
-            max-width: 300px;
-            text-align: center;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .card h3 {
-            margin-bottom: 10px;
-            color: #333;
-            text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
-        }
-
-        .card p {
-            font-size: 1.1rem;
-            color: #666;
-        }
-
-        .card i {
-            font-size: 2rem;
-            color: #007BFF;
-            margin-bottom: 10px;
-            text-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
-        }
-
-        .card:hover {
-            box-shadow: 0 0 15px rgba(0, 123, 255, 0.7);
-            transform: scale(1.05);
-        }
-
-        /* Responsive Design */
-        @media screen and (max-width: 768px) {
-            .menu-toggle {
-                display: block;
-            }
-
-            .sidebar {
-                width: 60px;
-                padding: 10px;
-            }
-
-            .sidebar h2 {
-                display: none;
-            }
-
-            .sidebar a {
-                justify-content: center;
-                padding: 10px;
-            }
-
-            .sidebar a i {
-                font-size: 18px;
-                margin: 0;
-            }
-
-            .content {
-                margin-left: 60px;
-                width: calc(100% - 60px);
-            }
-
-            .dashboard-cards {
-                flex-direction: column;
-                align-items: center;
-            }
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        table th, table td {
-            padding: 12px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #000000; /* Changed text color to black */
-        }
-
-        table th {
-            background-color: rgba(0, 123, 255, 0.7);
-            color: #fff;
-        }
-
-        table tr:hover {
-            background-color: rgba(0, 123, 255, 0.2);
-            transition: 0.3s ease-in-out;
-        }
-
-        .btn-action {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        .btn-action:hover {
-            background: #0056b3;
-        }
-
-        .btn-password {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        .btn-password:hover {
-            background: #218838;
-        }
-
-        .btn-delete {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        .btn-delete:hover {
-            background: #c82333;
-        }
-
-        .user-toolbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 14px;
-            margin-bottom: 16px;
-        }
-
-        .user-toolbar h1 {
-            margin: 0;
-            color: #0f2a3f;
-            text-shadow: none;
-            font-weight: 800;
-            letter-spacing: 0.2px;
-        }
-
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .stat-card {
-            background: linear-gradient(120deg, rgba(12, 55, 86, 0.94), rgba(24, 119, 145, 0.9));
-            color: #f1f8ff;
-            border-radius: 12px;
-            padding: 12px 14px;
-            box-shadow: 0 8px 20px rgba(9, 40, 65, 0.2);
-        }
-
-        .stat-card .label {
-            display: block;
-            font-size: 0.8rem;
-            opacity: 0.9;
-            margin-bottom: 4px;
-        }
-
-        .stat-card .value {
-            font-size: 1.28rem;
-            font-weight: 800;
-        }
-
-        .dashboard-container {
-            background: rgba(255, 255, 255, 0.82);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            border-radius: 14px;
-            box-shadow: 0 12px 26px rgba(16, 49, 75, 0.16);
-            padding: 10px;
-            width: 100%;
-            max-width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .btn-logout {
-            border: none;
-            padding: 9px 14px;
-            border-radius: 10px;
-            background: linear-gradient(120deg, #0b607f, #1f8a70);
-            color: #ffffff;
-            font-weight: 700;
-            box-shadow: 0 8px 18px rgba(10, 43, 64, 0.22);
-        }
-
-        .user-toolbar .btn-logout {
-            margin-left: auto;
-            flex-shrink: 0;
-        }
-
-        .role-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 74px;
-            padding: 4px 10px;
-            border-radius: 999px;
-            font-weight: 700;
-            font-size: 0.78rem;
-            text-transform: capitalize;
-            letter-spacing: 0.2px;
-            color: #fff;
-        }
-
-        .role-badge.admin {
-            background: linear-gradient(120deg, #7a1a39, #cf3f4e);
-        }
-
-        .role-badge.user {
-            background: linear-gradient(120deg, #0b607f, #1f8a70);
-        }
-
-        .action-wrap {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            justify-content: center;
-        }
-
-        /* Mobile Styles */
-        @media (max-width: 576px) {
-            .user-toolbar {
-                flex-direction: row;
-                align-items: flex-start;
-                justify-content: space-between;
-            }
-
-            .stats-row {
-                grid-template-columns: 1fr;
-            }
-
-            .dashboard-container {
-                padding: 8px;
-            }
-
-            table {
-                width: max-content;
-                min-width: 880px;
-                white-space: nowrap;
-            }
-
-            .user-toolbar h1 {
-                font-size: 1.95rem;
-                line-height: 1.05;
-                max-width: calc(100% - 120px);
-            }
-
-            .user-toolbar .btn-logout {
-                margin-top: 4px;
-                padding: 8px 12px;
-            }
-        }
-    </style>
-    <link rel="stylesheet" href="admin-sidebar.css">
-    <link rel="stylesheet" href="index-theme.css">
-</head>
-<body>
-
-    <!-- Toggle Button -->
-    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <h2>Admin Panel</h2>
-        <a href="admin.html"><i class="fas fa-tachometer-alt"></i> <span class="menu-text">Dashboard</span></a>
-        <a href="users.html"><i class="fas fa-users"></i> <span class="menu-text">Users</span></a>
-        <a href="bankdetailA.html"><i class="fas fa-university"></i> <span class="menu-text">Bank Details</span></a>
-        <a href="borrowA.html"><i class="fas fa-hand-holding-usd"></i> <span class="menu-text">Borrows</span></a>
-        <a href="ChitidA.html"><i class="fas fa-university"></i> <span class="menu-text">Chit-ids Approve</span></a>
-        <a href="paymentA.html"><i class="fas fa-credit-card"></i> <span class="menu-text">Payments</span></a>
-        <a href="contactA.html"><i class="fas fa-envelope"></i> <span class="menu-text">Contact Details</span></a>
-        <a href="index.html" class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
-    </div>
-
-    <!-- Content -->
-    <div class="content">
-        <div class="user-toolbar">
-            <h1>User & Admin Directory</h1>
-            <button class="btn-logout" onclick="fetchUserDetails()">Refresh</button>
-        </div>
-
-        <div class="stats-row">
-            <div class="stat-card">
-                <span class="label">Total Accounts</span>
-                <span class="value" id="total-accounts">0</span>
-            </div>
-            <div class="stat-card">
-                <span class="label">Admins</span>
-                <span class="value" id="total-admins">0</span>
-            </div>
-            <div class="stat-card">
-                <span class="label">Users</span>
-                <span class="value" id="total-users">0</span>
-            </div>
-        </div>
-
-        <div class="dashboard-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Mobile</th>
-                        <th>Role</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="user-details-table">
-                    <!-- Data will be loaded here -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <script>
-        const AUTH_API_BASES = ['/api', ''];
-
-        async function fetchAuthApi(path, options = {}) {
-            let lastError = null;
-            for (const base of AUTH_API_BASES) {
-                try {
-                    return await fetch(`${base}${path}`, options);
-                } catch (error) {
-                    lastError = error;
-                }
-            }
-
-            throw lastError || new Error('No auth backend is reachable');
-        }
-
-        async function fetchUserDetails() {
-            try {
-                const response = await fetchAuthApi('/api/users'); 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                const data = await response.json();
-                console.log('Fetched user details:', data); // Add logging
-                const tableBody = document.getElementById('user-details-table');
-                tableBody.innerHTML = '';
-
-                if (!Array.isArray(data)) {
-                    throw new Error('Invalid data format received');
-                }
-
-                const adminCount = data.filter((user) => user.role === 'admin').length;
-                const userCount = data.filter((user) => user.role !== 'admin').length;
-
-                document.getElementById('total-accounts').textContent = data.length;
-                document.getElementById('total-admins').textContent = adminCount;
-                document.getElementById('total-users').textContent = userCount;
-
-                if (data.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; font-weight:600; color:#264653;">No accounts found.</td></tr>';
-                    return;
-                }
-
-                data.forEach((user) => {
-                    const role = user.role || 'user';
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${user.fullname}</td>
-                        <td>${user.email}</td>
-                        <td>${user.mobile}</td>
-                        <td><span class="role-badge ${role === 'admin' ? 'admin' : 'user'}">${role}</span></td>
-                        <td>
-                            <div class="action-wrap">
-                                <button class="btn-action" onclick="viewUser('${user._id || user.id}')">View</button>
-                                <button class="btn-password" onclick="changePassword('${user._id || user.id}')">Change Password</button>
-                                <button class="btn-delete" onclick="deleteUser('${user._id || user.id}')">Delete</button>
-                            </div>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-            } catch (error) {
-                console.error('Error fetching user details:', error);
-                alert('Failed to fetch user details. Please try again later.');
-            }
-        }
-
-        function viewUser(userId) {
-            // Implement the logic to view user details
-            alert(`View details for user ID: ${userId}`);
-        }
-
-        async function changePassword(userId) {
-            const newPassword = prompt('Enter new password:');
-            if (!newPassword) {
-                return;
-            }
-
-            try {
-                const response = await fetchAuthApi(`/api/users/${userId}/password`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ password: newPassword })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
-                alert('Password changed successfully');
-            } catch (error) {
-                console.error('Error changing password:', error);
-                alert('Failed to change password. Please try again later.');
-            }
-        }
-
-        async function deleteUser(userId) {
-            if (!confirm('Are you sure you want to delete this user?')) {
-                return;
-            }
-
-            try {
-                const response = await fetchAuthApi(`/api/users/${userId}`, {
-                    method: 'DELETE'
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
-                alert('User deleted successfully');
-                fetchUserDetails();
-            } catch (error) {
-                console.error('Error deleting user:', error);
-                alert('Failed to delete user. Please try again later.');
-            }
-        }
-
-        function logout() {
-            fetchAuthApi('/logout', {
-                method: 'POST',
-                credentials: 'include',
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message === "Logout successful.") {
-                    window.location.href = "/login.html";
-                }
-            })
-            .catch(error => {
-                console.error('Error logging out:', error);
-            });
-        }
-
-        function toggleSidebar() {
-            document.body.classList.toggle('sidebar-open');
-        }
-
-        document.addEventListener('DOMContentLoaded', fetchUserDetails);
-    </script>
-
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
 
