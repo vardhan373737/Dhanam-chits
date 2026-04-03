@@ -1704,7 +1704,11 @@ app.post("/api/cashfree/create-order", async (req, res) => {
     }
 
     const orderId = buildCashfreeOrderId(normalizedMobile);
-    const returnUrl = String(process.env.CASHFREE_RETURN_URL || "").trim() || `${req.protocol}://${req.get("host")}/chitpayment.html?order_id={order_id}`;
+    const forwardedProto = String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim();
+    const requestProto = forwardedProto || String(req.protocol || "").trim() || "https";
+    const safeProto = requestProto === "http" ? "https" : requestProto;
+    const returnUrl = String(process.env.CASHFREE_RETURN_URL || "").trim()
+      || `${safeProto}://${req.get("host")}/chitpayment.html?order_id={order_id}`;
     const notifyUrl = String(process.env.CASHFREE_NOTIFY_URL || "").trim();
 
     const orderPayload = {
