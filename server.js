@@ -1,8 +1,11 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 const mongoose = require('mongoose');
+const axios = require('axios');
+const crypto = require('crypto');
 const connectDB = require('./db');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
@@ -10,10 +13,115 @@ const pdf = require('pdfkit');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
+const CASHFREE_MODE = String(process.env.CASHFREE_ENV || 'sandbox').trim().toLowerCase() === 'production'
+    ? 'production'
+    : 'sandbox';
+const CASHFREE_BASE_URL = CASHFREE_MODE === 'production'
+    ? 'https://api.cashfree.com'
+    : 'https://sandbox.cashfree.com';
+const CASHFREE_WEBHOOK_SECRET = String(
+    process.env.CASHFREE_WEBHOOK_SECRET || process.env.CASHFREE_SECRET_KEY || ''
+).trim();
+
+const getCashfreeHeaders = () => {
+    const appId = String(process.env.CASHFREE_APP_ID || '').trim();
+    const secretKey = String(process.env.CASHFREE_SECRET_KEY || '').trim();
+
+    if (!appId || !secretKey) {
+        throw new Error('Cashfree credentials are missing. Configure CASHFREE_APP_ID and CASHFREE_SECRET_KEY.');
+    }
+
+    return {
+        'x-client-id': appId,
+        'x-client-secret': secretKey,
+        'x-api-version': '2023-08-01',
+        'content-type': 'application/json'
+    };
+};
+
+const buildCashfreeOrderId = (mobile) => {
+    const normalizedMobile = String(mobile || '').replace(/\D/g, '').slice(-10) || 'guest';
+    return `CHIT_${Date.now()}_${normalizedMobile}_${Math.random().toString(16).slice(2, 6)}`;
+};
+
+const getCashfreeWebhookSignature = (req) => String(
+    req.headers['x-webhook-signature']
+    || req.headers['x-cf-signature']
+    || req.headers['x-cashfree-signature']
+    || ''
+).trim();
+
+const safeSignatureMatch = (provided, expected) => {
+    if (!provided || !expected) {
+        return false;
+    }
+
+    const providedBuffer = Buffer.from(provided);
+    const expectedBuffer = Buffer.from(expected);
+    if (providedBuffer.length !== expectedBuffer.length) {
+        return false;
+    }
+
+    return crypto.timingSafeEqual(providedBuffer, expectedBuffer);
+};
+
+const verifyCashfreeWebhookSignature = (req) => {
+    if (!CASHFREE_WEBHOOK_SECRET) {
+        return false;
+    }
+
+    const signatureHeader = getCashfreeWebhookSignature(req);
+    if (!signatureHeader) {
+        return false;
+    }
+
+    const signature = signatureHeader.replace(/^sha256=/i, '').trim();
+    const rawBody = req.rawBody || JSON.stringify(req.body || {});
+    const timestamp = String(req.headers['x-webhook-timestamp'] || req.headers['x-cf-timestamp'] || '').trim();
+
+    const candidates = [
+        crypto.createHmac('sha256', CASHFREE_WEBHOOK_SECRET).update(rawBody).digest('hex'),
+        crypto.createHmac('sha256', CASHFREE_WEBHOOK_SECRET).update(rawBody).digest('base64'),
+    ];
+
+    if (timestamp) {
+        candidates.push(crypto.createHmac('sha256', CASHFREE_WEBHOOK_SECRET).update(`${timestamp}${rawBody}`).digest('hex'));
+        candidates.push(crypto.createHmac('sha256', CASHFREE_WEBHOOK_SECRET).update(`${timestamp}${rawBody}`).digest('base64'));
+    }
+
+    return candidates.some((expected) => safeSignatureMatch(signature, expected));
+};
+
+const findSuccessfulCashfreePayment = (paymentsPayload, preferredPaymentId = '') => {
+    const preferredId = String(preferredPaymentId || '').trim();
+    const rows = Array.isArray(paymentsPayload)
+        ? paymentsPayload
+        : Array.isArray(paymentsPayload?.data)
+            ? paymentsPayload.data
+            : [];
+
+    const successRows = rows.filter((item) => String(item?.payment_status || '').toUpperCase() === 'SUCCESS');
+    if (successRows.length === 0) {
+        return null;
+    }
+
+    if (preferredId) {
+        const exact = successRows.find((item) => String(item?.cf_payment_id || '').trim() === preferredId);
+        if (exact) {
+            return exact;
+        }
+    }
+
+    return successRows[0];
+};
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({
+    verify: (req, _res, buf) => {
+        req.rawBody = buf.toString('utf8');
+    }
+}));
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -255,6 +363,66 @@ const paymentSchema = new mongoose.Schema({
 // Create a Payment model
 const Payment = mongoose.model('Payment', paymentSchema);
 
+const saveCashfreePaidOrder = async ({ orderData, successfulPayment, paymentData = {}, status = 'Approved' }) => {
+    const normalizedMobile = String(paymentData?.mobile || orderData?.customer_details?.customer_phone || '').trim();
+    const normalizedName = String(paymentData?.name || orderData?.customer_details?.customer_name || 'Cashfree User').trim();
+    const normalizedEmail = String(paymentData?.email || orderData?.customer_details?.customer_email || '').trim();
+    const normalizedChitPlan = String(
+        paymentData?.chitsPlan || orderData?.order_tags?.chits_plan || orderData?.order_tags?.chit_plan || ''
+    ).trim();
+    const paymentAmount = Number(orderData?.order_amount || paymentData?.amount || successfulPayment?.payment_amount || 0);
+    const paymentType = String(paymentData?.type || orderData?.order_tags?.payment_type || 'Cashfree Gateway').trim();
+    const orderId = String(orderData?.order_id || paymentData?.orderId || '').trim();
+    const utrNumber = String(successfulPayment?.cf_payment_id || orderId).trim();
+
+    if (!normalizedMobile || !paymentAmount || paymentAmount <= 0 || !utrNumber) {
+        throw new Error('Missing payment details required to save transaction.');
+    }
+
+    const existingPayment = await Payment.findOne({ utrNumber });
+    if (existingPayment) {
+        return {
+            payment: existingPayment,
+            created: false,
+            utrNumber,
+            cfPaymentId: successfulPayment?.cf_payment_id,
+        };
+    }
+
+    const payment = new Payment({
+        name: normalizedName,
+        mobile: normalizedMobile,
+        amount: paymentAmount,
+        utrNumber,
+        email: normalizedEmail,
+        type: paymentType,
+        chitsPlan: normalizedChitPlan,
+        status,
+    });
+    await payment.save();
+
+    const invoicePath = generateInvoice(payment);
+    if (normalizedEmail && fs.existsSync(invoicePath)) {
+        sendPaymentConfirmation(
+            normalizedEmail,
+            normalizedName,
+            normalizedMobile,
+            paymentAmount,
+            utrNumber,
+            paymentType,
+            normalizedChitPlan,
+            invoicePath
+        );
+    }
+
+    return {
+        payment,
+        created: true,
+        utrNumber,
+        cfPaymentId: successfulPayment?.cf_payment_id,
+    };
+};
+
 // Get all payments
 app.get('/api/bank-details', async (req, res) => {
     try {
@@ -312,6 +480,185 @@ app.post('/api/bank-details', async (req, res) => {
     } catch (error) {
         console.error('Error saving payment details:', error);
         res.status(500).json({ message: 'Error saving payment details.', error });
+    }
+});
+
+app.post('/api/cashfree/create-order', async (req, res) => {
+    try {
+        const { name, email, mobile, amount, chitsPlan, type } = req.body;
+        const normalizedName = String(name || '').trim();
+        const normalizedEmail = String(email || '').trim();
+        const normalizedMobile = String(mobile || '').replace(/\D/g, '').slice(-10);
+        const normalizedChitPlan = String(chitsPlan || '').trim();
+        const normalizedType = String(type || 'Chit Payment (Cashfree)').trim();
+        const orderAmount = Number(amount);
+
+        if (!normalizedName || !normalizedEmail || !normalizedMobile || !orderAmount || orderAmount <= 0) {
+            return res.status(400).json({ message: 'Name, email, mobile, and amount are required.' });
+        }
+
+        const orderId = buildCashfreeOrderId(normalizedMobile);
+        const returnUrl = String(process.env.CASHFREE_RETURN_URL || '').trim() || `${req.protocol}://${req.get('host')}/chitpayment.html?order_id={order_id}`;
+        const notifyUrl = String(process.env.CASHFREE_NOTIFY_URL || '').trim();
+
+        const orderPayload = {
+            order_id: orderId,
+            order_amount: orderAmount,
+            order_currency: 'INR',
+            customer_details: {
+                customer_id: normalizedMobile,
+                customer_name: normalizedName,
+                customer_email: normalizedEmail,
+                customer_phone: normalizedMobile,
+            },
+            order_meta: {
+                return_url: returnUrl,
+            },
+            order_tags: {
+                chits_plan: normalizedChitPlan,
+                payment_type: normalizedType,
+            }
+        };
+
+        if (notifyUrl) {
+            orderPayload.order_meta.notify_url = notifyUrl;
+        }
+
+        const response = await axios.post(`${CASHFREE_BASE_URL}/pg/orders`, orderPayload, {
+            headers: getCashfreeHeaders()
+        });
+
+        return res.json({
+            orderId: response.data.order_id,
+            paymentSessionId: response.data.payment_session_id,
+            cashfreeMode: CASHFREE_MODE,
+            amount: response.data.order_amount,
+            currency: response.data.order_currency,
+        });
+    } catch (error) {
+        const status = error.response?.status || 500;
+        const details = error.response?.data || null;
+        console.error('cashfree create order error', details || error.message || error);
+        return res.status(status).json({
+            message: details?.message || 'Failed to create Cashfree order',
+            error: details,
+        });
+    }
+});
+
+app.post('/api/cashfree/confirm-order', async (req, res) => {
+    try {
+        const { orderId, paymentData } = req.body;
+        const normalizedOrderId = String(orderId || '').trim();
+
+        if (!normalizedOrderId) {
+            return res.status(400).json({ message: 'orderId is required' });
+        }
+
+        const orderResponse = await axios.get(`${CASHFREE_BASE_URL}/pg/orders/${encodeURIComponent(normalizedOrderId)}`, {
+            headers: getCashfreeHeaders()
+        });
+
+        const paymentsResponse = await axios.get(`${CASHFREE_BASE_URL}/pg/orders/${encodeURIComponent(normalizedOrderId)}/payments`, {
+            headers: getCashfreeHeaders()
+        });
+
+        const successfulPayment = findSuccessfulCashfreePayment(paymentsResponse.data);
+
+        if (!successfulPayment || String(orderResponse.data?.order_status || '').toUpperCase() !== 'PAID') {
+            return res.status(409).json({
+                message: 'Payment is not completed yet. Please finish payment and try again.',
+                orderStatus: orderResponse.data?.order_status,
+            });
+        }
+
+        let saved;
+        try {
+            saved = await saveCashfreePaidOrder({
+                orderData: orderResponse.data,
+                successfulPayment,
+                paymentData,
+                status: 'Approved',
+            });
+        } catch (saveError) {
+            console.error('cashfree payment save error', saveError);
+            return res.status(500).json({ message: 'Payment succeeded but failed to save locally.', error: saveError });
+        }
+
+        return res.json({
+            message: saved.created ? 'Payment successful and saved.' : 'Payment already recorded',
+            payment: saved.payment,
+            orderStatus: orderResponse.data?.order_status,
+            cfPaymentId: saved.cfPaymentId || successfulPayment.cf_payment_id,
+        });
+    } catch (error) {
+        const status = error.response?.status || 500;
+        const details = error.response?.data || null;
+        console.error('cashfree confirm order error', details || error.message || error);
+        return res.status(status).json({
+            message: details?.message || 'Failed to verify Cashfree payment',
+            error: details,
+        });
+    }
+});
+
+app.post('/api/cashfree/webhook', async (req, res) => {
+    try {
+        if (!CASHFREE_WEBHOOK_SECRET) {
+            return res.status(500).json({ message: 'Webhook secret is not configured.' });
+        }
+
+        if (!verifyCashfreeWebhookSignature(req)) {
+            return res.status(401).json({ message: 'Invalid webhook signature.' });
+        }
+
+        const payload = req.body || {};
+        const eventType = String(payload?.type || payload?.event || '').toUpperCase();
+        const orderId = String(payload?.data?.order?.order_id || payload?.order?.order_id || payload?.order_id || '').trim();
+        const paymentStatus = String(payload?.data?.payment?.payment_status || payload?.payment?.payment_status || '').toUpperCase();
+        const webhookPaymentId = String(payload?.data?.payment?.cf_payment_id || payload?.payment?.cf_payment_id || '').trim();
+
+        if (!orderId) {
+            return res.status(400).json({ message: 'order_id missing in webhook payload.' });
+        }
+
+        if (!eventType.includes('SUCCESS') && paymentStatus !== 'SUCCESS') {
+            return res.status(200).json({ message: 'Webhook received. Event ignored.', eventType, paymentStatus });
+        }
+
+        const orderResponse = await axios.get(`${CASHFREE_BASE_URL}/pg/orders/${encodeURIComponent(orderId)}`, {
+            headers: getCashfreeHeaders()
+        });
+
+        const paymentsResponse = await axios.get(`${CASHFREE_BASE_URL}/pg/orders/${encodeURIComponent(orderId)}/payments`, {
+            headers: getCashfreeHeaders()
+        });
+
+        const successfulPayment = findSuccessfulCashfreePayment(paymentsResponse.data, webhookPaymentId);
+        if (!successfulPayment || String(orderResponse.data?.order_status || '').toUpperCase() !== 'PAID') {
+            return res.status(202).json({ message: 'Payment not in PAID state yet.' });
+        }
+
+        const saved = await saveCashfreePaidOrder({
+            orderData: orderResponse.data,
+            successfulPayment,
+            paymentData: {},
+            status: 'Approved',
+        });
+
+        return res.status(200).json({
+            message: saved.created ? 'Webhook payment saved.' : 'Webhook payment already recorded.',
+            orderId,
+            utrNumber: saved.utrNumber,
+        });
+    } catch (error) {
+        const status = error.response?.status || 500;
+        const details = error.response?.data || null;
+        console.error('cashfree webhook error', details || error.message || error);
+        return res.status(status).json({
+            message: details?.message || 'Failed to process Cashfree webhook',
+            error: details,
+        });
     }
 });
 

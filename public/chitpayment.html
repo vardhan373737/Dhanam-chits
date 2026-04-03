@@ -76,6 +76,43 @@
             color: #274766;
             margin-top: 6px;
         }
+
+        .btn-cashfree {
+            background: linear-gradient(120deg, #0f172a, #0b607f);
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+
+        .payment-status {
+            margin-top: 14px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .payment-status.info {
+            display: block;
+            background: rgba(8, 145, 178, 0.12);
+            color: #0b607f;
+            border: 1px solid rgba(8, 145, 178, 0.25);
+        }
+
+        .payment-status.error {
+            display: block;
+            background: rgba(185, 28, 28, 0.1);
+            color: #9f1239;
+            border: 1px solid rgba(185, 28, 28, 0.2);
+        }
+
+        .payment-status.success {
+            display: block;
+            background: rgba(15, 118, 110, 0.12);
+            color: #0f766e;
+            border: 1px solid rgba(15, 118, 110, 0.22);
+        }
     </style>
     <link rel="stylesheet" href="premium-shared.css">
     <link rel="stylesheet" href="index-theme.css">
@@ -142,6 +179,7 @@
             <div class="form-group">
                 <label for="utrNumber">UTR Number</label>
                 <input type="text" class="form-control" id="utrNumber" required>
+                <div class="helper">Required only for manual transfer.</div>
             </div>
 
             <div class="form-group">
@@ -149,11 +187,14 @@
                 <input type="text" class="form-control" id="type" value="Chit Payment" readonly>
             </div>
 
-            <button type="submit" class="btn btn-primary">Submit Payment</button>
+            <button type="submit" class="btn btn-primary" id="manualSubmitBtn">Submit Manual UTR Payment</button>
+            <button type="button" class="btn btn-cashfree" id="cashfreePayBtn">Pay with Cashfree</button>
             <button type="button" class="back-button" onclick="window.location.href='Chitid.html'">Back to Chit ID</button>
+            <div id="paymentStatus" class="payment-status"></div>
         </form>
     </main>
 
+    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
     <script>
         const params = new URLSearchParams(window.location.search);
         const queryChitId = (params.get('chitId') || '').trim();
@@ -174,13 +215,27 @@
         document.getElementById('mobile').value = queryMobile || user.mobile || '';
         document.getElementById('chitsPlan').value = queryChitId;
 
-        if (!queryChitId || !document.getElementById('mobile').value) {
-            alert('Invalid payment request. Please open this page using Pay Now from Chit ID page.');
+        const paymentForm = document.getElementById('paymentForm');
+        const manualSubmitBtn = document.getElementById('manualSubmitBtn');
+        const cashfreePayBtn = document.getElementById('cashfreePayBtn');
+        const paymentStatus = document.getElementById('paymentStatus');
+
+        function setPaymentStatus(message, type = 'info') {
+            paymentStatus.textContent = message;
+            paymentStatus.className = `payment-status ${type}`;
         }
 
-        document.getElementById('paymentForm').addEventListener('submit', async (event) => {
-            event.preventDefault();
+        function clearPaymentStatus() {
+            paymentStatus.textContent = '';
+            paymentStatus.className = 'payment-status';
+        }
 
+        function setButtonsDisabled(disabled) {
+            manualSubmitBtn.disabled = disabled;
+            cashfreePayBtn.disabled = disabled;
+        }
+
+        function collectPaymentPayload(includeUtr = true) {
             const payload = {
                 name: document.getElementById('name').value.trim(),
                 email: document.getElementById('email').value.trim(),
@@ -191,7 +246,30 @@
                 type: document.getElementById('type').value.trim(),
             };
 
+            if (!payload.name || !payload.email || !payload.mobile || !payload.chitsPlan || !payload.amount || payload.amount <= 0) {
+                throw new Error('Name, email, mobile, chit plan and amount are required.');
+            }
+
+            if (includeUtr && !payload.utrNumber) {
+                throw new Error('UTR number is required for manual submission.');
+            }
+
+            return payload;
+        }
+
+        if (!queryChitId || !document.getElementById('mobile').value) {
+            alert('Invalid payment request. Please open this page using Pay Now from Chit ID page.');
+        }
+
+        paymentForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
             try {
+                clearPaymentStatus();
+                setButtonsDisabled(true);
+                setPaymentStatus('Submitting manual payment details...', 'info');
+                const payload = collectPaymentPayload(true);
+
                 const response = await fetch('/api/bank-details', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -203,11 +281,79 @@
                     throw new Error(result.message || 'Payment submission failed');
                 }
 
+                setPaymentStatus(result.message || 'Payment submitted successfully', 'success');
                 alert(result.message || 'Payment submitted successfully');
                 window.location.href = 'dashboard.html';
             } catch (error) {
                 console.error('Payment submit error:', error);
+                setPaymentStatus(error.message || 'Failed to submit payment. Please try again.', 'error');
                 alert(error.message || 'Failed to submit payment. Please try again.');
+            } finally {
+                setButtonsDisabled(false);
+            }
+        });
+
+        cashfreePayBtn.addEventListener('click', async () => {
+            try {
+                clearPaymentStatus();
+                setButtonsDisabled(true);
+                setPaymentStatus('Creating Cashfree order...', 'info');
+
+                const paymentData = collectPaymentPayload(false);
+                paymentData.type = 'Chit Payment (Cashfree)';
+
+                const createOrderResponse = await fetch('/api/cashfree/create-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(paymentData),
+                });
+
+                const createOrderResult = await createOrderResponse.json().catch(() => ({}));
+                if (!createOrderResponse.ok) {
+                    throw new Error(createOrderResult.message || 'Unable to initialize Cashfree payment.');
+                }
+
+                if (!window.Cashfree || !createOrderResult.paymentSessionId) {
+                    throw new Error('Cashfree SDK failed to initialize. Please refresh and try again.');
+                }
+
+                const cashfree = window.Cashfree({ mode: createOrderResult.cashfreeMode || 'sandbox' });
+                setPaymentStatus('Opening Cashfree checkout...', 'info');
+
+                const checkoutResult = await cashfree.checkout({
+                    paymentSessionId: createOrderResult.paymentSessionId,
+                    redirectTarget: '_modal',
+                });
+
+                if (checkoutResult?.error) {
+                    throw new Error(checkoutResult.error.message || 'Cashfree checkout failed.');
+                }
+
+                setPaymentStatus('Verifying payment status...', 'info');
+
+                const verifyResponse = await fetch('/api/cashfree/confirm-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        orderId: createOrderResult.orderId,
+                        paymentData,
+                    }),
+                });
+
+                const verifyResult = await verifyResponse.json().catch(() => ({}));
+                if (!verifyResponse.ok) {
+                    throw new Error(verifyResult.message || 'Payment verification failed.');
+                }
+
+                setPaymentStatus(verifyResult.message || 'Payment completed successfully.', 'success');
+                alert(verifyResult.message || 'Payment completed successfully.');
+                window.location.href = 'dashboard.html';
+            } catch (error) {
+                console.error('Cashfree payment error:', error);
+                setPaymentStatus(error.message || 'Cashfree payment failed. Please try again.', 'error');
+                alert(error.message || 'Cashfree payment failed. Please try again.');
+            } finally {
+                setButtonsDisabled(false);
             }
         });
     </script>
