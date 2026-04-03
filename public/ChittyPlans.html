@@ -3,51 +3,349 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Details</title>
+    <title>Chit Plans - Dhanam Chits Pvt. Ltd</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        /* General Styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
-        }
-
         body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f8fb;
+            color: #333;
             display: flex;
-            height: 100vh;
-            background: #e0f7fa; /* Changed background color */
-            color: #000000; /* Changed text color to black */
-        }
-
-        /* Shared admin-sidebar.css handles sidebar/content layout; avoid double offsets on mobile. */
-        body {
-            display: block !important;
+            flex-direction: column;
             min-height: 100vh;
         }
 
-        /* Sidebar */
-        .sidebar {
-            width: 250px;
-            height: 100%;
-            background: #2c3e50;
-            padding: 20px;
-            position: fixed;
-            left: 0;
-            top: 0;
-            transition: width 0.3s;
-            overflow: hidden;
-        }
-
-        .sidebar h2 {
+        header {
+            background: linear-gradient(45deg, #090a0b, #6610f2);
             color: white;
-            text-align: center;
-            margin-bottom: 30px;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
 
-        .sidebar a {
+        .navbar-brand h1 {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .navbar-nav .nav-link {
+            color: white !important;
+            font-weight: bold;
+            margin-left: 15px;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #ffc107 !important;
+            text-decoration: underline;
+        }
+
+        .page-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-hero h1 {
+            font-size: 2.8rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .page-hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            flex: 1;
+            padding: 40px 20px;
+        }
+
+        .plan-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid #667eea;
+        }
+
+        .plan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .plan-card h3 {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+        }
+
+        .plan-card .price {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #764ba2;
+            margin-bottom: 20px;
+        }
+
+        .plan-card ul {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+
+        .plan-card ul li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+
+        .plan-card ul li:last-child {
+            border-bottom: none;
+        }
+
+        .plan-card ul li i {
+            color: #667eea;
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            padding: 12px 30px;
+            font-weight: bold;
+            border-radius: 8px;
+            transition: transform 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #764ba2, #667eea);
+            transform: scale(1.05);
+        }
+
+        footer {
+            background: #090a0b;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        footer a {
+            color: #ffc107;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .page-hero h1 {
+                font-size: 2rem;
+            }
+
+            .plan-card {
+                padding: 20px;
+            }
+
+            .plan-card h3 {
+                font-size: 1.5rem;
+            }
+
+            .plan-card .price {
+                font-size: 1.5rem;
+            }
+
+            .navbar-nav .nav-link {
+                margin-left: 0;
+                padding: 10px 0;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <img src="logo.jpeg" alt="Logo" style="height: 50px; margin-right: 15px; border-radius: 50%;">
+                <h1 style="font-size: 1.5rem; margin: 0; color: white;">Dhanam Chits</h1>
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="ChittyPlans.html">Chit Plans</a></li>
+                    <li class="nav-item"><a class="nav-link" href="payment.html">Payment Form</a></li>
+                    <li class="nav-item"><a class="nav-link" href="home.html">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="page-hero">
+        <h1>Our Chit Plans</h1>
+        <p>Choose a plan that suits your financial goals and investment capacity</p>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <!-- Basic Plan -->
+            <div class="col-md-4">
+                <div class="plan-card">
+                    <h3>Basic Plan</h3>
+                    <div class="price">₹1,00,000</div>
+                    <ul>
+                        <li><i class="bi bi-check-circle"></i> 10-month tenure</li>
+                        <li><i class="bi bi-check-circle"></i> Flexible payment terms</li>
+                        <li><i class="bi bi-check-circle"></i> Monthly draws available</li>
+                        <li><i class="bi bi-check-circle"></i> Transparent pricing</li>
+                        <li><i class="bi bi-check-circle"></i> Expert support</li>
+                    </ul>
+                    <a href="Login.html" class="btn btn-primary btn-block">Join Now</a>
+                </div>
+            </div>
+
+            <!-- Standard Plan -->
+            <div class="col-md-4">
+                <div class="plan-card" style="border-left-color: #764ba2;">
+                    <h3>Standard Plan</h3>
+                    <div class="price">₹2,50,000</div>
+                    <ul>
+                        <li><i class="bi bi-check-circle"></i> 12-month tenure</li>
+                        <li><i class="bi bi-check-circle"></i> Priority processing</li>
+                        <li><i class="bi bi-check-circle"></i> Multiple draw cycles</li>
+                        <li><i class="bi bi-check-circle"></i> Dedicated account manager</li>
+                        <li><i class="bi bi-check-circle"></i> 24/7 support</li>
+                    </ul>
+                    <a href="Login.html" class="btn btn-primary btn-block">Join Now</a>
+                </div>
+            </div>
+
+            <!-- Premium Plan -->
+            <div class="col-md-4">
+                <div class="plan-card" style="border-left-color: #667eea;">
+                    <h3>Premium Plan</h3>
+                    <div class="price">₹5,00,000</div>
+                    <ul>
+                        <li><i class="bi bi-check-circle"></i> 18-month tenure</li>
+                        <li><i class="bi bi-check-circle"></i> Concierge service</li>
+                        <li><i class="bi bi-check-circle"></i> Flexible draw cycles</li>
+                        <li><i class="bi bi-check-circle"></i> Personal finance advisor</li>
+                        <li><i class="bi bi-check-circle"></i> VIP benefits & rewards</li>
+                    </ul>
+                    <a href="Login.html" class="btn btn-primary btn-block">Join Now</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Plans -->
+        <div class="row" style="margin-top: 40px;">
+            <div class="col-md-6">
+                <div class="plan-card" style="border-left-color: #ffc107;">
+                    <h3>Gold Plan</h3>
+                    <div class="price">₹7,50,000</div>
+                    <ul>
+                        <li><i class="bi bi-check-circle"></i> 24-month tenure</li>
+                        <li><i class="bi bi-check-circle"></i> Exclusive benefits</li>
+                        <li><i class="bi bi-check-circle"></i> Enhanced returns</li>
+                        <li><i class="bi bi-check-circle"></i> Investment guidance</li>
+                    </ul>
+                    <a href="Login.html" class="btn btn-primary btn-block">Join Now</a>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="plan-card" style="border-left-color: #dc3545;">
+                    <h3>Platinum Plan</h3>
+                    <div class="price">₹10,00,000</div>
+                    <ul>
+                        <li><i class="bi bi-check-circle"></i> 24-month tenure</li>
+                        <li><i class="bi bi-check-circle"></i> Maximum flexibility</li>
+                        <li><i class="bi bi-check-circle"></i> Customized terms</li>
+                        <li><i class="bi bi-check-circle"></i> Premium support</li>
+                    </ul>
+                    <a href="Login.html" class="btn btn-primary btn-block">Join Now</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div style="margin-top: 60px; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+            <h2 style="color: #667eea; margin-bottom: 30px;">Frequently Asked Questions</h2>
+            <div class="accordion" id="faqAccordion">
+                <div class="card" style="border: none; border-bottom: 1px solid #eee; margin-bottom: 10px;">
+                    <div class="card-header" style="background: transparent; border: none; padding: 0;">
+                        <h5 style="margin: 0;">
+                            <button class="btn btn-link text-left w-100" type="button" data-toggle="collapse" data-target="#faq1">
+                                How do I join a chit plan?
+                            </button>
+                        </h5>
+                    </div>
+                    <div id="faq1" class="collapse" data-parent="#faqAccordion">
+                        <div class="card-body">
+                            Register, verify your details, select a plan that matches your investment capacity, and complete your first payment. Our team will guide you through the entire process.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="border: none; border-bottom: 1px solid #eee; margin-bottom: 10px;">
+                    <div class="card-header" style="background: transparent; border: none; padding: 0;">
+                        <h5 style="margin: 0;">
+                            <button class="btn btn-link text-left w-100" type="button" data-toggle="collapse" data-target="#faq2">
+                                What payment methods are accepted?
+                            </button>
+                        </h5>
+                    </div>
+                    <div id="faq2" class="collapse" data-parent="#faqAccordion">
+                        <div class="card-body">
+                            We accept bank transfers, UPI payments, and online card payments through our secure Cashfree payment gateway.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="border: none; border-bottom: 1px solid #eee; margin-bottom: 10px;">
+                    <div class="card-header" style="background: transparent; border: none; padding: 0;">
+                        <h5 style="margin: 0;">
+                            <button class="btn btn-link text-left w-100" type="button" data-toggle="collapse" data-target="#faq3">
+                                Can I withdraw or modify my plan after joining?
+                            </button>
+                        </h5>
+                    </div>
+                    <div id="faq3" class="collapse" data-parent="#faqAccordion">
+                        <div class="card-body">
+                            Yes, we offer flexible terms. You can discuss modifications with our account manager. Please refer to your plan's terms and conditions for specific withdrawal policies.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024-2025 Dhanam Chits Pvt. Ltd. All rights reserved.</p>
+        <div style="margin-top: 15px;">
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="terms.html">Terms & Conditions</a>
+            <a href="refunds.html">Refunds & Cancellations</a>
+            <a href="contact-us.html">Contact Us</a>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
             display: flex;
             align-items: center;
             color: white;

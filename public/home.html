@@ -3,29 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Details</title>
+    <title>Dashboard - Dhanam Chits Pvt. Ltd</title>
+    <meta name="description" content="Your personal dashboard to manage your chit plans and payments.">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        /* General Styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
-        }
-
         body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
             display: flex;
-            height: 100vh;
-            background: #e0f7fa; /* Changed background color */
-            color: #000000; /* Changed text color to black */
+            flex-direction: column;
+            min-height: 100vh;
+            padding-top: 60px;
         }
 
-        /* Shared admin-sidebar.css handles sidebar/content layout; avoid double offsets on mobile. */
-        body {
-            display: block !important;
-            min-height: 100vh;
+        header {
+            background: linear-gradient(45deg, #090a0b, #6610f2);
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
         }
+
+        .navbar-brand h1 {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .navbar-nav .nav-link {
+            color: white !important;
+            font-weight: bold;
+            margin-left: 15px;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #ffc107 !important;
+            text-decoration: underline;
+        }
+
+        .container {
+            flex: 1;
+            padding: 40px 20px;
+        }
+
+        .login-prompt {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .login-prompt i {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .login-prompt h2 {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .login-prompt p {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            transition: transform 0.2s ease;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #764ba2, #667eea);
+            transform: scale(1.05);
+            color: white;
+            text-decoration: none;
+        }
+
+        .login-prompt .btn {
+            margin: 0 10px;
+        }
+
+        .info-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .info-section h3 {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .info-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .info-list li {
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+
+        .info-list li:last-child {
+            border-bottom: none;
+        }
+
+        .info-list i {
+            color: #764ba2;
+            margin-right: 15px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            background: #090a0b;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        footer a {
+            color: #ffc107;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 60px;
+            }
+
+            .login-prompt {
+                padding: 20px;
+            }
+
+            .login-prompt h2 {
+                font-size: 1.8rem;
+            }
+
+            .navbar-nav .nav-link {
+                margin-left: 0;
+                padding: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <img src="logo.jpeg" alt="Logo" style="height: 50px; margin-right: 15px; border-radius: 50%;">
+                <h1 style="font-size: 1.5rem; margin: 0; color: white;">Dhanam Chits</h1>
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="ChittyPlans.html">Chit Plans</a></li>
+                    <li class="nav-item"><a class="nav-link" href="payment.html">Payment Form</a></li>
+                    <li class="nav-item"><a class="nav-link" href="home.html">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="login-prompt">
+            <i class="bi bi-person-circle"></i>
+            <h2>Welcome to Your Dashboard</h2>
+            <p>Please log in to view your chit plans, payment history, and account information.</p>
+            <div>
+                <a href="Login.html" class="btn btn-primary">Login</a>
+                <a href="register.html" class="btn btn-primary" style="background: linear-gradient(45deg, #764ba2, #667eea);">Sign Up</a>
+            </div>
+        </div>
+
+        <div style="margin-top: 40px;">
+            <div class="info-section">
+                <h3><i class="bi bi-info-circle"></i> What You Can Do Here</h3>
+                <ul class="info-list">
+                    <li><i class="bi bi-credit-card"></i> <strong>View Your Plans</strong> - See all your active and completed chit plans with detailed information</li>
+                    <li><i class="bi bi-calendar-check"></i> <strong>Payment History</strong> - Track all your payments and upcoming due dates</li>
+                    <li><i class="bi bi-graph-up"></i> <strong>Investment Returns</strong> - Monitor your returns and earnings from chit plans</li>
+                    <li><i class="bi bi-bell"></i> <strong>Notifications</strong> - Receive alerts about payment due dates and winnings</li>
+                    <li><i class="bi bi-gear"></i> <strong>Account Settings</strong> - Update your profile and manage your preferences</li>
+                    <li><i class="bi bi-download"></i> <strong>Download Reports</strong> - Generate and download your account statements</li>
+                </ul>
+            </div>
+
+            <div class="info-section">
+                <h3><i class="bi bi-question-circle"></i> Getting Started</h3>
+                <ol style="list-style: decimal; margin-left: 20px; color: #666;">
+                    <li style="padding: 10px 0;"><strong>Create an Account</strong> - Sign up with your email and phone number</li>
+                    <li style="padding: 10px 0;"><strong>Complete Verification</strong> - Verify your identity through our simple process</li>
+                    <li style="padding: 10px 0;"><strong>Choose a Plan</strong> - Select from our diverse chit plans</li>
+                    <li style="padding: 10px 0;"><strong>Make Your First Payment</strong> - Secure payment through multiple channels</li>
+                    <li style="padding: 10px 0;"><strong>Manage Your Account</strong> - Use your dashboard to monitor everything</li>
+                </ol>
+            </div>
+
+            <div class="info-section">
+                <h3><i class="bi bi-shield-lock"></i> Security & Privacy</h3>
+                <p style="color: #666; margin-bottom: 15px;">Your information and funds are protected with bank-level security:</p>
+                <ul class="info-list">
+                    <li><i class="bi bi-check-circle"></i> Secure SSL encryption for all transactions</li>
+                    <li><i class="bi bi-check-circle"></i> Two-factor authentication for account security</li>
+                    <li><i class="bi bi-check-circle"></i> Compliance with financial regulations</li>
+                    <li><i class="bi bi-check-circle"></i> Regular security audits and updates</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024-2025 Dhanam Chits Pvt. Ltd. All rights reserved.</p>
+        <div style="margin-top: 15px;">
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="terms.html">Terms & Conditions</a>
+            <a href="refunds.html">Refunds & Cancellations</a>
+            <a href="contact.html">Contact Us</a>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
 
         /* Sidebar */
         .sidebar {
