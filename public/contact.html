@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Outfit', sans-serif;
             background-color: #f4f8fb;
             color: #333;
             display: flex;
@@ -17,9 +17,9 @@
         }
 
         header {
-            background: linear-gradient(45deg, #090a0b, #6610f2);
+            background: linear-gradient(118deg, #06162b 0%, #0c3964 46%, #0f7f73 100%);
             color: white;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 14px 32px rgba(6, 22, 43, 0.34);
         }
 
         .navbar-brand h1 {
@@ -28,14 +28,19 @@
         }
 
         .navbar-nav .nav-link {
-            color: white !important;
-            font-weight: bold;
-            margin-left: 15px;
+            color: #edf8ff !important;
+            font-weight: 700;
+            margin-left: 8px;
+            border-radius: 999px;
+            padding: 8px 14px !important;
         }
 
-        .navbar-nav .nav-link:hover {
-            color: #ffc107 !important;
-            text-decoration: underline;
+        .navbar-nav .nav-link:hover,
+        .navbar-nav .nav-link:focus,
+        .navbar-nav .nav-link.active {
+            color: #ffffff !important;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.16);
         }
 
         .navbar-toggler {
@@ -43,7 +48,7 @@
         }
 
         .navbar-toggler-icon {
-            background-image: url("data:image/svg+xml;charset=UTF8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='black' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml;charset=UTF8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='white' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
         }
 
         .page-hero {
@@ -73,10 +78,11 @@
 
         .contact-card {
             background: white;
-            border-radius: 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(15, 23, 42, 0.08);
             padding: 30px;
             margin-bottom: 30px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 18px 45px rgba(14, 30, 62, 0.12);
             transition: transform 0.3s ease;
         }
 
@@ -85,7 +91,7 @@
         }
 
         .contact-card h3 {
-            color: #667eea;
+            color: #123d67;
             font-weight: bold;
             margin-bottom: 20px;
             font-size: 1.5rem;
@@ -96,7 +102,7 @@
         .contact-card h3 i {
             margin-right: 15px;
             font-size: 2rem;
-            color: #764ba2;
+            color: #0f7f73;
         }
 
         .contact-card p {
@@ -106,32 +112,33 @@
         }
 
         .contact-card a {
-            color: #667eea;
+            color: #0f4c81;
             text-decoration: none;
             font-weight: bold;
         }
 
         .contact-card a:hover {
-            color: #764ba2;
+            color: #0f7f73;
             text-decoration: underline;
         }
 
         .contact-form {
             background: white;
-            border-radius: 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(15, 23, 42, 0.08);
             padding: 40px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
             margin-top: 40px;
         }
 
         .contact-form h2 {
-            color: #667eea;
+            color: #123d67;
             margin-bottom: 30px;
             font-weight: bold;
         }
 
         .form-group label {
-            color: #667eea;
+            color: #123d67;
             font-weight: bold;
         }
 
@@ -142,28 +149,29 @@
         }
 
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            border-color: #0f4c81;
+            box-shadow: 0 0 0 0.2rem rgba(15, 76, 129, 0.2);
         }
 
         .btn-submit {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            background: linear-gradient(120deg, #c89200 0%, #efba31 100%);
             border: none;
             padding: 12px 30px;
             font-weight: bold;
             border-radius: 8px;
-            color: white;
+            color: #112240;
             transition: transform 0.2s ease;
         }
 
         .btn-submit:hover {
-            background: linear-gradient(45deg, #764ba2, #667eea);
+            background: linear-gradient(120deg, #efba31 0%, #c89200 100%);
             transform: scale(1.05);
-            color: white;
+            color: #112240;
         }
 
         footer {
-            background: #090a0b;
+            background: linear-gradient(120deg, #081b33 0%, #0f3b6a 55%, #0a6c58 100%);
+            border-top: 1px solid rgba(255, 255, 255, 0.25);
             color: white;
             padding: 30px 20px;
             text-align: center;
@@ -195,10 +203,11 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="index-theme.css">
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-lg navbar-dark container-fluid">
+        <nav class="navbar navbar-expand-lg">
             <a class="navbar-brand d-flex align-items-center" href="index.html">
                 <img src="logo.jpeg" alt="Logo" style="height: 50px; margin-right: 15px; object-fit: cover; border-radius: 50%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); transition: transform 0.3s ease;">
                 <h1 style="font-size: 1.5rem; margin: 0; color: white;">Dhanam Chits Pvt. Ltd</h1>
