@@ -170,7 +170,7 @@ app.post('/api/cashfree/service-charge', (req, res) => {
     if (!amount || amount <= 0) {
         return res.status(400).json({ message: 'Invalid amount.' });
     }
-    // 0.25% service charge
+    // 1.8% service charge
     const serviceCharge = Math.round((amount * 0.018) * 100) / 100;
     const total = Math.round((amount + serviceCharge) * 100) / 100;
     res.json({ serviceCharge, total });
