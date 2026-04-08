@@ -136,7 +136,7 @@
         <nav class="navbar navbar-expand-lg navbar-dark container-fluid">
             <a class="navbar-brand d-flex align-items-center" href="index.html">
                 <img src="logo.jpeg" alt="Logo" style="height: 50px; margin-right: 15px; border-radius: 50%;">
-                <h1 style="font-size: 1.5rem; margin: 0; color: white;">Dhanam Chits</h1>
+                <h1 style="font-size: 1.5rem; margin: 0; color: white;">Dhanam Chits Pvt. Ltd</h1>
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -168,13 +168,50 @@
                 <input type="email" class="form-control" id="email" required>
             </div>
 
+
             <div class="form-group">
                 <label for="mobile">Mobile</label>
                 <input type="text" class="form-control" id="mobile" maxlength="10" required>
             </div>
+            <div id="userChitBorrowInfo" style="display:none; margin-bottom: 1rem;"></div>
+        // --- Show Chit IDs and Borrow Details on Mobile Input ---
+        const mobileInput = document.getElementById('mobile');
+        const userChitBorrowInfo = document.getElementById('userChitBorrowInfo');
+
+        async function fetchChitBorrowDetails(mobile) {
+            try {
+                userChitBorrowInfo.style.display = 'block';
+                userChitBorrowInfo.innerHTML = '<span style="color:#888">Loading details...</span>';
+                // You must implement this endpoint in your backend
+                const res = await fetch(`/api/user-chits-borrow?mobile=${encodeURIComponent(mobile)}`);
+                if (!res.ok) throw new Error('No details found');
+                const data = await res.json();
+                let html = '';
+                if (data.chits && data.chits.length) {
+                    html += '<b>Chit IDs:</b><ul>' + data.chits.map(c => `<li>${c}</li>`).join('') + '</ul>';
+                }
+                if (data.borrows && data.borrows.length) {
+                    html += '<b>Borrows:</b><ul>' + data.borrows.map(b => `<li>${b}</li>`).join('') + '</ul>';
+                }
+                if (!html) html = '<span style="color:#c00">No Chit or Borrow details found.</span>';
+                userChitBorrowInfo.innerHTML = html;
+            } catch (e) {
+                userChitBorrowInfo.innerHTML = '<span style="color:#c00">No Chit or Borrow details found.</span>';
+            }
+        }
+
+        mobileInput.addEventListener('change', function() {
+            const mobile = this.value.trim();
+            if (mobile.length === 10) {
+                fetchChitBorrowDetails(mobile);
+            } else {
+                userChitBorrowInfo.style.display = 'none';
+                userChitBorrowInfo.innerHTML = '';
+            }
+        });
 
             <div class="form-group">
-                <label for="chitsPlan">Chit Plan / Chit ID</label>
+                <label for="chitsPlan">CHIT ID/BORROW PAYMENT</label>
                 <input type="text" class="form-control" id="chitsPlan" required>
             </div>
 
@@ -197,6 +234,7 @@
 
             <button type="submit" class="btn btn-primary" id="manualSubmitBtn">Submit Manual UTR Payment</button>
             <button type="button" class="btn btn-cashfree" id="cashfreePayBtn">Pay with Cashfree</button>
+            <div id="serviceChargeInfo" style="display:none; margin-top:10px; margin-bottom:10px;"></div>
             <div id="paymentStatus" class="payment-status"></div>
         </form>
     </main>
@@ -288,10 +326,40 @@
             try {
                 clearPaymentStatus();
                 setButtonsDisabled(true);
-                setPaymentStatus('Creating Cashfree order...', 'info');
+                const serviceChargeInfo = document.getElementById('serviceChargeInfo');
+                serviceChargeInfo.style.display = 'none';
+                serviceChargeInfo.innerHTML = '';
 
+                // Step 1: Ask backend for service charge and total
+                const amount = Number(document.getElementById('amount').value);
+                if (!amount || amount <= 0) {
+                    setPaymentStatus('Please enter a valid amount.', 'error');
+                    setButtonsDisabled(false);
+                    return;
+                }
+                setPaymentStatus('Calculating service charge...', 'info');
+                const res = await fetch('/api/cashfree/service-charge', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || typeof data.serviceCharge !== 'number' || typeof data.total !== 'number') {
+                    throw new Error(data.message || 'Failed to calculate service charge.');
+                }
+                serviceChargeInfo.style.display = 'block';
+                serviceChargeInfo.innerHTML = `<b>Service Charge (0.25%):</b> ₹${data.serviceCharge.toFixed(2)}<br><b>Total Payable:</b> ₹${data.total.toFixed(2)}`;
+
+                // Step 2: Confirm with user before proceeding
+                if (!confirm(`A service charge of ₹${data.serviceCharge.toFixed(2)} will be added. Total payable: ₹${data.total.toFixed(2)}.\nProceed to payment?`)) {
+                    setButtonsDisabled(false);
+                    return;
+                }
+
+                setPaymentStatus('Creating Cashfree order...', 'info');
                 const paymentData = collectPaymentPayload(false);
                 paymentData.type = 'Chit Payment (Cashfree)';
+                paymentData.amount = data.total; // Use total with service charge
 
                 const createOrderResponse = await fetch('/api/cashfree/create-order', {
                     method: 'POST',

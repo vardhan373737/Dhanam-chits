@@ -1,3 +1,14 @@
+// Service charge calculation endpoint
+app.post('/api/cashfree/service-charge', (req, res) => {
+    const amount = Number(req.body.amount);
+    if (!amount || amount <= 0) {
+        return res.status(400).json({ message: 'Invalid amount.' });
+    }
+    // 0.25% service charge
+    const serviceCharge = Math.round((amount * 0.0025) * 100) / 100;
+    const total = Math.round((amount + serviceCharge) * 100) / 100;
+    res.json({ serviceCharge, total });
+});
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
