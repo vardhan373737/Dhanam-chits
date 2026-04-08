@@ -1,14 +1,3 @@
-// Service charge calculation endpoint
-app.post('/api/cashfree/service-charge', (req, res) => {
-    const amount = Number(req.body.amount);
-    if (!amount || amount <= 0) {
-        return res.status(400).json({ message: 'Invalid amount.' });
-    }
-    // 0.25% service charge
-    const serviceCharge = Math.round((amount * 0.0025) * 100) / 100;
-    const total = Math.round((amount + serviceCharge) * 100) / 100;
-    res.json({ serviceCharge, total });
-});
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -22,7 +11,16 @@ const nodemailer = require('nodemailer');
 const fs = require('fs');
 const pdf = require('pdfkit');
 
+
 const app = express();
+// Middleware
+app.use(cors());
+app.use(bodyParser.json({
+    verify: (req, _res, buf) => {
+        req.rawBody = buf.toString('utf8');
+    }
+}));
+
 const PORT = process.env.PORT || 5001;
 const CASHFREE_MODE = String(process.env.CASHFREE_ENV || 'sandbox').trim().toLowerCase() === 'production'
     ? 'production'
@@ -33,6 +31,18 @@ const CASHFREE_BASE_URL = CASHFREE_MODE === 'production'
 const CASHFREE_WEBHOOK_SECRET = String(
     process.env.CASHFREE_WEBHOOK_SECRET || process.env.CASHFREE_SECRET_KEY || ''
 ).trim();
+
+// Service charge calculation endpoint (moved below app initialization)
+app.post('/api/cashfree/service-charge', (req, res) => {
+    const amount = Number(req.body.amount);
+    if (!amount || amount <= 0) {
+        return res.status(400).json({ message: 'Invalid amount.' });
+    }
+    // 0.25% service charge
+    const serviceCharge = Math.round((amount * 0.0050) * 100) / 100;
+    const total = Math.round((amount + serviceCharge) * 100) / 100;
+    res.json({ serviceCharge, total });
+});
 
 const getCashfreeHeaders = () => {
     const appId = String(process.env.CASHFREE_APP_ID || '').trim();

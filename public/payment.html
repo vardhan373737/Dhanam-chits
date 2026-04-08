@@ -174,41 +174,6 @@
                 <input type="text" class="form-control" id="mobile" maxlength="10" required>
             </div>
             <div id="userChitBorrowInfo" style="display:none; margin-bottom: 1rem;"></div>
-        // --- Show Chit IDs and Borrow Details on Mobile Input ---
-        const mobileInput = document.getElementById('mobile');
-        const userChitBorrowInfo = document.getElementById('userChitBorrowInfo');
-
-        async function fetchChitBorrowDetails(mobile) {
-            try {
-                userChitBorrowInfo.style.display = 'block';
-                userChitBorrowInfo.innerHTML = '<span style="color:#888">Loading details...</span>';
-                // You must implement this endpoint in your backend
-                const res = await fetch(`/api/user-chits-borrow?mobile=${encodeURIComponent(mobile)}`);
-                if (!res.ok) throw new Error('No details found');
-                const data = await res.json();
-                let html = '';
-                if (data.chits && data.chits.length) {
-                    html += '<b>Chit IDs:</b><ul>' + data.chits.map(c => `<li>${c}</li>`).join('') + '</ul>';
-                }
-                if (data.borrows && data.borrows.length) {
-                    html += '<b>Borrows:</b><ul>' + data.borrows.map(b => `<li>${b}</li>`).join('') + '</ul>';
-                }
-                if (!html) html = '<span style="color:#c00">No Chit or Borrow details found.</span>';
-                userChitBorrowInfo.innerHTML = html;
-            } catch (e) {
-                userChitBorrowInfo.innerHTML = '<span style="color:#c00">No Chit or Borrow details found.</span>';
-            }
-        }
-
-        mobileInput.addEventListener('change', function() {
-            const mobile = this.value.trim();
-            if (mobile.length === 10) {
-                fetchChitBorrowDetails(mobile);
-            } else {
-                userChitBorrowInfo.style.display = 'none';
-                userChitBorrowInfo.innerHTML = '';
-            }
-        });
 
             <div class="form-group">
                 <label for="chitsPlan">CHIT ID/BORROW PAYMENT</label>
