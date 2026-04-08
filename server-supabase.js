@@ -164,6 +164,17 @@ function getCashfreeHeaders() {
     "content-type": "application/json",
   };
 }
+// Service charge calculation endpoint (moved below app initialization)
+app.post('/api/cashfree/service-charge', (req, res) => {
+    const amount = Number(req.body.amount);
+    if (!amount || amount <= 0) {
+        return res.status(400).json({ message: 'Invalid amount.' });
+    }
+    // 0.25% service charge
+    const serviceCharge = Math.round((amount * 0.0050) * 100) / 100;
+    const total = Math.round((amount + serviceCharge) * 100) / 100;
+    res.json({ serviceCharge, total });
+});
 
 function buildCashfreeOrderId(mobile) {
   const normalizedMobile = String(mobile || "").replace(/\D/g, "").slice(-10) || "guest";
