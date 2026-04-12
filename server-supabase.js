@@ -361,6 +361,9 @@ async function saveCashfreePaidOrder({ orderData, successfulPayment, paymentData
 
 function mapPaymentRow(row) {
   const screenshotPath = getPaymentScreenshotPath(row.id, row.utr_number);
+  const screenshotUrl = screenshotPath
+    ? (String(screenshotPath).startsWith("http") ? String(screenshotPath) : `/${screenshotPath}`)
+    : null;
   return {
     _id: row.id,
     id: row.id,
@@ -372,7 +375,7 @@ function mapPaymentRow(row) {
     type: row.type,
     chitsPlan: row.chits_plan,
     status: row.status,
-    screenshotUrl: screenshotPath ? `/${screenshotPath}` : null,
+    screenshotUrl,
     created_at: row.created_at,
   };
 }
@@ -557,6 +560,7 @@ const borrowDocsDir = path.join(storageBaseDir, "uploads", "borrow-docs");
 const borrowDocsIndexPath = path.join(storageBaseDir, "uploads", "borrow-docs-index.json");
 const paymentScreenshotsDir = path.join(storageBaseDir, "uploads", "payment-screenshots");
 const paymentScreenshotsIndexPath = path.join(storageBaseDir, "uploads", "payment-screenshots-index.json");
+const paymentScreenshotBucket = String(process.env.PAYMENT_SCREENSHOT_BUCKET || "payment-screenshots").trim();
 const auctionChatFallbackPath = path.join(storageBaseDir, "uploads", "auction-chat-fallback.json");
 try {
   if (!fs.existsSync(invoicesDir)) {
@@ -722,6 +726,77 @@ function savePaymentScreenshotFromBase64({ mobile, utrNumber, screenshotBase64, 
 
   fs.writeFileSync(absolutePath, buffer);
   return path.posix.join("uploads", "payment-screenshots", fileName);
+}
+
+function normalizeUtrForPath(utrNumber) {
+  return String(utrNumber || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 48);
+}
+
+function buildSupabasePaymentScreenshotPath(utrNumber) {
+  const safeUtr = normalizeUtrForPath(utrNumber);
+  if (!safeUtr) {
+    return null;
+  }
+  return `manual/${safeUtr}`;
+}
+
+async function uploadPaymentScreenshotToSupabase({ utrNumber, screenshotBase64 }) {
+  const rawData = String(screenshotBase64 || "").trim();
+  if (!rawData) {
+    return null;
+  }
+
+  const objectPath = buildSupabasePaymentScreenshotPath(utrNumber);
+  if (!objectPath) {
+    return null;
+  }
+
+  const match = rawData.match(/^data:(image\/(png|jpeg|jpg|webp));base64,(.+)$/i);
+  if (!match) {
+    throw new Error("Invalid screenshot format. Upload a PNG, JPG, JPEG, or WEBP image.");
+  }
+
+  const mimeType = String(match[1] || "image/png").toLowerCase();
+  const base64Content = match[3];
+  const buffer = Buffer.from(base64Content, "base64");
+  if (!buffer || buffer.length === 0) {
+    throw new Error("Uploaded screenshot is empty.");
+  }
+
+  if (buffer.length > 5 * 1024 * 1024) {
+    throw new Error("Screenshot must be 5MB or smaller.");
+  }
+
+  const { error: uploadError } = await supabase.storage
+    .from(paymentScreenshotBucket)
+    .upload(objectPath, buffer, {
+      upsert: true,
+      contentType: mimeType,
+      cacheControl: "3600",
+    });
+
+  if (uploadError) {
+    console.error("supabase screenshot upload error", uploadError);
+    throw new Error("Failed to upload payment screenshot.");
+  }
+
+  const { data } = supabase.storage.from(paymentScreenshotBucket).getPublicUrl(objectPath);
+  return data?.publicUrl || null;
+}
+
+async function resolveSupabaseScreenshotUrlByUtr(utrNumber) {
+  const objectPath = buildSupabasePaymentScreenshotPath(utrNumber);
+  if (!objectPath) {
+    return null;
+  }
+
+  const { data, error } = await supabase.storage.from(paymentScreenshotBucket).download(objectPath);
+  if (error || !data) {
+    return null;
+  }
+
+  const { data: publicData } = supabase.storage.from(paymentScreenshotBucket).getPublicUrl(objectPath);
+  return publicData?.publicUrl || null;
 }
 
 function isAuctionChatTableMissing(error) {
@@ -1774,7 +1849,24 @@ app.get("/api/bank-details", async (_req, res) => {
     return res.status(500).json({ error: "Failed to fetch payments" });
   }
 
-  return res.json(data.map(mapPaymentRow));
+  const rows = Array.isArray(data) ? data : [];
+  const mapped = await Promise.all(
+    rows.map(async (row) => {
+      const payment = mapPaymentRow(row);
+      if (payment.screenshotUrl) {
+        return payment;
+      }
+
+      const supabaseUrl = await resolveSupabaseScreenshotUrlByUtr(row.utr_number);
+      if (supabaseUrl) {
+        payment.screenshotUrl = supabaseUrl;
+      }
+
+      return payment;
+    })
+  );
+
+  return res.json(mapped);
 });
 
 app.post("/api/bank-details", async (req, res) => {
@@ -1806,6 +1898,11 @@ app.post("/api/bank-details", async (req, res) => {
       screenshotName,
     });
 
+    const supabaseScreenshotUrl = await uploadPaymentScreenshotToSupabase({
+      utrNumber,
+      screenshotBase64,
+    });
+
     const { data, error } = await supabase
       .from("payments")
       .insert({
@@ -1825,8 +1922,8 @@ app.post("/api/bank-details", async (req, res) => {
       return res.status(500).json({ message: "Error saving payment details.", error });
     }
 
-    if (screenshotPath) {
-      setPaymentScreenshotPath(data.id, utrNumber, screenshotPath);
+    if (screenshotPath || supabaseScreenshotUrl) {
+      setPaymentScreenshotPath(data.id, utrNumber, supabaseScreenshotUrl || screenshotPath);
     }
 
     return res.status(200).json({
