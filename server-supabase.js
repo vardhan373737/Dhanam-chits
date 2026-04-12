@@ -1898,10 +1898,17 @@ app.post("/api/bank-details", async (req, res) => {
       screenshotName,
     });
 
-    const supabaseScreenshotUrl = await uploadPaymentScreenshotToSupabase({
-      utrNumber,
-      screenshotBase64,
-    });
+    let supabaseScreenshotUrl = null;
+    let screenshotWarning = null;
+    try {
+      supabaseScreenshotUrl = await uploadPaymentScreenshotToSupabase({
+        utrNumber,
+        screenshotBase64,
+      });
+    } catch (uploadError) {
+      console.warn("payment screenshot upload skipped", uploadError?.message || uploadError);
+      screenshotWarning = uploadError?.message || "Screenshot upload failed";
+    }
 
     const { data, error } = await supabase
       .from("payments")
@@ -1929,6 +1936,7 @@ app.post("/api/bank-details", async (req, res) => {
     return res.status(200).json({
       message: "Payment details submitted successfully!",
       payment: mapPaymentRow(data),
+      screenshotWarning,
     });
   } catch (error) {
     console.error("create payment exception", error);
