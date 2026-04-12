@@ -11,7 +11,7 @@ if (!supabaseUrl || !supabaseServiceRoleKey) {
 const RETRY_ATTEMPTS = Number(process.env.SUPABASE_FETCH_RETRIES || 2);
 const RETRY_BASE_DELAY_MS = Number(process.env.SUPABASE_FETCH_RETRY_BASE_MS || 300);
 const RETRY_MAX_DELAY_MS = Number(process.env.SUPABASE_FETCH_RETRY_MAX_MS || 2000);
-const REQUEST_TIMEOUT_MS = Number(process.env.SUPABASE_FETCH_TIMEOUT_MS || 10000);
+const REQUEST_TIMEOUT_MS = Number(process.env.SUPABASE_FETCH_TIMEOUT_MS || 30000);
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank / UPI Details - Dhanam Chits</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="premium-shared.css">
+    <style>
+        .manual-wrap {
+            width: min(94%, 860px);
+            margin: 1.5rem auto 2rem;
+            padding: 24px;
+            border-radius: 22px;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.92));
+            box-shadow: 0 24px 55px rgba(10, 20, 40, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.62);
+        }
+
+        .manual-title {
+            margin: 0 0 8px;
+            color: #0f1f39;
+            font-weight: 800;
+        }
+
+        .manual-subtitle {
+            margin: 0 0 18px;
+            color: #254564;
+            font-weight: 600;
+        }
+
+        .summary-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .summary-item {
+            border-radius: 16px;
+            padding: 14px 16px;
+            background: linear-gradient(180deg, #f9fcff, #ffffff);
+            border: 1px solid rgba(15, 76, 129, 0.1);
+            box-shadow: 0 10px 22px rgba(8, 32, 50, 0.08);
+        }
+
+        .summary-item span {
+            display: block;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #5d7491;
+            margin-bottom: 4px;
+        }
+
+        .summary-item strong {
+            color: #0f1f39;
+            font-size: 1rem;
+            word-break: break-word;
+        }
+
+        .toggle-wrap {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .toggle-btn {
+            border: 0;
+            border-radius: 999px;
+            padding: 10px 18px;
+            font-weight: 700;
+            background: rgba(15, 76, 129, 0.12);
+            color: #0b3a66;
+            transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .toggle-btn:hover,
+        .toggle-btn.is-active {
+            background: linear-gradient(120deg, #0b607f, #1f8a70);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+        }
+
+        .details-card {
+            border-radius: 18px;
+            padding: 18px;
+            background: linear-gradient(180deg, #ffffff, #f7fbff);
+            border: 1px solid rgba(15, 76, 129, 0.1);
+            box-shadow: 0 12px 25px rgba(8, 32, 50, 0.08);
+        }
+
+        .details-card.bank-card {
+            border-top: 4px solid #0b607f;
+        }
+
+        .details-card.upi-card {
+            border-top: 4px solid #1f8a70;
+        }
+
+        .details-card h3 {
+            margin: 0 0 14px;
+            color: #0f1f39;
+            font-size: 1.15rem;
+            font-weight: 800;
+        }
+
+        .detail-action {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .copy-btn {
+            border: 0;
+            border-radius: 999px;
+            padding: 7px 12px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #ffffff;
+            background: linear-gradient(120deg, #0b607f, #1f8a70);
+            box-shadow: 0 8px 16px rgba(8, 32, 50, 0.14);
+            transition: transform 0.2s ease, filter 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.05);
+        }
+
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+
+        .detail-row {
+            margin-bottom: 12px;
+        }
+
+        .detail-row span {
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #5d7491;
+            margin-bottom: 4px;
+        }
+
+        .detail-row strong {
+            display: block;
+            color: #10213a;
+            word-break: break-word;
+        }
+
+        .note {
+            margin-top: 14px;
+            font-size: 0.9rem;
+            color: #4f6782;
+        }
+
+        .empty-state,
+        .status-box {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .empty-state.show,
+        .status-box.info,
+        .status-box.error,
+        .status-box.success {
+            display: block;
+        }
+
+        .empty-state {
+            background: rgba(245, 158, 11, 0.1);
+            color: #8a5d00;
+            border: 1px solid rgba(245, 158, 11, 0.22);
+        }
+
+        .status-box.info {
+            background: rgba(8, 145, 178, 0.12);
+            color: #0b607f;
+            border: 1px solid rgba(8, 145, 178, 0.25);
+        }
+
+        .status-box.error {
+            background: rgba(185, 28, 28, 0.1);
+            color: #9f1239;
+            border: 1px solid rgba(185, 28, 28, 0.2);
+        }
+
+        .status-box.success {
+            background: rgba(15, 118, 110, 0.12);
+            color: #0f766e;
+            border: 1px solid rgba(15, 118, 110, 0.22);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .manual-submit-panel {
+            margin-top: 16px;
+            border-radius: 18px;
+            padding: 18px;
+            background: linear-gradient(180deg, #ffffff, #f7fbff);
+            border: 1px solid rgba(15, 76, 129, 0.1);
+            box-shadow: 0 12px 25px rgba(8, 32, 50, 0.08);
+        }
+
+        .manual-submit-panel h3 {
+            margin: 0 0 10px;
+            color: #0f1f39;
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+
+        .manual-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .manual-grid .form-group {
+            margin-bottom: 0;
+        }
+
+        .manual-grid label {
+            font-size: 0.85rem;
+            color: #274766;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .manual-actions {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .submit-manual-btn {
+            border: 0;
+            border-radius: 999px;
+            padding: 10px 18px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #ffffff;
+            background: linear-gradient(120deg, #0f766e, #0891b2);
+            box-shadow: 0 10px 18px rgba(8, 32, 50, 0.18);
+        }
+
+        .submit-manual-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .file-chip {
+            font-size: 0.85rem;
+            color: #254564;
+            font-weight: 600;
+        }
+
+        @media (max-width: 576px) {
+            .manual-wrap {
+                margin-top: 1rem;
+                padding: 18px;
+            }
+
+            .manual-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <img src="logo.jpeg" alt="Logo" style="height: 50px; margin-right: 15px; border-radius: 50%;">
+                <h1 style="font-size: 1.5rem; margin: 0; color: white;">Dhanam Chits Pvt. Ltd</h1>
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="payment.html">Payment Form</a></li>
+                    <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main class="manual-wrap">
+        <h2 class="manual-title">Bank and UPI Details</h2>
+        <p class="manual-subtitle">Choose Bank or UPI to view the payment details set by admin.</p>
+
+        <div class="summary-bar" id="summaryBar">
+            <div class="summary-item"><span>Name</span><strong id="summaryName">-</strong></div>
+            <div class="summary-item"><span>Mobile</span><strong id="summaryMobile">-</strong></div>
+            <div class="summary-item"><span>Payment Type</span><strong id="summaryType">-</strong></div>
+            <div class="summary-item"><span>Amount</span><strong id="summaryAmount">-</strong></div>
+        </div>
+
+        <div class="toggle-wrap">
+            <button type="button" class="toggle-btn is-active" id="bankTab">Bank</button>
+            <button type="button" class="toggle-btn" id="upiTab">UPI</button>
+        </div>
+
+        <div id="loadingBox" class="status-box info">Loading your bank and UPI details...</div>
+        <div id="errorBox" class="status-box error"></div>
+        <div id="emptyBox" class="empty-state">No bank or UPI details are available right now.</div>
+
+        <div class="details-grid">
+            <div class="details-card bank-card" id="bankCard">
+                <h3>Bank Details</h3>
+                <div class="detail-row">
+                    <span>Account Holder</span>
+                    <div class="detail-action">
+                        <strong id="bankName">-</strong>
+                        <button type="button" class="copy-btn" data-copy-target="bankName">Copy</button>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <span>Account Number</span>
+                    <div class="detail-action">
+                        <strong id="accountNumber">-</strong>
+                        <button type="button" class="copy-btn" data-copy-target="accountNumber">Copy</button>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <span>IFSC Code</span>
+                    <div class="detail-action">
+                        <strong id="ifscCode">-</strong>
+                        <button type="button" class="copy-btn" data-copy-target="ifscCode">Copy</button>
+                    </div>
+                </div>
+                <div class="detail-row"><span>Bank Name</span><strong id="bankNameValue">-</strong></div>
+                <div class="detail-row"><span>Mobile</span><strong id="bankMobile">-</strong></div>
+                <div class="note">Admin can update or delete this record from the bank details admin page.</div>
+            </div>
+
+            <div class="details-card upi-card hidden" id="upiCard">
+                <h3>UPI Details</h3>
+                <div class="detail-row">
+                    <span>UPI ID</span>
+                    <div class="detail-action">
+                        <strong id="upiId">-</strong>
+                        <button type="button" class="copy-btn" data-copy-target="upiId">Copy</button>
+                    </div>
+                </div>
+                <div class="detail-row"><span>Bank Name</span><strong id="upiBankName">-</strong></div>
+                <div class="detail-row"><span>Account Holder</span><strong id="upiAccountHolder">-</strong></div>
+                <div class="detail-row"><span>Mobile</span><strong id="upiMobile">-</strong></div>
+                <div class="note">Admin can update or delete this UPI record from the same bank details admin page.</div>
+            </div>
+        </div>
+
+        <div class="manual-submit-panel">
+            <h3>Manual Payment Confirmation</h3>
+            <div class="manual-grid">
+                <div class="form-group">
+                    <label for="manualUtr">UTR Number</label>
+                    <input type="text" class="form-control" id="manualUtr" placeholder="Enter UTR Number">
+                </div>
+                <div class="form-group">
+                    <label for="manualScreenshot">Upload Payment Screenshot</label>
+                    <input type="file" class="form-control" id="manualScreenshot" accept="image/*">
+                </div>
+            </div>
+            <div class="manual-actions">
+                <button type="button" class="submit-manual-btn hidden" id="manualFinalSubmitBtn">Submit Payment</button>
+                <span class="file-chip" id="manualFileName">No screenshot selected</span>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const paymentTypeFromUrl = (params.get('type') || params.get('paymentType') || params.get('chitsPlan') || '').trim();
+        const amountFromUrl = (params.get('amount') || params.get('payAmount') || '').trim();
+        const customerNameFromUrl = (params.get('name') || '').trim();
+        const customerEmailFromUrl = (params.get('email') || '').trim();
+        const customerMobileFromUrl = (params.get('mobile') || '').trim();
+        const chitPlanFromUrl = (params.get('chitsPlan') || '').trim();
+
+        document.getElementById('summaryName').textContent = '-';
+        document.getElementById('summaryMobile').textContent = '-';
+        document.getElementById('summaryType').textContent = paymentTypeFromUrl || '-';
+
+        const parsedAmount = Number(amountFromUrl);
+        if (amountFromUrl && Number.isFinite(parsedAmount) && parsedAmount > 0) {
+            document.getElementById('summaryAmount').textContent = `₹${parsedAmount.toLocaleString('en-IN')}`;
+        } else {
+            document.getElementById('summaryAmount').textContent = amountFromUrl || '-';
+        }
+
+        const bankTab = document.getElementById('bankTab');
+        const upiTab = document.getElementById('upiTab');
+        const bankCard = document.getElementById('bankCard');
+        const upiCard = document.getElementById('upiCard');
+        const loadingBox = document.getElementById('loadingBox');
+        const errorBox = document.getElementById('errorBox');
+        const emptyBox = document.getElementById('emptyBox');
+        const manualUtrInput = document.getElementById('manualUtr');
+        const manualScreenshotInput = document.getElementById('manualScreenshot');
+        const manualFinalSubmitBtn = document.getElementById('manualFinalSubmitBtn');
+        const manualFileName = document.getElementById('manualFileName');
+
+        function setActiveTab(tabName) {
+            const isBank = tabName === 'bank';
+            bankTab.classList.toggle('is-active', isBank);
+            upiTab.classList.toggle('is-active', !isBank);
+            bankCard.classList.toggle('hidden', !isBank);
+            upiCard.classList.toggle('hidden', isBank);
+        }
+
+        function showError(message) {
+            errorBox.textContent = message;
+            errorBox.className = 'status-box error';
+            emptyBox.classList.remove('show');
+        }
+
+        function readFileAsDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result || ''));
+                reader.onerror = () => reject(new Error('Unable to read screenshot file.'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function hideMessages() {
+            loadingBox.classList.add('hidden');
+            errorBox.className = 'status-box error hidden';
+            errorBox.textContent = '';
+            emptyBox.classList.remove('show');
+        }
+
+        async function copyText(value, label) {
+            const text = String(value || '').trim();
+            if (!text || text === '-') {
+                showError(`No ${label} available to copy.`);
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(text);
+                loadingBox.textContent = `${label} copied to clipboard.`;
+                loadingBox.className = 'status-box success';
+                loadingBox.classList.remove('hidden');
+                setTimeout(() => {
+                    loadingBox.className = 'status-box info hidden';
+                    loadingBox.textContent = 'Loading your bank and UPI details...';
+                }, 1200);
+            } catch (_error) {
+                showError(`Unable to copy ${label}. Please copy it manually.`);
+            }
+        }
+
+        async function loadBankDetails() {
+            try {
+                loadingBox.classList.remove('hidden');
+                let detail = null;
+                const allResponse = await fetch('/api/bankdetails');
+                const allData = await allResponse.json().catch(() => []);
+
+                if (!allResponse.ok) {
+                    throw new Error('Failed to load bank details');
+                }
+
+                if (Array.isArray(allData) && allData.length > 0) {
+                    detail = allData[0];
+                }
+
+                if (!detail) {
+                    loadingBox.classList.add('hidden');
+                    emptyBox.classList.add('show');
+                    return;
+                }
+
+                document.getElementById('bankName').textContent = detail.name || '-';
+                document.getElementById('accountNumber').textContent = detail.accountNumber || '-';
+                document.getElementById('ifscCode').textContent = detail.ifscCode || '-';
+                document.getElementById('bankNameValue').textContent = detail.bankName || '-';
+                document.getElementById('bankMobile').textContent = detail.mobile || '-';
+
+                document.getElementById('upiId').textContent = detail.upiId || '-';
+                document.getElementById('upiBankName').textContent = detail.bankName || '-';
+                document.getElementById('upiAccountHolder').textContent = detail.name || '-';
+                document.getElementById('upiMobile').textContent = detail.mobile || '-';
+
+                document.getElementById('summaryName').textContent = detail.name || '-';
+                document.getElementById('summaryMobile').textContent = detail.mobile || '-';
+
+                loadingBox.classList.add('hidden');
+                hideMessages();
+            } catch (error) {
+                loadingBox.classList.add('hidden');
+                showError(error.message || 'Unable to load bank details right now.');
+            }
+        }
+
+        bankTab.addEventListener('click', () => setActiveTab('bank'));
+        upiTab.addEventListener('click', () => setActiveTab('upi'));
+
+        function toggleManualSubmitButton() {
+            const hasUtr = String(manualUtrInput.value || '').trim().length > 0;
+            const hasScreenshot = manualScreenshotInput.files && manualScreenshotInput.files.length > 0;
+            manualFinalSubmitBtn.classList.toggle('hidden', !(hasUtr && hasScreenshot));
+        }
+
+        manualUtrInput.addEventListener('input', toggleManualSubmitButton);
+        manualScreenshotInput.addEventListener('change', () => {
+            const selected = manualScreenshotInput.files && manualScreenshotInput.files[0];
+            manualFileName.textContent = selected ? `Selected: ${selected.name}` : 'No screenshot selected';
+            toggleManualSubmitButton();
+        });
+
+        manualFinalSubmitBtn.addEventListener('click', async () => {
+            const utrNumber = String(manualUtrInput.value || '').trim();
+            const screenshotFile = manualScreenshotInput.files && manualScreenshotInput.files[0];
+
+            if (!utrNumber || !screenshotFile) {
+                showError('Please enter UTR number and upload screenshot before submitting.');
+                toggleManualSubmitButton();
+                return;
+            }
+
+            const amountNum = Number(amountFromUrl);
+            const payload = {
+                name: customerNameFromUrl || document.getElementById('summaryName').textContent || 'Customer',
+                email: customerEmailFromUrl,
+                mobile: customerMobileFromUrl || document.getElementById('summaryMobile').textContent || '',
+                chitsPlan: chitPlanFromUrl || paymentTypeFromUrl || 'Manual Payment',
+                amount: amountNum,
+                utrNumber,
+                type: paymentTypeFromUrl || 'Manual Transfer',
+                screenshotName: screenshotFile.name || '',
+                screenshotBase64: '',
+            };
+
+            if (!payload.mobile || !payload.amount || payload.amount <= 0) {
+                showError('Mobile and amount are required to submit manual payment. Please start from payment form.');
+                return;
+            }
+
+            try {
+                manualFinalSubmitBtn.disabled = true;
+                loadingBox.textContent = 'Submitting your manual payment...';
+                loadingBox.className = 'status-box info';
+                loadingBox.classList.remove('hidden');
+
+                payload.screenshotBase64 = await readFileAsDataUrl(screenshotFile);
+
+                const response = await fetch('/api/bank-details', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to submit payment details');
+                }
+
+                const successMessage = result.message || 'Your payment is successful. Please wait for server approval.';
+                loadingBox.textContent = successMessage;
+                loadingBox.className = 'status-box success';
+                manualUtrInput.value = '';
+                manualScreenshotInput.value = '';
+                manualFileName.textContent = 'No screenshot selected';
+                toggleManualSubmitButton();
+
+                alert(successMessage);
+                window.location.href = 'payment.html';
+            } catch (error) {
+                showError(error.message || 'Unable to submit payment right now.');
+            } finally {
+                manualFinalSubmitBtn.disabled = false;
+            }
+        });
+
+        document.querySelectorAll('.copy-btn').forEach((button) => {
+            button.addEventListener('click', async () => {
+                const targetId = button.getAttribute('data-copy-target');
+                const target = document.getElementById(targetId || '');
+                const labelMap = {
+                    upiId: 'UPI ID',
+                    accountNumber: 'Account Number',
+                    bankName: 'Account Holder',
+                    ifscCode: 'IFSC Code',
+                };
+                const label = labelMap[targetId] || 'Value';
+                await copyText(target?.textContent || '', label);
+            });
+        });
+
+        setActiveTab('bank');
+        toggleManualSubmitButton();
+        loadBankDetails();
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

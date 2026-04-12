@@ -181,12 +181,17 @@ function buildCashfreeOrderId(mobile) {
   return `CHIT_${Date.now()}_${normalizedMobile}_${crypto.randomBytes(2).toString("hex")}`;
 }
 
-async function incrementApprovedChitTotalPaid({ mobile, chitPlan, amount }) {
+async function incrementApprovedChitTotalPaid({ mobile, chitPlan }) {
   const normalizedMobile = String(mobile || "").trim();
   const normalizedChitPlan = String(chitPlan || "").trim();
-  const paymentAmount = Number(amount);
+  const modeLikePlan = normalizedChitPlan.toUpperCase();
 
-  if (!normalizedMobile || !normalizedChitPlan || !paymentAmount || paymentAmount <= 0) {
+  if (!normalizedMobile || !normalizedChitPlan) {
+    return;
+  }
+
+  // Skip non-chit mode labels.
+  if (modeLikePlan === "BORROW PAYMENT" || modeLikePlan === "CHIT ID") {
     return;
   }
 
@@ -194,7 +199,7 @@ async function incrementApprovedChitTotalPaid({ mobile, chitPlan, amount }) {
 
   const { data: matchedChits, error: chitLookupError } = await supabase
     .from("chit_ids")
-    .select("id, total_paid")
+    .select("id, chit_id")
     .eq("mobile", normalizedMobile)
     .eq("chit_id", normalizedChitPlan)
     .eq("status", "Approved")
@@ -210,7 +215,7 @@ async function incrementApprovedChitTotalPaid({ mobile, chitPlan, amount }) {
   if (!approvedChit) {
     const { data: fallbackChits, error: fallbackLookupError } = await supabase
       .from("chit_ids")
-      .select("id, total_paid")
+      .select("id, chit_id")
       .eq("mobile", normalizedMobile)
       .eq("status", "Approved")
       .order("created_at", { ascending: false })
@@ -231,8 +236,30 @@ async function incrementApprovedChitTotalPaid({ mobile, chitPlan, amount }) {
     return;
   }
 
-  const currentPaid = Number(approvedChit.total_paid) || 0;
-  const updatedTotalPaid = currentPaid + paymentAmount;
+  const { data: approvedPayments, error: approvedPaymentsError } = await supabase
+    .from("payments")
+    .select("amount, chits_plan, type")
+    .eq("mobile", normalizedMobile)
+    .eq("status", "Approved");
+
+  if (approvedPaymentsError) {
+    console.error("approved payments lookup error", approvedPaymentsError);
+    return;
+  }
+
+  const targetChit = String(approvedChit.chit_id || normalizedChitPlan).trim().toLowerCase();
+  const updatedTotalPaid = (Array.isArray(approvedPayments) ? approvedPayments : [])
+    .filter((payment) => {
+      const paymentPlan = String(payment?.chits_plan || "").trim().toLowerCase();
+      const paymentType = String(payment?.type || "").trim().toLowerCase();
+
+      if (paymentPlan === "borrow payment" || paymentType.includes("borrow")) {
+        return false;
+      }
+
+      return paymentPlan === targetChit || paymentPlan === "chit id";
+    })
+    .reduce((sum, payment) => sum + (Number(payment?.amount) || 0), 0);
 
   const { error: chitUpdateError } = await supabase
     .from("chit_ids")
@@ -332,6 +359,7 @@ async function saveCashfreePaidOrder({ orderData, successfulPayment, paymentData
 }
 
 function mapPaymentRow(row) {
+  const screenshotPath = getPaymentScreenshotPath(row.id, row.utr_number);
   return {
     _id: row.id,
     id: row.id,
@@ -343,6 +371,7 @@ function mapPaymentRow(row) {
     type: row.type,
     chitsPlan: row.chits_plan,
     status: row.status,
+    screenshotUrl: screenshotPath ? `/${screenshotPath}` : null,
     created_at: row.created_at,
   };
 }
@@ -525,6 +554,8 @@ const storageBaseDir = process.env.VERCEL === "1" ? "/tmp" : __dirname;
 const invoicesDir = path.join(storageBaseDir, "invoices");
 const borrowDocsDir = path.join(storageBaseDir, "uploads", "borrow-docs");
 const borrowDocsIndexPath = path.join(storageBaseDir, "uploads", "borrow-docs-index.json");
+const paymentScreenshotsDir = path.join(storageBaseDir, "uploads", "payment-screenshots");
+const paymentScreenshotsIndexPath = path.join(storageBaseDir, "uploads", "payment-screenshots-index.json");
 const auctionChatFallbackPath = path.join(storageBaseDir, "uploads", "auction-chat-fallback.json");
 try {
   if (!fs.existsSync(invoicesDir)) {
@@ -532,6 +563,9 @@ try {
   }
   if (!fs.existsSync(borrowDocsDir)) {
     fs.mkdirSync(borrowDocsDir, { recursive: true });
+  }
+  if (!fs.existsSync(paymentScreenshotsDir)) {
+    fs.mkdirSync(paymentScreenshotsDir, { recursive: true });
   }
 } catch (dirError) {
   console.error("Failed to prepare invoices directory:", dirError);
@@ -597,6 +631,96 @@ function getBorrowDocumentPaths(recordId) {
     panDocumentPath: stored.panDocumentPath || null,
     rcDocumentPath: stored.rcDocumentPath || null,
   };
+}
+
+function readPaymentScreenshotsIndex() {
+  try {
+    if (!fs.existsSync(paymentScreenshotsIndexPath)) {
+      return {};
+    }
+
+    const raw = fs.readFileSync(paymentScreenshotsIndexPath, "utf8");
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (_error) {
+    return {};
+  }
+}
+
+function writePaymentScreenshotsIndex(indexData) {
+  try {
+    fs.writeFileSync(paymentScreenshotsIndexPath, JSON.stringify(indexData, null, 2), "utf8");
+  } catch (error) {
+    console.error("Failed to save payment screenshot index:", error);
+  }
+}
+
+function setPaymentScreenshotPath(recordId, utrNumber, screenshotPath) {
+  const normalizedRecordId = String(recordId || "").trim();
+  const normalizedUtr = String(utrNumber || "").trim();
+  const normalizedPath = String(screenshotPath || "").trim();
+  if (!normalizedPath) {
+    return;
+  }
+
+  const indexData = readPaymentScreenshotsIndex();
+  if (normalizedRecordId) {
+    indexData[`id:${normalizedRecordId}`] = normalizedPath;
+  }
+  if (normalizedUtr) {
+    indexData[`utr:${normalizedUtr}`] = normalizedPath;
+  }
+  writePaymentScreenshotsIndex(indexData);
+}
+
+function getPaymentScreenshotPath(recordId, utrNumber) {
+  const normalizedRecordId = String(recordId || "").trim();
+  const normalizedUtr = String(utrNumber || "").trim();
+  const indexData = readPaymentScreenshotsIndex();
+
+  if (normalizedRecordId && indexData[`id:${normalizedRecordId}`]) {
+    return indexData[`id:${normalizedRecordId}`];
+  }
+
+  if (normalizedUtr && indexData[`utr:${normalizedUtr}`]) {
+    return indexData[`utr:${normalizedUtr}`];
+  }
+
+  return null;
+}
+
+function savePaymentScreenshotFromBase64({ mobile, utrNumber, screenshotBase64, screenshotName }) {
+  const rawData = String(screenshotBase64 || "").trim();
+  if (!rawData) {
+    return null;
+  }
+
+  const match = rawData.match(/^data:(image\/(png|jpeg|jpg|webp));base64,(.+)$/i);
+  if (!match) {
+    throw new Error("Invalid screenshot format. Upload a PNG, JPG, JPEG, or WEBP image.");
+  }
+
+  const subtype = String(match[2] || "png").toLowerCase();
+  const extension = subtype === "jpeg" ? "jpg" : subtype;
+  const base64Content = match[3];
+  const buffer = Buffer.from(base64Content, "base64");
+  if (!buffer || buffer.length === 0) {
+    throw new Error("Uploaded screenshot is empty.");
+  }
+
+  if (buffer.length > 5 * 1024 * 1024) {
+    throw new Error("Screenshot must be 5MB or smaller.");
+  }
+
+  const normalizedMobile = String(mobile || "").replace(/\D/g, "").slice(-10) || "unknown";
+  const safeUtr = String(utrNumber || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 24) || "utr";
+  const safeOriginal = String(screenshotName || "").replace(/[^a-zA-Z0-9_.-]/g, "").slice(0, 40);
+  const originalBase = safeOriginal ? safeOriginal.replace(/\.[^.]+$/, "") : `${normalizedMobile}-${safeUtr}`;
+  const fileName = `${originalBase}-${Date.now()}.${extension}`;
+  const absolutePath = path.join(paymentScreenshotsDir, fileName);
+
+  fs.writeFileSync(absolutePath, buffer);
+  return path.posix.join("uploads", "payment-screenshots", fileName);
 }
 
 function isAuctionChatTableMissing(error) {
@@ -1604,28 +1728,37 @@ app.delete("/api/contacts/:id", async (req, res) => {
 });
 
 app.get("/api/feedback", async (_req, res) => {
-  const { data, error } = await supabase
-    .from("feedback")
-    .select("*")
-    .order("created_at", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("feedback")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (error) {
+    if (error) {
+      console.error("feedback list error", error);
+      return res.status(500).json({ message: "Failed to fetch feedback" });
+    }
+
+    return res.json(
+      data.map((feedback) => ({
+        _id: feedback.id,
+        id: feedback.id,
+        name: feedback.name,
+        email: feedback.email,
+        message: feedback.message,
+        rating: feedback.rating,
+        date: feedback.created_at,
+        created_at: feedback.created_at,
+      }))
+    );
+  } catch (error) {
     console.error("feedback list error", error);
+    if (String(error?.name || error?.message || "").includes("AbortError")) {
+      return res.status(200).json([]);
+    }
+
     return res.status(500).json({ message: "Failed to fetch feedback" });
   }
-
-  return res.json(
-    data.map((feedback) => ({
-      _id: feedback.id,
-      id: feedback.id,
-      name: feedback.name,
-      email: feedback.email,
-      message: feedback.message,
-      rating: feedback.rating,
-      date: feedback.created_at,
-      created_at: feedback.created_at,
-    }))
-  );
 });
 
 // Compatibility route: historically this returned payments.
@@ -1644,7 +1777,7 @@ app.get("/api/bank-details", async (_req, res) => {
 });
 
 app.post("/api/bank-details", async (req, res) => {
-  const { name, mobile, amount, utrNumber, email, type, chitsPlan } = req.body;
+  const { name, mobile, amount, utrNumber, email, type, chitsPlan, screenshotBase64, screenshotName } = req.body;
 
   try {
     const normalizedMobile = String(mobile || "").trim();
@@ -1665,6 +1798,13 @@ app.post("/api/bank-details", async (req, res) => {
       return res.status(400).json({ message: "UTR number already exists. Please enter a unique UTR number." });
     }
 
+    const screenshotPath = savePaymentScreenshotFromBase64({
+      mobile: normalizedMobile,
+      utrNumber,
+      screenshotBase64,
+      screenshotName,
+    });
+
     const { data, error } = await supabase
       .from("payments")
       .insert({
@@ -1684,11 +1824,9 @@ app.post("/api/bank-details", async (req, res) => {
       return res.status(500).json({ message: "Error saving payment details.", error });
     }
 
-    await incrementApprovedChitTotalPaid({
-      mobile: normalizedMobile,
-      chitPlan: normalizedChitPlan,
-      amount: paymentAmount,
-    });
+    if (screenshotPath) {
+      setPaymentScreenshotPath(data.id, utrNumber, screenshotPath);
+    }
 
     return res.status(200).json({
       message: "Payment details submitted successfully!",
@@ -1885,11 +2023,33 @@ app.post("/api/cashfree/webhook", async (req, res) => {
 
 app.put("/api/bank-details/:id/status", async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const rawStatus = String(req.body?.status || "").trim();
+  const normalizedStatus = rawStatus.toLowerCase() === "completed" ? "Approved" : rawStatus;
+
+  if (!["Pending", "Approved", "Rejected"].includes(normalizedStatus)) {
+    return res.status(400).json({
+      message: "Invalid payment status. Use Pending, Approved, or Rejected.",
+    });
+  }
+
+  const { data: existingPayment, error: existingError } = await supabase
+    .from("payments")
+    .select("id, status, mobile, chits_plan, amount")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (existingError) {
+    console.error("load payment before status update error", existingError);
+    return res.status(500).json({ message: "Failed to update payment status" });
+  }
+
+  if (!existingPayment) {
+    return res.status(404).json({ message: "Payment not found" });
+  }
 
   const { data, error } = await supabase
     .from("payments")
-    .update({ status })
+    .update({ status: normalizedStatus })
     .eq("id", id)
     .select("id")
     .maybeSingle();
@@ -1901,6 +2061,13 @@ app.put("/api/bank-details/:id/status", async (req, res) => {
 
   if (!data) {
     return res.status(404).json({ message: "Payment not found" });
+  }
+
+  if (String(existingPayment.status || "") !== normalizedStatus) {
+    await incrementApprovedChitTotalPaid({
+      mobile: existingPayment.mobile,
+      chitPlan: existingPayment.chits_plan,
+    });
   }
 
   return res.json({ message: "Payment status updated successfully" });

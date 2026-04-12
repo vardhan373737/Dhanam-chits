@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="0; url=manualpay.html">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting...</title>
+</head>
+<body>
+    <script>
+        const target = `manualpay.html${window.location.search || ''}${window.location.hash || ''}`;
+        window.location.replace(target);
+    </script>
+    <p>Redirecting to the manual payment page...</p>
+</body>
+</html>

@@ -484,6 +484,8 @@
         <h2>Admin Panel</h2>
         <a href="admin.html"><i class="fas fa-tachometer-alt"></i> <span class="menu-text">Dashboard</span></a>
         <a href="users.html"><i class="fas fa-users"></i> <span class="menu-text">Users</span></a>
+                    <a href="adminbank.html"><i class="fas fa-university"></i> <span class="menu-text">Admin-Bank</span></a>
+
         <a href="bankdetailA.html"><i class="fas fa-university"></i> <span class="menu-text">Bank Details</span></a>
         <a href="borrowA.html"><i class="fas fa-hand-holding-usd"></i> <span class="menu-text">Borrows</span></a>
         <a href="ChitidA.html"><i class="fas fa-university"></i> <span class="menu-text">chit-ids Approve</span></a>
@@ -526,6 +528,7 @@
                         <th>Payment Type</th>
                         <th>Amount</th>
                         <th>UTR Number</th>
+                        <th>Screenshot</th>
                         <th>Chit ID</th>
                         <th>Status</th>
                         <th>Action</th>
@@ -538,7 +541,7 @@
                     <tr>
                         <td colspan="4"></td>
                         <td id="total-amount" style="font-weight: bold;"></td>
-                        <td colspan="4"></td>
+                        <td colspan="5"></td>
                     </tr>
                 </tfoot>
             </table>
@@ -570,7 +573,7 @@
                 document.getElementById('pending-payments-count').textContent = data.filter((item) => item.status === 'Pending').length;
 
                 if (data.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center; font-weight:600; color:#264653;">No payment records found.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="10" style="text-align:center; font-weight:600; color:#264653;">No payment records found.</td></tr>';
                     document.getElementById('total-amount').textContent = 'Total Amount: 0';
                     document.getElementById('total-amount-stat').textContent = '0';
                     return;
@@ -586,10 +589,15 @@
                         <td>${payment.type}</td>
                         <td>${payment.amount}</td>
                         <td>${payment.utrNumber}</td>
+                        <td>
+                            ${payment.screenshotUrl
+                                ? `<a href="${payment.screenshotUrl}" target="_blank" rel="noopener"><img src="${payment.screenshotUrl}" alt="Payment Screenshot" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #d6e2f0;"></a>`
+                                : '-'}
+                        </td>
                         <td>${payment.chitsPlan}</td>
                         <td>${payment.status}</td>
                         <td>
-                            <button class="btn-status" onclick="updateStatus('${payment._id}', 'Completed')">Mark as Completed</button>
+                            <button class="btn-status" onclick="updateStatus('${payment._id}', 'Approved')">Mark as Completed</button>
                             <button class="btn-delete" onclick="deletePayment('${payment._id}')">Delete</button>
                             <button class="btn-send-statement" onclick="sendStatement('${payment._id}')">Send Statement</button>
                         </td>
@@ -649,7 +657,7 @@
             }
 
             try {
-                const response = await fetch(`/api/bank-details/${id}`, {
+                const response = await fetch(`/api/payments/${id}`, {
                     method: 'DELETE'
                 });
 

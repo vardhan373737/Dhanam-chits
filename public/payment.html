@@ -116,6 +116,94 @@
             border: 1px solid rgba(15, 118, 110, 0.22);
         }
 
+        .payment-select {
+            min-height: 52px;
+            height: auto;
+            line-height: 1.35;
+            padding-top: 0.85rem !important;
+            padding-bottom: 0.85rem !important;
+            color: #10213a;
+            background-color: #ffffff !important;
+            appearance: auto;
+        }
+
+        .payment-select option {
+            color: #10213a;
+        }
+
+        #userChitBorrowInfo {
+            display: none;
+            margin-bottom: 1rem;
+        }
+
+        .lookup-card {
+            border-radius: 16px;
+            padding: 16px 18px;
+            border: 1px solid rgba(16, 33, 58, 0.1);
+            box-shadow: 0 16px 30px rgba(10, 20, 40, 0.12);
+            background: linear-gradient(180deg, #ffffff, #f7fbff);
+        }
+
+        .lookup-card.is-info {
+            border-color: rgba(8, 145, 178, 0.18);
+            background: linear-gradient(180deg, #f7fdff, #ffffff);
+        }
+
+        .lookup-card.is-success {
+            border-color: rgba(15, 118, 110, 0.18);
+            background: linear-gradient(180deg, #f5fffc, #ffffff);
+        }
+
+        .lookup-card.is-warning {
+            border-color: rgba(245, 158, 11, 0.22);
+            background: linear-gradient(180deg, #fffaf0, #ffffff);
+        }
+
+        .lookup-title {
+            margin: 0 0 10px;
+            font-weight: 800;
+            color: #0f1f39;
+        }
+
+        .lookup-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px 14px;
+        }
+
+        .lookup-item {
+            background: rgba(15, 76, 129, 0.05);
+            border: 1px solid rgba(15, 76, 129, 0.08);
+            border-radius: 12px;
+            padding: 10px 12px;
+        }
+
+        .lookup-item span {
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #47607f;
+            margin-bottom: 4px;
+        }
+
+        .lookup-item strong {
+            display: block;
+            font-size: 1rem;
+            color: #10213a;
+            word-break: break-word;
+        }
+
+        .lookup-note {
+            margin-top: 10px;
+            font-size: 0.88rem;
+            color: #4f6782;
+        }
+
+        .hidden-payment-type {
+            display: none;
+        }
+
         @media (max-width: 576px) {
             .container {
                 margin-top: 1rem;
@@ -177,7 +265,11 @@
 
             <div class="form-group">
                 <label for="chitsPlan">CHIT ID/BORROW PAYMENT</label>
-                <input type="text" class="form-control" id="chitsPlan" required>
+                <select class="form-control payment-select" id="chitsPlan" required>
+                    <option value="" selected disabled>Select CHIT ID / BORROW PAYMENT</option>
+                    <option value="CHIT ID">CHIT ID</option>
+                    <option value="BORROW PAYMENT">BORROW PAYMENT</option>
+                </select>
             </div>
 
             <div class="form-group">
@@ -186,19 +278,19 @@
                 <div class="helper">Enter the amount you are paying now.</div>
             </div>
 
-            <div class="form-group">
-                <label for="utrNumber">UTR Number</label>
-                <input type="text" class="form-control" id="utrNumber">
-                <div class="helper">Required only for manual bank/UPI transfer.</div>
-            </div>
-
-            <div class="form-group">
+            <div class="form-group hidden-payment-type" id="paymentTypeGroup">
                 <label for="type">Payment Type</label>
                 <input type="text" class="form-control" id="type" value="Chit Payment" readonly>
             </div>
 
-            <button type="submit" class="btn btn-primary" id="manualSubmitBtn">Submit Manual UTR Payment</button>
-            <button type="button" class="btn btn-cashfree" id="cashfreePayBtn">Pay with Cashfree</button>
+            <div class="form-group hidden-payment-type" id="paymentMethodGroup">
+                <label>Payment Method</label>
+                <div>
+                    <button type="button" class="btn btn-primary" id="manualSubmitBtn">Submit Manual UTR Payment</button>
+                    <button type="button" class="btn btn-cashfree" id="cashfreePayBtn">Pay with Cashfree</button>
+                </div>
+            </div>
+
             <div id="serviceChargeInfo" style="display:none; margin-top:10px; margin-bottom:10px;"></div>
             <div id="paymentStatus" class="payment-status"></div>
         </form>
@@ -217,6 +309,15 @@
         const manualSubmitBtn = document.getElementById('manualSubmitBtn');
         const cashfreePayBtn = document.getElementById('cashfreePayBtn');
         const paymentStatus = document.getElementById('paymentStatus');
+        const userChitBorrowInfo = document.getElementById('userChitBorrowInfo');
+        const mobileInput = document.getElementById('mobile');
+        const chitsPlanSelect = document.getElementById('chitsPlan');
+        const amountInput = document.getElementById('amount');
+        const paymentTypeInput = document.getElementById('type');
+        const paymentTypeGroup = document.getElementById('paymentTypeGroup');
+        const paymentMethodGroup = document.getElementById('paymentMethodGroup');
+        let lookupTimer = null;
+        let selectedChitIdForPayment = '';
 
         function setPaymentStatus(message, type = 'info') {
             paymentStatus.textContent = message;
@@ -233,57 +334,219 @@
             cashfreePayBtn.disabled = disabled;
         }
 
+        function normalizeText(value) {
+            return String(value || '').trim().toLowerCase();
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatAmount(value) {
+            const amount = Number(value) || 0;
+            return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+
+        function setPaymentTypeFromSelection() {
+            paymentTypeInput.value = chitsPlanSelect.value === 'BORROW PAYMENT' ? 'Borrow Payment' : 'Chit Payment';
+        }
+
+        function togglePaymentTypeVisibility() {
+            const amountValue = Number(amountInput.value);
+            const shouldShow = Number.isFinite(amountValue) && amountValue > 0;
+            paymentTypeGroup.classList.toggle('hidden-payment-type', !shouldShow);
+            paymentMethodGroup.classList.toggle('hidden-payment-type', !shouldShow);
+        }
+
+        function showLookupInfo(html, tone = 'is-info') {
+            userChitBorrowInfo.className = `lookup-card ${tone}`;
+            userChitBorrowInfo.innerHTML = html;
+            userChitBorrowInfo.style.display = 'block';
+        }
+
+        function hideLookupInfo() {
+            userChitBorrowInfo.innerHTML = '';
+            userChitBorrowInfo.style.display = 'none';
+            selectedChitIdForPayment = '';
+        }
+
+        async function loadSelectionDetails() {
+            const mobile = String(mobileInput.value || '').replace(/\D/g, '').trim();
+            const selection = String(chitsPlanSelect.value || '').trim();
+
+            if (!selection || mobile.length !== 10) {
+                hideLookupInfo();
+                return;
+            }
+
+            showLookupInfo('<div class="lookup-title">Loading details...</div>', 'is-info');
+
+            try {
+                const paymentsResponse = await fetch(`/api/payments/${encodeURIComponent(mobile)}`);
+                const paymentRows = await paymentsResponse.json().catch(() => []);
+                const approvedPayments = Array.isArray(paymentRows)
+                    ? paymentRows.filter((item) => normalizeText(item.status) === 'approved')
+                    : [];
+
+                if (selection === 'CHIT ID') {
+                    const response = await fetch(`/api/chit-ids/mobile/${encodeURIComponent(mobile)}`);
+                    const data = await response.json().catch(() => []);
+
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            showLookupInfo(
+                                '<div class="lookup-title">No Chit ID found</div><div class="lookup-note">No Chit ID is linked to this mobile number.</div>',
+                                'is-warning'
+                            );
+                            return;
+                        }
+                        throw new Error(data.message || 'Failed to load Chit ID details.');
+                    }
+
+                    if (!Array.isArray(data) || data.length === 0) {
+                        showLookupInfo(
+                            '<div class="lookup-title">No Chit ID found</div><div class="lookup-note">No Chit ID records are linked to this mobile number.</div>',
+                            'is-warning'
+                        );
+                        return;
+                    }
+
+                    const approvedRecord = data.find((item) => String(item.status || '').trim().toLowerCase() === 'approved') || data[0];
+                    selectedChitIdForPayment = String(approvedRecord.chitId || '').trim();
+                    const totalBalance = Number(approvedRecord.totalBalance) || 0;
+                    const totalPaidFromChit = Number(approvedRecord.totalPaid) || 0;
+                    const totalPaidFromApprovedPayments = approvedPayments
+                        .filter((payment) => normalizeText(payment.chitsPlan) === normalizeText(selectedChitIdForPayment))
+                        .reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0);
+                    const totalPaid = Math.max(totalPaidFromChit, totalPaidFromApprovedPayments);
+                    const balanceDue = Math.max(totalBalance - totalPaid, 0);
+
+                    showLookupInfo(`
+                        <div class="lookup-title">Chit Details</div>
+                        <div class="lookup-grid">
+                            <div class="lookup-item"><span>Chit ID</span><strong>${escapeHtml(approvedRecord.chitId || 'N/A')}</strong></div>
+                            <div class="lookup-item"><span>Status</span><strong>${escapeHtml(approvedRecord.status || 'N/A')}</strong></div>
+                            <div class="lookup-item"><span>Total Paid</span><strong>${formatAmount(totalPaid)}</strong></div>
+                            <div class="lookup-item"><span>Balance Due</span><strong>${formatAmount(balanceDue)}</strong></div>
+                        </div>
+                        <div class="lookup-note">Only approved payments are considered for the live balance.</div>
+                    `, 'is-success');
+                    return;
+                }
+
+                if (selection === 'BORROW PAYMENT') {
+                    const response = await fetch(`/api/borrow-history/${encodeURIComponent(mobile)}`);
+                    const data = await response.json().catch(() => []);
+
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Failed to load borrow details.');
+                    }
+
+                    if (!Array.isArray(data) || data.length === 0) {
+                        showLookupInfo(
+                            '<div class="lookup-title">No Borrow record found</div><div class="lookup-note">No borrow entry is linked to this mobile number.</div>',
+                            'is-warning'
+                        );
+                        return;
+                    }
+
+                    const approvedRecord = data.find((item) => String(item.status || '').trim().toLowerCase() === 'approved') || data[0];
+                    const borrowAmount = Number(approvedRecord.amount) || 0;
+                    const paidBorrowAmount = approvedPayments
+                        .filter((payment) => {
+                            const paymentType = normalizeText(payment.type);
+                            const paymentPlan = normalizeText(payment.chitsPlan);
+                            return paymentType.includes('borrow') || paymentPlan === 'borrow payment';
+                        })
+                        .reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0);
+                    const balanceDue = Math.max(borrowAmount - paidBorrowAmount, 0);
+
+                    showLookupInfo(`
+                        <div class="lookup-title">Borrow Details</div>
+                        <div class="lookup-grid">
+                            <div class="lookup-item"><span>Borrow Amount</span><strong>${formatAmount(borrowAmount)}</strong></div>
+                            <div class="lookup-item"><span>Paid (Approved)</span><strong>${formatAmount(paidBorrowAmount)}</strong></div>
+                            <div class="lookup-item"><span>Balance Due</span><strong>${formatAmount(balanceDue)}</strong></div>
+                            <div class="lookup-item"><span>Status</span><strong>${escapeHtml(approvedRecord.status || 'N/A')}</strong></div>
+                            <div class="lookup-item"><span>Mobile</span><strong>${escapeHtml(approvedRecord.mobile || mobile)}</strong></div>
+                        </div>
+                        <div class="lookup-note">Only approved borrow payments are deducted from the balance.</div>
+                    `, 'is-success');
+                }
+            } catch (error) {
+                console.error('Lookup details error:', error);
+                showLookupInfo(
+                    `<div class="lookup-title">Unable to load details</div><div class="lookup-note">${escapeHtml(error.message || 'Please try again.')}</div>`,
+                    'is-warning'
+                );
+            }
+        }
+
+        function scheduleSelectionDetails() {
+            clearTimeout(lookupTimer);
+            lookupTimer = setTimeout(loadSelectionDetails, 250);
+        }
+
+        setPaymentTypeFromSelection();
+        togglePaymentTypeVisibility();
+        mobileInput.addEventListener('input', scheduleSelectionDetails);
+        mobileInput.addEventListener('blur', scheduleSelectionDetails);
+        amountInput.addEventListener('input', togglePaymentTypeVisibility);
+        amountInput.addEventListener('change', togglePaymentTypeVisibility);
+        chitsPlanSelect.addEventListener('change', () => {
+            setPaymentTypeFromSelection();
+            scheduleSelectionDetails();
+        });
+
+        if (String(mobileInput.value || '').replace(/\D/g, '').length === 10 && chitsPlanSelect.value) {
+            scheduleSelectionDetails();
+        }
+
         function collectPaymentPayload(includeUtr = true) {
+            const selectedMode = document.getElementById('chitsPlan').value.trim();
+            const resolvedPlan = selectedMode === 'CHIT ID'
+                ? (selectedChitIdForPayment || '')
+                : selectedMode;
+
             const payload = {
                 name: document.getElementById('name').value.trim(),
                 email: document.getElementById('email').value.trim(),
                 mobile: document.getElementById('mobile').value.trim(),
-                chitsPlan: document.getElementById('chitsPlan').value.trim(),
+                chitsPlan: resolvedPlan,
                 amount: Number(document.getElementById('amount').value),
-                utrNumber: document.getElementById('utrNumber').value.trim(),
                 type: document.getElementById('type').value.trim(),
             };
+
+            if (selectedMode === 'CHIT ID' && !resolvedPlan) {
+                throw new Error('Unable to resolve Chit ID. Select CHIT ID and check mobile details again.');
+            }
 
             if (!payload.name || !payload.email || !payload.mobile || !payload.chitsPlan || !payload.amount || payload.amount <= 0) {
                 throw new Error('Name, email, mobile, chit plan and amount are required.');
             }
 
-            if (includeUtr && !payload.utrNumber) {
-                throw new Error('UTR number is required for manual submission.');
-            }
-
             return payload;
         }
 
-        paymentForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-
+        manualSubmitBtn.addEventListener('click', () => {
             try {
-                clearPaymentStatus();
-                setButtonsDisabled(true);
-                setPaymentStatus('Submitting manual payment details...', 'info');
-                const payload = collectPaymentPayload(true);
-
-                const response = await fetch('/api/bank-details', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
+                const payload = collectPaymentPayload(false);
+                const query = new URLSearchParams({
+                    name: payload.name,
+                    email: payload.email,
+                    mobile: payload.mobile,
+                    chitsPlan: payload.chitsPlan,
+                    amount: String(payload.amount || ''),
+                    type: payload.type,
                 });
-
-                const result = await response.json().catch(() => ({}));
-                if (!response.ok) {
-                    throw new Error(result.message || 'Payment submission failed');
-                }
-
-                setPaymentStatus(result.message || 'Payment submitted successfully', 'success');
-                alert(result.message || 'Payment submitted successfully');
-                window.location.href = 'dashboard.html';
+                window.location.href = `manualpay.html?${query.toString()}`;
             } catch (error) {
-                console.error('Manual payment submit error:', error);
-                setPaymentStatus(error.message || 'Failed to submit payment. Please try again.', 'error');
-                alert(error.message || 'Failed to submit payment. Please try again.');
-            } finally {
-                setButtonsDisabled(false);
+                setPaymentStatus(error.message || 'Please complete required fields first.', 'error');
             }
         });
 
