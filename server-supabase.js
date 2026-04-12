@@ -751,6 +751,8 @@ async function uploadPaymentScreenshotToSupabase({ utrNumber, screenshotBase64 }
     return null;
   }
 
+  await ensurePaymentScreenshotBucket();
+
   const match = rawData.match(/^data:(image\/(png|jpeg|jpg|webp));base64,(.+)$/i);
   if (!match) {
     throw new Error("Invalid screenshot format. Upload a PNG, JPG, JPEG, or WEBP image.");
@@ -790,13 +792,54 @@ async function resolveSupabaseScreenshotUrlByUtr(utrNumber) {
     return null;
   }
 
-  const { data, error } = await supabase.storage.from(paymentScreenshotBucket).download(objectPath);
-  if (error || !data) {
+  await ensurePaymentScreenshotBucket();
+
+  const { data, error } = await supabase.storage
+    .from(paymentScreenshotBucket)
+    .createSignedUrl(objectPath, 60 * 60 * 24 * 7);
+
+  if (error || !data?.signedUrl) {
     return null;
   }
 
-  const { data: publicData } = supabase.storage.from(paymentScreenshotBucket).getPublicUrl(objectPath);
-  return publicData?.publicUrl || null;
+  return data.signedUrl;
+}
+
+let paymentScreenshotBucketReady = null;
+
+async function ensurePaymentScreenshotBucket() {
+  if (paymentScreenshotBucketReady) {
+    return paymentScreenshotBucketReady;
+  }
+
+  paymentScreenshotBucketReady = (async () => {
+    try {
+      const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+      if (listError) {
+        throw listError;
+      }
+
+      const existing = Array.isArray(buckets)
+        ? buckets.find((bucket) => String(bucket.name || "").trim() === paymentScreenshotBucket)
+        : null;
+
+      if (!existing) {
+        const { error: createError } = await supabase.storage.createBucket(paymentScreenshotBucket, {
+          public: false,
+          allowedMimeTypes: ["image/png", "image/jpeg", "image/jpg", "image/webp"],
+          fileSizeLimit: 5 * 1024 * 1024,
+        });
+
+        if (createError) {
+          console.warn("payment screenshot bucket create skipped", createError.message || createError);
+        }
+      }
+    } catch (error) {
+      console.warn("payment screenshot bucket ensure skipped", error?.message || error);
+    }
+  })();
+
+  return paymentScreenshotBucketReady;
 }
 
 function isAuctionChatTableMissing(error) {
