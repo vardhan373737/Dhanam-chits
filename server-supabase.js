@@ -22,6 +22,7 @@ app.use(
   })
 );
 app.use(express.json({
+  limit: "8mb",
   verify: (req, _res, buf) => {
     req.rawBody = buf.toString("utf8");
   },

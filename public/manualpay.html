@@ -419,6 +419,7 @@
         const manualScreenshotInput = document.getElementById('manualScreenshot');
         const manualFinalSubmitBtn = document.getElementById('manualFinalSubmitBtn');
         const manualFileName = document.getElementById('manualFileName');
+        const MAX_SCREENSHOT_SIZE_BYTES = 2.5 * 1024 * 1024;
 
         function setActiveTab(tabName) {
             const isBank = tabName === 'bank';
@@ -526,6 +527,13 @@
         manualUtrInput.addEventListener('input', toggleManualSubmitButton);
         manualScreenshotInput.addEventListener('change', () => {
             const selected = manualScreenshotInput.files && manualScreenshotInput.files[0];
+            if (selected && selected.size > MAX_SCREENSHOT_SIZE_BYTES) {
+                showError('Screenshot is too large. Please upload an image smaller than 2.5 MB.');
+                manualScreenshotInput.value = '';
+                manualFileName.textContent = 'No screenshot selected';
+                toggleManualSubmitButton();
+                return;
+            }
             manualFileName.textContent = selected ? `Selected: ${selected.name}` : 'No screenshot selected';
             toggleManualSubmitButton();
         });
@@ -537,6 +545,11 @@
             if (!utrNumber || !screenshotFile) {
                 showError('Please enter UTR number and upload screenshot before submitting.');
                 toggleManualSubmitButton();
+                return;
+            }
+
+            if (screenshotFile.size > MAX_SCREENSHOT_SIZE_BYTES) {
+                showError('Screenshot is too large. Please upload an image smaller than 2.5 MB.');
                 return;
             }
 
