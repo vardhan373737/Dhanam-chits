@@ -426,7 +426,7 @@
         <a href="ChitidA.html"><i class="fas fa-university"></i> <span class="menu-text">Chit-ids Approve</span></a>
         <a href="paymentA.html"><i class="fas fa-credit-card"></i> <span class="menu-text">Payments</span></a>
         <a href="contactA.html"><i class="fas fa-envelope"></i> <span class="menu-text">Contact Details</span></a>
-        <a href="#" class="logout-btn" onclick="return logout(event)"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
+        <a href="/Login.html" class="logout-btn" onclick="return logout(event)"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
     </div>
 
     <!-- Content -->
@@ -623,7 +623,7 @@
                 localStorage.removeItem('mobile');
                 localStorage.removeItem('chitId');
                 localStorage.removeItem('name');
-                window.location.href = 'Login.html';
+                window.location.href = '/Login.html';
             }
 
             return false;

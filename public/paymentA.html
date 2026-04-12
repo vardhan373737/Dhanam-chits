@@ -323,6 +323,99 @@
             box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
         }
 
+        .screenshot-thumb {
+            width: 56px;
+            height: 56px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #d6e2f0;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .screenshot-thumb:hover {
+            transform: scale(1.04);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .screenshot-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.72);
+            z-index: 4000;
+            padding: 18px;
+        }
+
+        .screenshot-modal.show {
+            display: flex;
+        }
+
+        .screenshot-modal-card {
+            width: min(94vw, 980px);
+            max-height: 92vh;
+            background: #ffffff;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 22px 60px rgba(0, 0, 0, 0.35);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .screenshot-modal-header,
+        .screenshot-modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 14px 18px;
+            background: linear-gradient(135deg, #0f2a3f, #1f8a70);
+            color: #fff;
+        }
+
+        .screenshot-modal-title {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        .screenshot-modal-close,
+        .screenshot-modal-open {
+            border: none;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-weight: 700;
+        }
+
+        .screenshot-modal-close {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .screenshot-modal-open {
+            background: #ffffff;
+            color: #0f2a3f;
+        }
+
+        .screenshot-modal-body {
+            padding: 18px;
+            overflow: auto;
+            background: #f4f8fb;
+            display: flex;
+            justify-content: center;
+        }
+
+        .screenshot-modal-body img {
+            max-width: 100%;
+            max-height: 74vh;
+            object-fit: contain;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+        }
+
         .payment-toolbar {
             display: flex;
             align-items: center;
@@ -491,7 +584,7 @@
         <a href="ChitidA.html"><i class="fas fa-university"></i> <span class="menu-text">chit-ids Approve</span></a>
         <a href="paymentA.html"><i class="fas fa-credit-card"></i> <span class="menu-text">Payments</span></a>
         <a href="contactA.html"><i class="fas fa-envelope"></i> <span class="menu-text">Contact Details</span></a>
-        <a href="#" class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
+        <a href="/Login.html" class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
     </div>
 
     <!-- Content -->
@@ -550,9 +643,27 @@
         <button class="btn-logout" onclick="logout()">Logout</button>
     </div>
 
+    <div class="screenshot-modal" id="screenshotModal" aria-hidden="true">
+        <div class="screenshot-modal-card" role="dialog" aria-modal="true" aria-labelledby="screenshotModalTitle">
+            <div class="screenshot-modal-header">
+                <h3 class="screenshot-modal-title" id="screenshotModalTitle">Payment Screenshot</h3>
+                <button type="button" class="screenshot-modal-close" onclick="closeScreenshotModal()">Close</button>
+            </div>
+            <div class="screenshot-modal-body">
+                <img id="screenshotModalImage" src="" alt="Payment Screenshot Preview">
+            </div>
+            <div class="screenshot-modal-footer">
+                <span id="screenshotModalLabel">Preview</span>
+                <button type="button" class="screenshot-modal-open" id="screenshotModalOpenBtn">Open</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const PAYMENT_API_BASE = '';
         let paymentCache = [];
+        let currentScreenshotUrl = '';
+        let currentScreenshotUrl = '';
 
         async function fetchData() {
             try {
@@ -591,7 +702,7 @@
                         <td>${payment.utrNumber}</td>
                         <td>
                             ${payment.screenshotUrl
-                                ? `<a href="${payment.screenshotUrl}" target="_blank" rel="noopener"><img src="${payment.screenshotUrl}" alt="Payment Screenshot" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #d6e2f0;"></a>`
+                                ? `<img src="${payment.screenshotUrl}" alt="Payment Screenshot" class="screenshot-thumb" onclick="openScreenshotModal('${encodeURIComponent(payment.screenshotUrl)}')">`
                                 : '-'}
                         </td>
                         <td>${payment.chitsPlan}</td>
@@ -775,7 +886,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.message === "Logout successful.") {
-                    window.location.href = "/login.html";
+                    window.location.href = "/Login.html";
                 }
             })
             .catch(error => {
@@ -786,6 +897,45 @@
         function toggleSidebar() {
             document.body.classList.toggle('sidebar-open');
         }
+
+        function openScreenshotModal(encodedUrl) {
+            currentScreenshotUrl = decodeURIComponent(String(encodedUrl || '').trim());
+            if (!currentScreenshotUrl) {
+                return;
+            }
+
+            document.getElementById('screenshotModalImage').src = currentScreenshotUrl;
+            document.getElementById('screenshotModalLabel').textContent = 'Payment Screenshot';
+            const modal = document.getElementById('screenshotModal');
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeScreenshotModal() {
+            const modal = document.getElementById('screenshotModal');
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+            document.getElementById('screenshotModalImage').src = '';
+            currentScreenshotUrl = '';
+        }
+
+        document.getElementById('screenshotModal').addEventListener('click', (event) => {
+            if (event.target.id === 'screenshotModal') {
+                closeScreenshotModal();
+            }
+        });
+
+        document.getElementById('screenshotModalOpenBtn').addEventListener('click', () => {
+            if (currentScreenshotUrl) {
+                window.open(currentScreenshotUrl, '_blank', 'noopener');
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeScreenshotModal();
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', fetchData);
     </script>
