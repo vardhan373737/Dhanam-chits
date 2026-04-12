@@ -664,9 +664,31 @@
         let paymentCache = [];
         let currentScreenshotUrl = '';
 
+        async function apiFetch(url, options = {}) {
+            const mergedOptions = {
+                credentials: 'include',
+                ...options,
+                headers: {
+                    ...(options.headers || {}),
+                },
+            };
+
+            const response = await fetch(url, mergedOptions);
+            if (response.status === 401 || response.status === 403) {
+                const message = response.status === 401
+                    ? 'Admin session expired. Please login again.'
+                    : 'You are not authorized to access payment admin actions.';
+                alert(message);
+                window.location.href = 'Login.html';
+                throw new Error(message);
+            }
+
+            return response;
+        }
+
         async function fetchData() {
             try {
-                const response = await fetch('/api/bank-details');
+                const response = await apiFetch('/api/bank-details');
                 const data = await response.json();
                 console.log('Fetched payment details:', data); // Add logging
                 const tableBody = document.getElementById('payments-table');
@@ -741,7 +763,7 @@
 
         async function updateStatus(id, status) {
             try {
-                const response = await fetch(`/api/bank-details/${id}/status`, {
+                const response = await apiFetch(`/api/bank-details/${id}/status`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -767,7 +789,7 @@
             }
 
             try {
-                const response = await fetch(`/api/payments/${id}`, {
+                const response = await apiFetch(`/api/payments/${id}`, {
                     method: 'DELETE'
                 });
 
@@ -785,7 +807,7 @@
 
         async function sendStatement(id) {
             try {
-                const response = await fetch(`${PAYMENT_API_BASE}/api/bank-details/${id}/send-statement`, {
+                const response = await apiFetch(`${PAYMENT_API_BASE}/api/bank-details/${id}/send-statement`, {
                     method: 'POST'
                 });
 
@@ -844,7 +866,7 @@
 
             for (const payment of filteredPayments) {
                 try {
-                    const response = await fetch(`${PAYMENT_API_BASE}/api/bank-details/${payment._id}/send-statement`, {
+                    const response = await apiFetch(`${PAYMENT_API_BASE}/api/bank-details/${payment._id}/send-statement`, {
                         method: 'POST'
                     });
 

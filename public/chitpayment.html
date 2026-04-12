@@ -235,6 +235,28 @@
             cashfreePayBtn.disabled = disabled;
         }
 
+        async function apiFetch(url, options = {}) {
+            const mergedOptions = {
+                credentials: 'include',
+                ...options,
+                headers: {
+                    ...(options.headers || {}),
+                },
+            };
+
+            const response = await fetch(url, mergedOptions);
+            if (response.status === 401 || response.status === 403) {
+                const message = response.status === 401
+                    ? 'Your session has expired. Please login again.'
+                    : 'You are not authorized for this action.';
+                alert(message);
+                window.location.href = 'Login.html';
+                throw new Error(message);
+            }
+
+            return response;
+        }
+
         function collectPaymentPayload(includeUtr = true) {
             const payload = {
                 name: document.getElementById('name').value.trim(),
@@ -270,7 +292,7 @@
                 setPaymentStatus('Submitting manual payment details...', 'info');
                 const payload = collectPaymentPayload(true);
 
-                const response = await fetch('/api/bank-details', {
+                const response = await apiFetch('/api/bank-details', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
@@ -302,7 +324,7 @@
                 const paymentData = collectPaymentPayload(false);
                 paymentData.type = 'Chit Payment (Cashfree)';
 
-                const createOrderResponse = await fetch('/api/cashfree/create-order', {
+                const createOrderResponse = await apiFetch('/api/cashfree/create-order', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(paymentData),
@@ -331,7 +353,7 @@
 
                 setPaymentStatus('Verifying payment status...', 'info');
 
-                const verifyResponse = await fetch('/api/cashfree/confirm-order', {
+                const verifyResponse = await apiFetch('/api/cashfree/confirm-order', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

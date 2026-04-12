@@ -334,6 +334,28 @@
             cashfreePayBtn.disabled = disabled;
         }
 
+        async function apiFetch(url, options = {}) {
+            const mergedOptions = {
+                credentials: 'include',
+                ...options,
+                headers: {
+                    ...(options.headers || {}),
+                },
+            };
+
+            const response = await fetch(url, mergedOptions);
+            if (response.status === 401 || response.status === 403) {
+                const message = response.status === 401
+                    ? 'Your session has expired. Please login again.'
+                    : 'You are not authorized for this action.';
+                alert(message);
+                window.location.href = 'Login.html';
+                throw new Error(message);
+            }
+
+            return response;
+        }
+
         function normalizeText(value) {
             return String(value || '').trim().toLowerCase();
         }
@@ -387,14 +409,14 @@
             showLookupInfo('<div class="lookup-title">Loading details...</div>', 'is-info');
 
             try {
-                const paymentsResponse = await fetch(`/api/payments/${encodeURIComponent(mobile)}`);
+                const paymentsResponse = await apiFetch(`/api/payments/${encodeURIComponent(mobile)}`);
                 const paymentRows = await paymentsResponse.json().catch(() => []);
                 const approvedPayments = Array.isArray(paymentRows)
                     ? paymentRows.filter((item) => normalizeText(item.status) === 'approved')
                     : [];
 
                 if (selection === 'CHIT ID') {
-                    const response = await fetch(`/api/chit-ids/mobile/${encodeURIComponent(mobile)}`);
+                    const response = await apiFetch(`/api/chit-ids/mobile/${encodeURIComponent(mobile)}`);
                     const data = await response.json().catch(() => []);
 
                     if (!response.ok) {
@@ -440,7 +462,7 @@
                 }
 
                 if (selection === 'BORROW PAYMENT') {
-                    const response = await fetch(`/api/borrow-history/${encodeURIComponent(mobile)}`);
+                    const response = await apiFetch(`/api/borrow-history/${encodeURIComponent(mobile)}`);
                     const data = await response.json().catch(() => []);
 
                     if (!response.ok) {
@@ -566,7 +588,7 @@
                     return;
                 }
                 setPaymentStatus('Calculating service charge...', 'info');
-                const res = await fetch('/api/cashfree/service-charge', {
+                const res = await apiFetch('/api/cashfree/service-charge', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ amount }),
@@ -589,7 +611,7 @@
                 paymentData.type = 'Chit Payment (Cashfree)';
                 paymentData.amount = data.total; // Use total with service charge
 
-                const createOrderResponse = await fetch('/api/cashfree/create-order', {
+                const createOrderResponse = await apiFetch('/api/cashfree/create-order', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(paymentData),
@@ -618,7 +640,7 @@
 
                 setPaymentStatus('Verifying payment status...', 'info');
 
-                const verifyResponse = await fetch('/api/cashfree/confirm-order', {
+                const verifyResponse = await apiFetch('/api/cashfree/confirm-order', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

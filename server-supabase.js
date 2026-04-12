@@ -10,14 +10,44 @@ const fs = require("fs");
 const path = require("path");
 const pdf = require("pdfkit");
 const multer = require("multer");
+const rateLimit = require("express-rate-limit");
 const supabase = require("./supabaseClient");
 
 const app = express();
 const PORT = Number(process.env.SUPABASE_PORT || 5000);
+const isProduction = process.env.NODE_ENV === "production";
+
+const configuredOrigins = String(process.env.CORS_ORIGIN || process.env.APP_BASE_URL || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const allowedOriginSet = new Set(configuredOrigins);
+
+function requestOriginAllowed(origin) {
+  if (isProduction && allowedOriginSet.size === 0) {
+    return true;
+  }
+
+  if (!origin) {
+    return !isProduction;
+  }
+
+  if (!isProduction) {
+    return true;
+  }
+
+  return allowedOriginSet.has(origin);
+}
 
 app.use(
   cors({
-    origin: true,
+    origin: (origin, callback) => {
+      if (requestOriginAllowed(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
@@ -34,13 +64,19 @@ app.use(
     secret: process.env.SESSION_SECRET || "change-me-in-production",
     resave: false,
     saveUninitialized: false,
+    name: "dhanam.sid",
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: isProduction,
       httpOnly: true,
+      sameSite: "lax",
       maxAge: 1000 * 60 * 60 * 24,
     },
   })
 );
+
+if (isProduction) {
+  app.set("trust proxy", 1);
+}
 
 function requireAdmin(req, res, next) {
   if (!req.session.user || req.session.user.role !== "admin") {
@@ -49,42 +85,155 @@ function requireAdmin(req, res, next) {
   return next();
 }
 
-async function requireAdminFlexible(req, res, next) {
-  if (req.session.user && req.session.user.role === "admin") {
-    return next();
+function requireAuthenticatedUser(req, res, next) {
+  if (!req.session?.user) {
+    return res.status(401).json({ message: "Authentication required" });
   }
 
-  const mobileFromHeader = req.headers["x-user-mobile"];
-  const mobileFromQuery = req.query?.mobile;
-  const mobileFromBody = req.body?.mobile;
-  const mobile = String(mobileFromHeader || mobileFromQuery || mobileFromBody || "").trim();
+  return next();
+}
 
-  if (!mobile) {
-    return res.status(403).json({ message: "Forbidden" });
+function normalizeMobile(value) {
+  return String(value || "").replace(/\D/g, "").slice(-10);
+}
+
+function isRequesterAdmin(req) {
+  return String(req.session?.user?.role || "").toLowerCase() === "admin";
+}
+
+function canAccessMobile(req, targetMobile) {
+  if (!req.session?.user) {
+    return false;
   }
 
-  try {
-    const { data, error } = await supabase
-      .from("users")
-      .select("id, role")
-      .eq("mobile", mobile)
-      .maybeSingle();
+  if (isRequesterAdmin(req)) {
+    return true;
+  }
 
-    if (error) {
-      console.error("admin auth lookup error", error);
-      return res.status(500).json({ message: "Failed to authorize admin user" });
+  return normalizeMobile(req.session.user.mobile) === normalizeMobile(targetMobile);
+}
+
+function requireOwnerOrAdminForMobileParam(paramName = "mobile") {
+  return (req, res, next) => {
+    const targetMobile = String(req.params?.[paramName] || "").trim();
+    if (!targetMobile) {
+      return res.status(400).json({ message: "Mobile is required" });
     }
 
-    if (!data || data.role !== "admin") {
+    if (!canAccessMobile(req, targetMobile)) {
       return res.status(403).json({ message: "Forbidden" });
     }
 
     return next();
-  } catch (error) {
-    console.error("admin auth error", error);
-    return res.status(500).json({ message: "Failed to authorize admin user" });
-  }
+  };
 }
+
+function enforceBodyMobileOwnership(req, res, mobileFieldName = "mobile") {
+  if (isRequesterAdmin(req)) {
+    return true;
+  }
+
+  const bodyMobile = String(req.body?.[mobileFieldName] || "").trim();
+  if (!bodyMobile || normalizeMobile(bodyMobile) !== normalizeMobile(req.session?.user?.mobile)) {
+    res.status(403).json({ message: "Forbidden: mobile ownership mismatch" });
+    return false;
+  }
+
+  return true;
+}
+
+async function requireAdminFlexible(req, res, next) {
+  return requireAdmin(req, res, next);
+}
+
+const csrfExemptRoutes = new Set([
+  "/login",
+  "/Login",
+  "/api/login",
+  "/api/Login",
+  "/register",
+  "/api/register",
+  "/api/Register",
+  "/logout",
+  "/api/logout",
+  "/api/Logout",
+  "/api/cashfree/webhook",
+]);
+
+app.use((req, res, next) => {
+  const method = String(req.method || "GET").toUpperCase();
+  if (!["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    return next();
+  }
+
+  if (csrfExemptRoutes.has(req.path)) {
+    return next();
+  }
+
+  if (!isProduction) {
+    return next();
+  }
+
+  const origin = String(req.headers.origin || "").trim();
+  if (allowedOriginSet.size === 0) {
+    const expectedOrigin = `${req.protocol}://${req.get("host")}`;
+    if (!origin || origin === expectedOrigin) {
+      return next();
+    }
+
+    return res.status(403).json({ message: "CSRF validation failed: origin not allowed" });
+  }
+
+  if (!origin) {
+    return res.status(403).json({ message: "CSRF validation failed: missing origin" });
+  }
+
+  if (!allowedOriginSet.has(origin)) {
+    return res.status(403).json({ message: "CSRF validation failed: origin not allowed" });
+  }
+
+  return next();
+});
+
+const paymentWriteLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many payment write requests. Please try again shortly." },
+});
+
+const paymentAdminActionLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many admin payment actions. Please retry in a few minutes." },
+});
+
+const cashfreeOrderLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many Cashfree order attempts. Please try again later." },
+});
+
+const cashfreeConfirmLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many payment verification attempts. Please try again later." },
+});
+
+const cashfreeWebhookLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Webhook rate limit exceeded." },
+});
 
 app.get("/", (_req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
@@ -1881,7 +2030,7 @@ app.get("/api/feedback", async (_req, res) => {
 });
 
 // Compatibility route: historically this returned payments.
-app.get("/api/bank-details", async (_req, res) => {
+app.get("/api/bank-details", requireAdmin, async (_req, res) => {
   const { data, error } = await supabase
     .from("payments")
     .select("*")
@@ -1912,10 +2061,14 @@ app.get("/api/bank-details", async (_req, res) => {
   return res.json(mapped);
 });
 
-app.post("/api/bank-details", async (req, res) => {
+app.post("/api/bank-details", requireAuthenticatedUser, paymentWriteLimiter, async (req, res) => {
   const { name, mobile, amount, utrNumber, email, type, chitsPlan, screenshotBase64, screenshotName } = req.body;
 
   try {
+    if (!enforceBodyMobileOwnership(req, res, "mobile")) {
+      return;
+    }
+
     const normalizedMobile = String(mobile || "").trim();
     const normalizedChitPlan = String(chitsPlan || "").trim();
     const paymentAmount = Number(amount);
@@ -1987,9 +2140,14 @@ app.post("/api/bank-details", async (req, res) => {
   }
 });
 
-app.post("/api/cashfree/create-order", async (req, res) => {
+app.post("/api/cashfree/create-order", requireAuthenticatedUser, cashfreeOrderLimiter, async (req, res) => {
   try {
     const { name, email, mobile, amount, chitsPlan, type } = req.body;
+
+    if (!enforceBodyMobileOwnership(req, res, "mobile")) {
+      return;
+    }
+
     const normalizedName = String(name || "").trim();
     const normalizedEmail = String(email || "").trim();
     const normalizedMobile = String(mobile || "").replace(/\D/g, "").slice(-10);
@@ -2054,10 +2212,17 @@ app.post("/api/cashfree/create-order", async (req, res) => {
   }
 });
 
-app.post("/api/cashfree/confirm-order", async (req, res) => {
+app.post("/api/cashfree/confirm-order", requireAuthenticatedUser, cashfreeConfirmLimiter, async (req, res) => {
   try {
     const { orderId, paymentData } = req.body;
     const normalizedOrderId = String(orderId || "").trim();
+
+    if (!isRequesterAdmin(req)) {
+      const paymentMobile = String(paymentData?.mobile || "").trim();
+      if (!paymentMobile || normalizeMobile(paymentMobile) !== normalizeMobile(req.session?.user?.mobile)) {
+        return res.status(403).json({ message: "Forbidden: mobile ownership mismatch" });
+      }
+    }
 
     if (!normalizedOrderId) {
       return res.status(400).json({ message: "orderId is required" });
@@ -2110,7 +2275,7 @@ app.post("/api/cashfree/confirm-order", async (req, res) => {
   }
 });
 
-app.post("/api/cashfree/webhook", async (req, res) => {
+app.post("/api/cashfree/webhook", cashfreeWebhookLimiter, async (req, res) => {
   try {
     if (!CASHFREE_WEBHOOK_SECRET) {
       return res.status(500).json({ message: "Webhook secret is not configured." });
@@ -2170,7 +2335,7 @@ app.post("/api/cashfree/webhook", async (req, res) => {
   }
 });
 
-app.put("/api/bank-details/:id/status", async (req, res) => {
+app.put("/api/bank-details/:id/status", requireAdmin, paymentAdminActionLimiter, async (req, res) => {
   const { id } = req.params;
   const rawStatus = String(req.body?.status || "").trim();
   const normalizedStatus = rawStatus.toLowerCase() === "completed" ? "Approved" : rawStatus;
@@ -2222,7 +2387,7 @@ app.put("/api/bank-details/:id/status", async (req, res) => {
   return res.json({ message: "Payment status updated successfully" });
 });
 
-app.get("/api/payments", async (_req, res) => {
+app.get("/api/payments", requireAdmin, async (_req, res) => {
   const { data, error } = await supabase
     .from("payments")
     .select("*")
@@ -2236,7 +2401,7 @@ app.get("/api/payments", async (_req, res) => {
   return res.json(data.map(mapPaymentRow));
 });
 
-app.get("/api/payments/:mobile", async (req, res) => {
+app.get("/api/payments/:mobile", requireAuthenticatedUser, requireOwnerOrAdminForMobileParam("mobile"), async (req, res) => {
   const { mobile } = req.params;
 
   const { data, error } = await supabase
@@ -2253,7 +2418,7 @@ app.get("/api/payments/:mobile", async (req, res) => {
   return res.json(data.map(mapPaymentRow));
 });
 
-app.delete("/api/payments/:id", async (req, res) => {
+app.delete("/api/payments/:id", requireAdmin, paymentAdminActionLimiter, async (req, res) => {
   const { id } = req.params;
   const { error } = await supabase.from("payments").delete().eq("id", id);
 
@@ -2265,7 +2430,7 @@ app.delete("/api/payments/:id", async (req, res) => {
   return res.json({ message: "Payment deleted successfully" });
 });
 
-app.post("/api/bank-details/:id/send-statement", async (req, res) => {
+app.post("/api/bank-details/:id/send-statement", requireAdmin, paymentAdminActionLimiter, async (req, res) => {
   const { id } = req.params;
 
   const { data: payment, error } = await supabase
@@ -2294,7 +2459,7 @@ app.post("/api/bank-details/:id/send-statement", async (req, res) => {
   }
 });
 
-app.post("/api/payments/send-statements/:mobile", async (req, res) => {
+app.post("/api/payments/send-statements/:mobile", requireAdmin, paymentAdminActionLimiter, async (req, res) => {
   const { mobile } = req.params;
   const { data: payments, error } = await supabase.from("payments").select("*").eq("mobile", mobile);
 
@@ -2321,10 +2486,14 @@ app.post("/api/payments/send-statements/:mobile", async (req, res) => {
   }
 });
 
-app.post("/api/bank-detail", async (req, res) => {
+app.post("/api/bank-detail", requireAuthenticatedUser, paymentWriteLimiter, async (req, res) => {
   const { name, accountNumber, ifscCode, upiId, bankName, mobile } = req.body;
 
   try {
+    if (!enforceBodyMobileOwnership(req, res, "mobile")) {
+      return;
+    }
+
     const payload = {
       name,
       account_number: accountNumber,
@@ -2347,7 +2516,7 @@ app.post("/api/bank-detail", async (req, res) => {
   }
 });
 
-app.get("/api/bank-details/:mobile", async (req, res) => {
+app.get("/api/bank-details/:mobile", requireAuthenticatedUser, requireOwnerOrAdminForMobileParam("mobile"), async (req, res) => {
   const { mobile } = req.params;
 
   const { data, error } = await supabase
@@ -2368,7 +2537,7 @@ app.get("/api/bank-details/:mobile", async (req, res) => {
   return res.json([mapBankDetailRow(data[0])]);
 });
 
-app.get("/api/bankdetails", async (_req, res) => {
+app.get("/api/bankdetails", requireAdmin, async (_req, res) => {
   const { data, error } = await supabase
     .from("bank_details")
     .select("*")
@@ -2382,7 +2551,7 @@ app.get("/api/bankdetails", async (_req, res) => {
   return res.json(data.map(mapBankDetailRow));
 });
 
-app.put("/api/bank-details/:id", async (req, res) => {
+app.put("/api/bank-details/:id", requireAdmin, paymentAdminActionLimiter, async (req, res) => {
   const { id } = req.params;
   const { name, accountNumber, ifscCode, upiId, bankName, mobile } = req.body;
 
@@ -2412,7 +2581,7 @@ app.put("/api/bank-details/:id", async (req, res) => {
   return res.json({ message: "Bank detail updated successfully" });
 });
 
-app.delete("/api/bank-details/:id", async (req, res) => {
+app.delete("/api/bank-details/:id", requireAdmin, paymentAdminActionLimiter, async (req, res) => {
   const { id } = req.params;
 
   const { data, error } = await supabase

@@ -209,6 +209,29 @@
     </div>
 
     <script>
+        async function apiFetch(url, options = {}) {
+            const mergedOptions = {
+                credentials: 'include',
+                ...options,
+                headers: {
+                    ...(options.headers || {}),
+                },
+            };
+
+            const response = await fetch(url, mergedOptions);
+            if (response.status === 401 || response.status === 403) {
+                const message = response.status === 401
+                    ? 'Your session has expired. Please login again.'
+                    : 'You are not authorized to access this resource.';
+                alert(message);
+                localStorage.removeItem('user');
+                window.location.href = 'Login.html';
+                throw new Error(message);
+            }
+
+            return response;
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             const user = JSON.parse(localStorage.getItem('user'));
             if (!user) {
@@ -218,7 +241,7 @@
             }
 
             try {
-                const response = await fetch(`/api/payments/${encodeURIComponent(user.mobile)}`);
+                const response = await apiFetch(`/api/payments/${encodeURIComponent(user.mobile)}`);
                 const payments = await response.json();
 
                 if (!response.ok) {
@@ -267,7 +290,7 @@
             bankDetailsContainer.innerHTML = '';
 
             try {
-                const response = await fetch(`/api/bank-details/${encodeURIComponent(mobile)}`);
+                const response = await apiFetch(`/api/bank-details/${encodeURIComponent(mobile)}`);
                 const bankDetails = await response.json().catch(() => []);
 
                 if (!response.ok || !Array.isArray(bankDetails) || bankDetails.length === 0) {

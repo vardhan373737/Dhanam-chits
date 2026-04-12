@@ -451,6 +451,28 @@
             emptyBox.classList.remove('show');
         }
 
+        async function apiFetch(url, options = {}) {
+            const mergedOptions = {
+                credentials: 'include',
+                ...options,
+                headers: {
+                    ...(options.headers || {}),
+                },
+            };
+
+            const response = await fetch(url, mergedOptions);
+            if (response.status === 401 || response.status === 403) {
+                const message = response.status === 401
+                    ? 'Your session has expired. Please login again.'
+                    : 'You are not authorized for this action.';
+                showError(message);
+                window.location.href = 'Login.html';
+                throw new Error(message);
+            }
+
+            return response;
+        }
+
         async function copyText(value, label) {
             const text = String(value || '').trim();
             if (!text || text === '-') {
@@ -476,15 +498,20 @@
             try {
                 loadingBox.classList.remove('hidden');
                 let detail = null;
-                const allResponse = await fetch('/api/bankdetails');
-                const allData = await allResponse.json().catch(() => []);
+                const mobileForLookup = String(customerMobileFromUrl || user?.mobile || '').trim();
+                if (!mobileForLookup) {
+                    throw new Error('Mobile number is missing. Please start from payment form.');
+                }
 
-                if (!allResponse.ok) {
+                const response = await apiFetch(`/api/bank-details/${encodeURIComponent(mobileForLookup)}`);
+                const data = await response.json().catch(() => []);
+
+                if (!response.ok) {
                     throw new Error('Failed to load bank details');
                 }
 
-                if (Array.isArray(allData) && allData.length > 0) {
-                    detail = allData[0];
+                if (Array.isArray(data) && data.length > 0) {
+                    detail = data[0];
                 }
 
                 if (!detail) {
@@ -579,7 +606,7 @@
 
                 payload.screenshotBase64 = await readFileAsDataUrl(screenshotFile);
 
-                const response = await fetch('/api/bank-details', {
+                const response = await apiFetch('/api/bank-details', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
