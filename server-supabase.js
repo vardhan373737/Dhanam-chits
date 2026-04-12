@@ -1,7 +1,6 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const session = require("express-session");
 const bcrypt = require("bcryptjs");
 const axios = require("axios");
 const nodemailer = require("nodemailer");
@@ -16,6 +15,15 @@ const supabase = require("./supabaseClient");
 const app = express();
 const PORT = Number(process.env.SUPABASE_PORT || 5000);
 const isProduction = process.env.NODE_ENV === "production";
+const AUTH_COOKIE_NAME = "dhanam.sid";
+const AUTH_COOKIE_MAX_AGE_MS = 1000 * 60 * 60 * 24;
+const authCookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: "lax",
+  maxAge: AUTH_COOKIE_MAX_AGE_MS,
+  path: "/",
+};
 
 const configuredOrigins = String(process.env.CORS_ORIGIN || process.env.APP_BASE_URL || "")
   .split(",")
@@ -59,24 +67,114 @@ app.use(express.json({
 }));
 app.use(express.static(path.join(__dirname, "public"), { index: false }));
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "change-me-in-production",
-    resave: false,
-    saveUninitialized: false,
-    name: "dhanam.sid",
-    cookie: {
-      secure: isProduction,
-      httpOnly: true,
-      sameSite: "lax",
-      maxAge: 1000 * 60 * 60 * 24,
-    },
-  })
-);
-
 if (isProduction) {
   app.set("trust proxy", 1);
 }
+
+function getAuthSecret() {
+  return process.env.SESSION_SECRET || "change-me-in-production";
+}
+
+function parseCookieHeader(cookieHeader = "") {
+  return String(cookieHeader || "")
+    .split(";")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .reduce((cookies, item) => {
+      const separatorIndex = item.indexOf("=");
+      if (separatorIndex === -1) {
+        return cookies;
+      }
+
+      const key = item.slice(0, separatorIndex).trim();
+      const value = item.slice(separatorIndex + 1).trim();
+      if (key) {
+        cookies[key] = value;
+      }
+
+      return cookies;
+    }, {});
+}
+
+function base64UrlEncode(text) {
+  return Buffer.from(String(text), "utf8").toString("base64url");
+}
+
+function base64UrlDecode(text) {
+  return Buffer.from(String(text), "base64url").toString("utf8");
+}
+
+function signAuthPayload(payload) {
+  return crypto.createHmac("sha256", getAuthSecret()).update(payload).digest("base64url");
+}
+
+function createAuthToken(user) {
+  const payload = base64UrlEncode(JSON.stringify({
+    id: user.id,
+    fullname: user.fullname,
+    email: user.email,
+    mobile: user.mobile,
+    role: user.role,
+    issuedAt: Date.now(),
+  }));
+  const signature = signAuthPayload(payload);
+  return `${payload}.${signature}`;
+}
+
+function readAuthToken(token) {
+  const rawToken = String(token || "").trim();
+  if (!rawToken) {
+    return null;
+  }
+
+  const [payload, signature] = rawToken.split(".");
+  if (!payload || !signature) {
+    return null;
+  }
+
+  const expectedSignature = signAuthPayload(payload);
+  const expectedBuffer = Buffer.from(expectedSignature, "utf8");
+  const providedBuffer = Buffer.from(signature, "utf8");
+  if (expectedBuffer.length !== providedBuffer.length || !crypto.timingSafeEqual(expectedBuffer, providedBuffer)) {
+    return null;
+  }
+
+  try {
+    const user = JSON.parse(base64UrlDecode(payload));
+    if (!user || !user.id || !user.mobile || !user.role) {
+      return null;
+    }
+
+    return {
+      id: user.id,
+      fullname: user.fullname,
+      email: user.email,
+      mobile: user.mobile,
+      role: user.role,
+    };
+  } catch (_error) {
+    return null;
+  }
+}
+
+function attachAuthContext(req, _res, next) {
+  const cookies = parseCookieHeader(req.headers.cookie || "");
+  const user = readAuthToken(cookies[AUTH_COOKIE_NAME]);
+  req.authUser = user;
+  req.session = { user };
+  next();
+}
+
+function setAuthCookie(res, user) {
+  const token = createAuthToken(user);
+  res.cookie(AUTH_COOKIE_NAME, token, authCookieOptions);
+}
+
+function clearAuthCookie(res) {
+  res.clearCookie(AUTH_COOKIE_NAME, { ...authCookieOptions, maxAge: undefined });
+}
+
+app.use(attachAuthContext);
 
 function requireAdmin(req, res, next) {
   if (!req.session.user || req.session.user.role !== "admin") {
@@ -1446,6 +1544,7 @@ const loginHandler = async (req, res) => {
       mobile: user.mobile,
       role: user.role,
     };
+    setAuthCookie(res, req.session.user);
 
     const forwardedFor = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
     const ipAddress = forwardedFor || req.socket?.remoteAddress || "Unknown";
@@ -1477,13 +1576,9 @@ app.post("/api/login", loginHandler);
 app.post("/api/Login", loginHandler);
 
 const logoutHandler = (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ message: "Logout failed. Try again." });
-    }
-    res.clearCookie("connect.sid");
-    return res.status(200).json({ message: "Logout successful." });
-  });
+  req.session = { user: null };
+  clearAuthCookie(res);
+  return res.status(200).json({ message: "Logout successful." });
 };
 
 app.post("/logout", logoutHandler);
