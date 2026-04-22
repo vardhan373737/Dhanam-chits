@@ -10,6 +10,7 @@
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root {
       --ink: #102739;
@@ -1024,7 +1025,10 @@
         <div class="actions">
           <button class="btn btn-save" onclick="saveReminderFromForm()">Save Reminder</button>
           <button class="btn btn-share" onclick="shareSelectedToWhatsApp()">Share to WhatsApp</button>
+          <button class="btn btn-share" onclick="downloadReminderTemplateExcel()">Download Empty Excel</button>
+          <button class="btn btn-edit" onclick="triggerReminderExcelUpload()">Upload Excel File</button>
           <button class="btn btn-reset" onclick="resetReminderForm()">Reset</button>
+          <input type="file" id="reminderExcelFileInput" accept=".xlsx,.xls" style="display: none;" onchange="handleReminderExcelUpload(event)">
         </div>
       </div>
 
@@ -1967,7 +1971,7 @@
     async function fetchPayments() {
       try {
         document.getElementById('statusLine').textContent = 'Loading payment records...';
-        const response = await apiFetch('/api/payments');
+        const response = await apiFetch('/api/payment-reminders');
         const data = await response.json();
 
         console.log('API Response Status:', response.status);
@@ -2011,6 +2015,305 @@
         totalAmount: totalRaw,
         reminderNote: document.getElementById('reminderNote').value.trim(),
       };
+    }
+
+    function normalizeImportedDate(value) {
+      const raw = String(value || '').trim();
+      if (!raw) {
+        return '';
+      }
+
+      const excelSerial = Number(raw);
+      if (Number.isFinite(excelSerial) && excelSerial > 20000 && excelSerial < 60000) {
+        const epoch = Date.UTC(1899, 11, 30);
+        const parsed = new Date(epoch + (excelSerial * 24 * 60 * 60 * 1000));
+        const year = parsed.getUTCFullYear();
+        const month = String(parsed.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(parsed.getUTCDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      const isoLike = raw.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+      if (isoLike) {
+        const year = isoLike[1];
+        const month = isoLike[2].padStart(2, '0');
+        const day = isoLike[3].padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      const dmyLike = raw.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+      if (dmyLike) {
+        const day = dmyLike[1].padStart(2, '0');
+        const month = dmyLike[2].padStart(2, '0');
+        const year = dmyLike[3];
+        return `${year}-${month}-${day}`;
+      }
+
+      const mdyLike = raw.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})$/);
+      if (mdyLike) {
+        const first = Number(mdyLike[1]);
+        const second = Number(mdyLike[2]);
+        const third = mdyLike[3].length === 2 ? `20${mdyLike[3]}` : mdyLike[3];
+        if (first > 12) {
+          return `${third}-${String(second).padStart(2, '0')}-${String(first).padStart(2, '0')}`;
+        }
+        if (second > 12) {
+          return `${third}-${String(first).padStart(2, '0')}-${String(second).padStart(2, '0')}`;
+        }
+      }
+
+      const parsed = new Date(raw);
+      if (Number.isNaN(parsed.getTime())) {
+        return '';
+      }
+
+      const year = parsed.getFullYear();
+      const month = String(parsed.getMonth() + 1).padStart(2, '0');
+      const day = String(parsed.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function parseReminderRowFromExcel(values) {
+      const normalized = values.reduce((accumulator, value, index) => {
+        accumulator[index] = String(value ?? '').trim();
+        return accumulator;
+      }, {});
+
+      const headers = Object.values(normalized).map((value) => normalizeText(value));
+      const isKeyValueSheet = headers.some((value) => ['name', 'mobile', 'borrow date', 'repayment date', 'principal amount', 'interest', 'note'].includes(value));
+
+      const fieldMap = {};
+      if (isKeyValueSheet) {
+        values.forEach((value, index) => {
+          const key = normalizeText(values[index - 1]);
+          if (!key) {
+            return;
+          }
+          if (key.includes('name')) fieldMap.name = value;
+          if (key.includes('mobile')) fieldMap.mobile = value;
+          if (key.includes('borrow date')) fieldMap.borrowDate = value;
+          if (key.includes('repayment date')) fieldMap.repaymentDate = value;
+          if (key.includes('principal amount') || key === 'amount') fieldMap.reminderAmount = value;
+          if (key.includes('interest')) fieldMap.reminderInterest = value;
+          if (key.includes('note')) fieldMap.reminderNote = value;
+        });
+        return fieldMap;
+      }
+
+      return {
+        name: values[0] || '',
+        mobile: values[1] || '',
+        borrowDate: values[2] || '',
+        repaymentDate: values[3] || '',
+        reminderAmount: values[4] || '',
+        reminderInterest: values[5] || '',
+        reminderNote: values[6] || '',
+      };
+    }
+
+    function parseReminderSheetFromExcel(rows) {
+      if (!Array.isArray(rows) || !rows.length) {
+        return {};
+      }
+
+      const headerRow = rows[0].map((cell) => normalizeText(cell));
+      const headerIndex = headerRow.reduce((accumulator, header, index) => {
+        if (header) {
+          accumulator[header] = index;
+        }
+        return accumulator;
+      }, {});
+
+      const fieldByHeader = (row, ...names) => {
+        for (const name of names) {
+          const index = headerIndex[normalizeText(name)];
+          if (typeof index === 'number') {
+            return row[index];
+          }
+        }
+        return '';
+      };
+
+      const isLikelyDataRow = (row) => {
+        if (!Array.isArray(row)) {
+          return false;
+        }
+
+        return row.some((cell) => String(cell ?? '').trim() !== '') && !row.every((cell) => {
+          const text = normalizeText(cell);
+          return !text || ['enter borrower name', '10-digit mobile', 'yyyy-mm-dd', 'amount', 'interest %', 'optional note', 'use yyyy-mm-dd for dates.'].includes(text);
+        });
+      };
+
+      if (headerIndex.name !== undefined || headerIndex.mobile !== undefined || headerIndex['borrow date'] !== undefined || headerIndex['repayment date'] !== undefined) {
+        const row = rows.slice(1).find((candidateRow) => isLikelyDataRow(candidateRow)) || rows[1] || [];
+        return {
+          name: fieldByHeader(row, 'Name'),
+          mobile: fieldByHeader(row, 'Mobile'),
+          borrowDate: fieldByHeader(row, 'Borrow Date'),
+          repaymentDate: fieldByHeader(row, 'Repayment Date'),
+          reminderAmount: fieldByHeader(row, 'Principal Amount', 'Amount'),
+          reminderInterest: fieldByHeader(row, 'Interest (%)', 'Interest'),
+          reminderNote: fieldByHeader(row, 'Note'),
+        };
+      }
+
+      return parseReminderRowFromExcel(rows[0]);
+    }
+
+    function applyImportedReminderData(parsed) {
+      if (parsed.name) {
+        document.getElementById('selectedUser').value = parsed.name;
+      }
+      if (parsed.mobile) {
+        document.getElementById('manualMobile').value = parsed.mobile;
+      }
+      if (parsed.borrowDate) {
+        document.getElementById('borrowDate').value = parsed.borrowDate;
+      }
+      if (parsed.repaymentDate) {
+        document.getElementById('repaymentDate').value = parsed.repaymentDate;
+      }
+      if (parsed.reminderAmount) {
+        document.getElementById('reminderAmount').value = parsed.reminderAmount;
+      }
+      if (parsed.reminderInterest) {
+        document.getElementById('reminderInterest').value = parsed.reminderInterest;
+      }
+      if (parsed.reminderNote) {
+        document.getElementById('reminderNote').value = parsed.reminderNote;
+      }
+
+      const nameText = document.getElementById('selectedUser').value.trim();
+      const mobileText = document.getElementById('manualMobile').value.trim();
+      document.getElementById('selectedUserChip').querySelector('.value').textContent =
+        nameText || mobileText ? `${nameText || 'Unknown'} / ${mobileText || 'No mobile'}` : 'No user selected yet';
+
+      calculateAmounts('interest');
+      calculateDaysRemaining();
+    }
+
+    function triggerReminderExcelUpload() {
+      const input = document.getElementById('reminderExcelFileInput');
+      if (input) {
+        input.value = '';
+        input.click();
+      }
+    }
+
+    async function handleReminderExcelUpload(event) {
+      const file = event?.target?.files?.[0];
+      if (!file) {
+        return;
+      }
+
+      const fileName = String(file.name || '').toLowerCase();
+      if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+        alert('Please upload an Excel file (.xlsx or .xls).');
+        return;
+      }
+
+      try {
+        if (!window.XLSX) {
+          throw new Error('Excel reader is not available. Refresh page and try again.');
+        }
+
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = window.XLSX.read(arrayBuffer, { type: 'array' });
+        const sheetName = workbook.SheetNames?.[0];
+        if (!sheetName) {
+          throw new Error('No sheet found in uploaded Excel file.');
+        }
+
+        const sheet = workbook.Sheets[sheetName];
+        const rows = window.XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false, defval: '' });
+        const parsed = parseReminderSheetFromExcel(rows || []);
+        applyImportedReminderData(parsed);
+        document.getElementById('statusLine').textContent = 'Excel file imported. Review and click Save Reminder.';
+      } catch (error) {
+        console.error('Excel import error:', error);
+        alert('Failed to read Excel file. Please use the template and upload a valid .xlsx file.');
+      }
+    }
+
+    async function downloadReminderTemplateExcel() {
+      try {
+        if (!window.XLSX) {
+          throw new Error('Excel template generator is not available. Refresh page and try again.');
+        }
+
+        const workbook = window.XLSX.utils.book_new();
+        const templateRows = [
+          ['Name', 'Mobile', 'Borrow Date', 'Repayment Date', 'Principal Amount', 'Interest (%)', 'Note'],
+          ['Enter borrower name', '10-digit mobile', 'YYYY-MM-DD', 'YYYY-MM-DD', 'Amount', 'Interest %', 'Optional note'],
+          ['Harsha', '9346412185', '22-04-2026', '25-04-2026', 5000, 30, 'Use YYYY-MM-DD or DD-MM-YYYY for dates.'],
+        ];
+
+        const sheet = window.XLSX.utils.aoa_to_sheet(templateRows);
+        sheet['!cols'] = [
+          { wch: 22 },
+          { wch: 16 },
+          { wch: 14 },
+          { wch: 16 },
+          { wch: 18 },
+          { wch: 14 },
+          { wch: 30 },
+        ];
+        sheet['!rows'] = [
+          { hpt: 24 },
+          { hpt: 20 },
+          { hpt: 20 },
+        ];
+        sheet['!autofilter'] = { ref: 'A1:G1' };
+        const headerStyle = {
+          font: { bold: true, color: { rgb: 'FFFFFF' } },
+          fill: { patternType: 'solid', fgColor: { rgb: '0E8B9C' } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: {
+            top: { style: 'thin', color: { rgb: 'D7E6EC' } },
+            bottom: { style: 'thin', color: { rgb: 'D7E6EC' } },
+            left: { style: 'thin', color: { rgb: 'D7E6EC' } },
+            right: { style: 'thin', color: { rgb: 'D7E6EC' } },
+          },
+        };
+
+        const infoStyle = {
+          font: { italic: true, color: { rgb: '496A81' } },
+          fill: { patternType: 'solid', fgColor: { rgb: 'F4FAFC' } },
+          alignment: { vertical: 'center', wrapText: true },
+          border: {
+            top: { style: 'thin', color: { rgb: 'E1EBF0' } },
+            bottom: { style: 'thin', color: { rgb: 'E1EBF0' } },
+            left: { style: 'thin', color: { rgb: 'E1EBF0' } },
+            right: { style: 'thin', color: { rgb: 'E1EBF0' } },
+          },
+        };
+
+        ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1'].forEach((cellRef) => {
+          if (sheet[cellRef]) {
+            sheet[cellRef].s = headerStyle;
+          }
+        });
+        ['A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'A3', 'B3', 'C3', 'D3', 'E3', 'F3', 'G3'].forEach((cellRef) => {
+          if (sheet[cellRef]) {
+            sheet[cellRef].s = infoStyle;
+          }
+        });
+        window.XLSX.utils.book_append_sheet(workbook, sheet, 'Reminder Template');
+        const output = window.XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([output], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'payment-reminder-template.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Template download error:', error);
+        alert('Failed to generate Excel template. Please refresh and try again.');
+      }
     }
 
     function populateReminderForm(payment) {

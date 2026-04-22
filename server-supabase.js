@@ -2701,6 +2701,24 @@ app.get("/api/payments", requireAdmin, async (_req, res) => {
   return res.json([...mappedPayments, ...manualOnlyReminders]);
 });
 
+app.get("/api/payment-reminders", requireAdmin, async (_req, res) => {
+  const { data, error } = await supabase
+    .from(paymentRemindersTable)
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("list payment reminders error", error);
+    return res.status(500).json({ error: "Failed to fetch payment reminders" });
+  }
+
+  const reminders = (data || [])
+    .map(normalizeReminderRow)
+    .filter(Boolean);
+
+  return res.json(reminders);
+});
+
 app.get("/api/payments/:mobile", requireAuthenticatedUser, requireOwnerOrAdminForMobileParam("mobile"), async (req, res) => {
   const { mobile } = req.params;
 
