@@ -616,6 +616,7 @@ function mapPaymentRow(row) {
   return {
     _id: row.id,
     id: row.id,
+    paymentId: row.id,
     name: row.name,
     mobile: row.mobile,
     amount: row.amount,
@@ -1021,8 +1022,12 @@ async function upsertPaymentReminderRow({ paymentId = null, mobile, name = null,
   return data;
 }
 
-async function clearPaymentReminderRows({ paymentId = null, mobile = null }) {
+async function clearPaymentReminderRows({ paymentId = null, mobile = null, reminderId = null }) {
   let query = supabase.from(paymentRemindersTable).delete();
+
+  if (reminderId) {
+    query = query.eq("id", reminderId);
+  }
 
   if (paymentId) {
     query = query.eq("payment_id", paymentId);
@@ -1038,12 +1043,12 @@ async function clearPaymentReminderRows({ paymentId = null, mobile = null }) {
   }
 }
 
-async function syncReminderColumnsOnPayment(paymentId, reminderData) {
+async function syncReminderColumnsOnPayment(paymentId, reminderData, nextStatus = null) {
   if (!paymentId) {
     return null;
   }
 
-  const updatePayload = reminderData
+  const basePayload = reminderData
     ? {
         reminder_note: encodeReminderPayload(reminderData),
         reminder_borrow_date: reminderData.borrowDate || null,
@@ -1059,18 +1064,35 @@ async function syncReminderColumnsOnPayment(paymentId, reminderData) {
         reminder_interest: null,
       };
 
-  const { data, error } = await supabase
-    .from("payments")
-    .update(updatePayload)
-    .eq("id", paymentId)
-    .select("*")
-    .maybeSingle();
+  const updatePayload = { ...basePayload };
 
-  if (error) {
-    throw error;
+  if (nextStatus) {
+    updatePayload.status = nextStatus;
   }
 
-  return data;
+  while (true) {
+    const { data, error } = await supabase
+      .from("payments")
+      .update(updatePayload)
+      .eq("id", paymentId)
+      .select("*")
+      .maybeSingle();
+
+    if (!error) {
+      return data;
+    }
+
+    const message = String(error.message || "");
+    const missingColumnMatch = message.match(/'([^']+)' column of 'payments'/i);
+    const missingColumn = missingColumnMatch?.[1];
+
+    if (String(error.code || "") === "PGRST204" && missingColumn && Object.prototype.hasOwnProperty.call(updatePayload, missingColumn)) {
+      delete updatePayload[missingColumn];
+      continue;
+    }
+
+    throw error;
+  }
 }
 
 function setPaymentScreenshotPath(recordId, utrNumber, screenshotPath) {
@@ -2785,11 +2807,23 @@ app.put("/api/payments/:id/reminder", requireAdmin, paymentAdminActionLimiter, a
       })
     : null;
 
+  const nextPaymentStatus = !reminderData
+    ? "Approved"
+    : String(reminderData.reminderStatus || "").toLowerCase() === "paid"
+      ? "paid-reminder"
+      : "manual-reminder";
+
   try {
     if (paymentRecord) {
-      const updatedPayment = await syncReminderColumnsOnPayment(targetId, reminderData);
+      const updatedPayment = await syncReminderColumnsOnPayment(targetId, reminderData, nextPaymentStatus);
 
       if (reminderData) {
+        if (String(reminderData.reminderStatus || "").toLowerCase() === "paid") {
+          await clearPaymentReminderRows({ mobile: targetMobile });
+        } else {
+          await clearPaymentReminderRows({ paymentId: targetId, mobile: targetMobile });
+        }
+
         await upsertPaymentReminderRow({
           paymentId: targetId,
           mobile: targetMobile,
@@ -2807,7 +2841,8 @@ app.put("/api/payments/:id/reminder", requireAdmin, paymentAdminActionLimiter, a
     }
 
     if (!reminderData) {
-      await clearPaymentReminderRows({ mobile: targetMobile });
+      const manualReminderId = String(id || "").trim().length === 36 ? String(id).trim() : null;
+      await clearPaymentReminderRows({ reminderId: manualReminderId, mobile: targetMobile });
       return res.json({
         message: "Reminder cleared successfully",
         payment: {

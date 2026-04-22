@@ -1053,6 +1053,7 @@
     let paymentCache = [];
     let selectedPaymentId = '';
     let selectedPaymentMobile = '';
+    let selectedReminderId = '';
     let paymentViewMode = 'all';
 
     async function apiFetch(url, options = {}) {
@@ -1240,17 +1241,58 @@
       return lines.join('\n');
     }
 
-    function getAdminPaymentsOnly() {
+    function getReminderSignature(item) {
+      return [
+        normalizeText(item.name),
+        normalizeText(item.mobile),
+        normalizeText(item.reminderBorrowDate),
+        normalizeText(item.reminderRepaymentDate),
+        normalizeText(item.reminderAmount),
+        normalizeText(item.reminderInterest),
+        normalizeText(item.reminderNote),
+      ].join('|');
+    }
+
+    function getPaymentAmounts(payment) {
+      const principal = Number(payment.reminderAmount ?? payment.amount ?? 0) || 0;
+      const interestRate = Number(payment.reminderInterest ?? 0) || 0;
+      const interestAmount = (principal * interestRate) / 100;
+      const totalAmount = principal + interestAmount;
+
+      return { principal, interestRate, interestAmount, totalAmount };
+    }
+
+    function dedupePaymentsBySignature(items) {
+      const seen = new Set();
+      return items.filter((item) => {
+        const signature = getReminderSignature(item);
+        if (seen.has(signature)) {
+          return false;
+        }
+        seen.add(signature);
+        return true;
+      });
+    }
+
+    function getAdminPaymentsOnly(paidRecords = []) {
       // Show only manual reminder rows.
       const allReminders = [];
+      const paidIds = new Set(
+        paidRecords.map((item) => String(item.paymentId || item._id || item.id || '').trim()).filter(Boolean)
+      );
+      const paidSignatures = new Set(paidRecords.map((item) => getReminderSignature(item)));
 
       paymentCache.forEach((item) => {
         const status = normalizeText(item.status);
+        const reminderStatus = normalizeText(item.reminderStatus);
+        const reminderPaidAt = String(item.reminderPaidAt || '').trim();
+        const itemSignature = getReminderSignature(item);
+        const itemId = String(item.paymentId || item._id || item.id || '').trim();
         console.log(`Item: ${item.name} | Status: ${status} | Mobile: ${item.mobile}`);
         
-        // Accept only active manual reminders (exclude reminders already marked as paid)
-        if (status !== 'manual-reminder') {
-          console.log('  -> FILTERED OUT: status not manual-reminder');
+        // Accept only active manual reminders and exclude anything already paid.
+        if (paidIds.has(itemId) || paidSignatures.has(itemSignature) || status !== 'manual-reminder' || reminderStatus === 'paid' || reminderPaidAt) {
+          console.log('  -> FILTERED OUT: not an active manual reminder');
           return;
         }
 
@@ -1263,7 +1305,8 @@
     }
 
     function getFilteredPayments() {
-      const adminOnlyRecords = getAdminPaymentsOnly();
+      const paidRecords = getPaidPayments();
+      const adminOnlyRecords = getAdminPaymentsOnly(paidRecords);
       const query = normalizeText(document.getElementById('searchInput').value);
       if (!query) {
         return adminOnlyRecords;
@@ -1292,7 +1335,9 @@
 
       const paidRecords = paymentCache.filter((item) => {
         const status = normalizeText(item.status);
-        if (status !== 'approved' && status !== 'paid' && status !== 'completed' && status !== 'paid-reminder') {
+        const reminderStatus = normalizeText(item.reminderStatus);
+        const reminderPaidAt = String(item.reminderPaidAt || '').trim();
+        if (status !== 'approved' && status !== 'paid' && status !== 'completed' && status !== 'paid-reminder' && reminderStatus !== 'paid' && !reminderPaidAt) {
           return false;
         }
 
@@ -1338,6 +1383,7 @@
       if (Number.isNaN(d.getTime())) {
         return null;
       }
+
       d.setHours(0, 0, 0, 0);
       return d;
     }
@@ -1423,8 +1469,28 @@
     }
 
     function getReminderBuckets() {
-      const active = getFilteredPayments();
       const paid = getPaidPayments();
+      const active = getAdminPaymentsOnly(paid).filter((item) => {
+        const query = normalizeText(document.getElementById('searchInput').value);
+        if (!query) {
+          return true;
+        }
+
+        const haystack = [
+          item.name,
+          item.mobile,
+          item.chitsPlan,
+          item.status,
+          item.reminderBorrowDate,
+          item.reminderRepaymentDate,
+          item.reminderAmount,
+          item.reminderInterest,
+          item.reminderNote,
+        ]
+          .map((part) => normalizeText(part))
+          .join(' ');
+        return haystack.includes(query);
+      });
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -1454,33 +1520,6 @@
         button.classList.toggle('active', button.dataset.view === view);
       });
       renderPayments();
-    }
-
-    function buildPdfRows(items, mode = 'reminder') {
-      return items.map((payment) => {
-        const dueInfo = mode === 'paid' ? null : getDaysRemainingValue(payment.reminderRepaymentDate);
-        const dueLabel = mode === 'paid' ? 'Settled' : (dueInfo ? dueInfo.display : 'No due date');
-        const dateLabel = mode === 'paid'
-          ? formatDisplayDate(payment.paidAt || payment.created_at)
-          : (payment.reminderRepaymentDate || 'No due date');
-        const principal = Number(payment.reminderAmount || payment.amount || 0);
-        const interestRate = Number(payment.reminderInterest || 0);
-        const interestAmount = mode === 'paid' ? 0 : ((principal * interestRate) / 100);
-        const total = mode === 'paid' ? Number(payment.amount || payment.reminderAmount || 0) : totalPayable(payment);
-
-        return [
-          payment.name || '-',
-          payment.mobile || '-',
-          payment.chitsPlan || '-',
-          dateLabel,
-          dueLabel,
-          pdfCurrency(principal),
-          mode === 'paid' ? '-' : `${interestRate || 0}%`,
-          mode === 'paid' ? '-' : pdfCurrency(interestAmount),
-          pdfCurrency(total),
-          payment.reminderNote || '-',
-        ];
-      });
     }
 
     function pdfSetDarkBackground(doc) {
@@ -1720,7 +1759,7 @@
       const repaymentText = isPaidEntry
         ? `Paid on ${formatDisplayDate(payment.paidDate || payment.created_at)}`
         : (payment.reminderRepaymentDate || 'No due date');
-      const total = totalPayable(payment);
+      const amounts = getPaymentAmounts(payment);
       const status = normalizeText(payment.status);
       const isPaidReminder = status === 'paid-reminder' || normalizeText(payment.reminderStatus) === 'paid';
 
@@ -1732,9 +1771,10 @@
             <span>${repaymentText}</span>
             <span>${dueLabel}</span>
             <span>${payment.mobile || ''}</span>
+            ${isPaidEntry ? `<span>Principal ${formatCurrency(amounts.principal)}</span><span>Interest ${formatCurrency(amounts.interestAmount)}</span>` : ''}
           </div>
         </div>
-        <div class="bill-amount">${formatCurrency(total)}</div>
+        <div class="bill-amount">${formatCurrency(isPaidEntry ? amounts.totalAmount : totalPayable(payment))}</div>
         <div class="bill-actions">
           <button type="button" class="btn btn-edit">Manage</button>
           <button type="button" class="btn btn-share">WhatsApp</button>
@@ -1775,7 +1815,7 @@
       clearBtn.onclick = (event) => {
         event.preventDefault();
         event.stopPropagation();
-        clearReminder(payment._id || payment.id);
+        clearReminder(payment);
       };
 
       return item;
@@ -1807,6 +1847,47 @@
       sectionEl.appendChild(list);
     }
 
+    function renderPaidSection(sectionEl, title, items) {
+      const totals = items.reduce((sum, payment) => {
+        const amounts = getPaymentAmounts(payment);
+        sum.principal += amounts.principal;
+        sum.interest += amounts.interestAmount;
+        sum.total += amounts.totalAmount;
+        return sum;
+      }, { principal: 0, interest: 0, total: 0 });
+
+      sectionEl.innerHTML = `
+        <div class="bill-section-head">
+          <h3>${title}</h3>
+          <div class="section-total">
+            <div>Principal ${formatCurrency(totals.principal)}</div>
+            <div>Interest ${formatCurrency(totals.interest)}</div>
+            <div>Total ${formatCurrency(totals.total)}</div>
+          </div>
+        </div>
+      `;
+
+      if (!items.length) {
+        const empty = document.createElement('div');
+        empty.className = 'bill-empty';
+        empty.textContent = `No records in ${title.toLowerCase()}.`;
+        sectionEl.appendChild(empty);
+        return;
+      }
+
+      const list = document.createElement('div');
+      list.className = 'bill-list';
+      items.forEach((payment) => {
+        const paidItem = {
+          ...payment,
+          paidMode: true,
+          reminderAmount: payment.reminderAmount ?? payment.amount ?? 0,
+        };
+        list.appendChild(buildBillItem(paidItem));
+      });
+      sectionEl.appendChild(list);
+    }
+
     function renderPayments() {
       const statusLine = document.getElementById('statusLine');
       const overdueSummary = document.getElementById('overdueSummary');
@@ -1826,21 +1907,6 @@
       const { active: filtered, paid: paidRecords, grouped } = getReminderBuckets();
 
       renderBillSection(overdueSection, 'Overdue Payments', grouped.overdue);
-      console.log('Filtered Results:', filtered);
-      console.log('Filtered Length:', filtered.length);
-      
-      if (!filtered.length) {
-        overdueSummary.innerHTML = `
-          <div class="row">
-            <div class="title">Overdue</div>
-            <div class="amount">${formatCurrency(0)}</div>
-          </div>
-          <div class="summary">No manual reminder records found.</div>
-        `;
-        statusLine.textContent = 'No manual reminder records to show.';
-        return;
-      }
-
       const overdueTotal = grouped.overdue.reduce((sum, p) => sum + totalPayable(p), 0);
       const overdueNames = grouped.overdue.map((p) => p.name || p.mobile || 'Reminder').slice(0, 3);
       const extraCount = Math.max(0, grouped.overdue.length - overdueNames.length);
@@ -1853,11 +1919,17 @@
         <div class="summary">${grouped.overdue.length ? `${overdueNames.join(', ')}${extraCount ? ` and ${extraCount} more.` : '.'}` : 'No overdue manual reminders.'}</div>
       `;
 
+      if (!filtered.length) {
+        statusLine.textContent = paymentViewMode === 'paid'
+          ? `Showing ${paidRecords.length} paid payments.`
+          : 'No manual reminder records to show.';
+      }
+
       renderBillSection(thisMonthSection, 'This month', grouped.thisMonth);
       renderBillSection(nextMonthSection, 'Next month', grouped.nextMonth);
       renderBillSection(laterSection, 'Later', grouped.later);
 
-      const paidItems = paidRecords.map((item) => ({
+      const paidItems = dedupePaymentsBySignature(paidRecords).map((item) => ({
         ...item,
         reminderRepaymentDate: item.reminderRepaymentDate || null,
         paidDate: item.created_at || null,
@@ -1865,7 +1937,7 @@
         reminderAmount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : (item.reminderAmount || 0),
         reminderInterest: 0,
       }));
-      renderBillSection(paidSection, 'Paid', paidItems);
+      renderPaidSection(paidSection, 'Paid', paidItems);
 
       const visibility = {
         all: ['overdueSummary', 'overdueSection', 'thisMonthSection', 'nextMonthSection', 'laterSection', 'paidSection'],
@@ -1942,8 +2014,9 @@
     }
 
     function populateReminderForm(payment) {
-      selectedPaymentId = payment._id || payment.id;
+      selectedPaymentId = payment.paymentId || payment._id || payment.id;
       selectedPaymentMobile = payment.mobile || '';
+      selectedReminderId = payment.reminderId || payment.id || '';
       const plainName = String(payment.name || 'Unknown User').trim();
       const selectedText = `${plainName} / ${payment.mobile || 'No mobile'}`.trim();
       document.getElementById('selectedUser').value = plainName;
@@ -1976,6 +2049,7 @@
     function resetReminderForm() {
       selectedPaymentId = '';
       selectedPaymentMobile = '';
+      selectedReminderId = '';
       document.getElementById('selectedUser').value = '';
       document.getElementById('manualMobile').value = '';
       document.getElementById('selectedUserChip').querySelector('.value').textContent = 'No user selected yet';
@@ -2000,17 +2074,24 @@
       await saveReminder(selectedPaymentId || payload.mobile, payload);
     }
 
-    async function clearReminder(paymentId) {
+    async function clearReminder(payment) {
       if (!confirm('Clear reminder details for this payment?')) {
         return;
       }
 
-      await saveReminder(paymentId, {
+      const targetId = payment?.paymentId || payment?._id || payment?.id || payment?.mobile;
+
+      await saveReminder(targetId, {
+        reminderId: payment?.reminderId || payment?.id || '',
+        name: payment?.name || '',
+        mobile: payment?.mobile || '',
         borrowDate: '',
         repaymentDate: '',
         reminderAmount: '',
         reminderInterest: '',
         reminderNote: '',
+        reminderStatus: 'manual',
+        paidAt: '',
       });
     }
 
@@ -2020,6 +2101,7 @@
       }
 
       const payload = {
+        reminderId: payment.reminderId || payment.id || '',
         name: payment.name || '',
         mobile: payment.mobile || '',
         borrowDate: payment.reminderBorrowDate || '',
@@ -2031,7 +2113,7 @@
         paidAt: new Date().toISOString(),
       };
 
-      await saveReminder(payment._id || payment.id || payment.mobile, payload);
+      await saveReminder(payment.paymentId || payment._id || payment.id || payment.mobile, payload);
     }
 
     async function markReminderUnpaid(payment) {
@@ -2040,6 +2122,7 @@
       }
 
       const payload = {
+        reminderId: payment.reminderId || payment.id || '',
         name: payment.name || '',
         mobile: payment.mobile || '',
         borrowDate: payment.reminderBorrowDate || '',
@@ -2051,17 +2134,26 @@
         paidAt: '',
       };
 
-      await saveReminder(payment._id || payment.id || payment.mobile, payload);
+      await saveReminder(payment.paymentId || payment._id || payment.id || payment.mobile, payload);
     }
 
     async function saveReminder(paymentId, payload) {
       try {
+        const requestBody = {
+          ...payload,
+          mobile: String(payload.mobile || selectedPaymentMobile || '').trim(),
+        };
+
+        if (!requestBody.reminderId && selectedReminderId) {
+          requestBody.reminderId = selectedReminderId;
+        }
+
         const response = await apiFetch(`/api/payments/${paymentId}/reminder`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(requestBody),
         });
 
         const result = await response.json().catch(() => ({}));
