@@ -79,6 +79,25 @@ alter table if exists public.payments
 create index if not exists idx_payments_mobile on public.payments (mobile);
 create unique index if not exists idx_payments_utr_unique on public.payments (utr_number) where utr_number is not null;
 
+create table if not exists public.payment_reminders (
+  id uuid primary key default gen_random_uuid(),
+  payment_id uuid references public.payments (id) on delete cascade,
+  payment_mobile text not null,
+  payment_name text,
+  reminder_note text not null default '',
+  reminder_borrow_date date,
+  reminder_repayment_date date,
+  reminder_amount numeric(12,2),
+  reminder_interest numeric(8,2),
+  reminder_status text not null default 'manual',
+  paid_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_payment_reminders_payment_id on public.payment_reminders (payment_id);
+create index if not exists idx_payment_reminders_mobile_created_at on public.payment_reminders (payment_mobile, created_at desc);
+
 create table if not exists public.bank_details (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -198,6 +217,7 @@ execute function public.set_updated_at();
 alter table public.users enable row level security;
 alter table public.submissions enable row level security;
 alter table public.payments enable row level security;
+alter table public.payment_reminders enable row level security;
 alter table public.bank_details enable row level security;
 alter table public.borrows enable row level security;
 alter table public.chit_ids enable row level security;
@@ -223,6 +243,13 @@ with check (auth.role() = 'service_role');
 drop policy if exists "service-role-payments" on public.payments;
 create policy "service-role-payments"
 on public.payments
+for all
+using (auth.role() = 'service_role')
+with check (auth.role() = 'service_role');
+
+drop policy if exists "service-role-payment-reminders" on public.payment_reminders;
+create policy "service-role-payment-reminders"
+on public.payment_reminders
 for all
 using (auth.role() = 'service_role')
 with check (auth.role() = 'service_role');

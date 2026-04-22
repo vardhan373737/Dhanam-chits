@@ -611,7 +611,7 @@ function mapPaymentRow(row) {
   const screenshotUrl = screenshotPath
     ? (String(screenshotPath).startsWith("http") ? String(screenshotPath) : `/${screenshotPath}`)
     : null;
-  const reminderPayload = getStoredReminderForPayment(row) || parseReminderPayload(row.reminder_note);
+  const reminderPayload = parseReminderPayload(row.reminder_note);
   const reminderStatus = String(reminderPayload?.reminderStatus || "").toLowerCase();
   return {
     _id: row.id,
@@ -684,6 +684,35 @@ function parseReminderPayload(value) {
     return null;
   }
 }
+
+function normalizeReminderRow(row) {
+  if (!row || typeof row !== "object") {
+    return null;
+  }
+
+  const reminderPayload = parseReminderPayload(row.reminder_note);
+  const reminderStatus = String(row.reminder_status || reminderPayload?.reminderStatus || "manual").toLowerCase();
+  return {
+    id: row.id,
+    _id: row.id,
+    reminderId: row.id,
+    paymentId: row.payment_id || null,
+    name: row.payment_name || reminderPayload?.name || "Manual Reminder",
+    mobile: row.payment_mobile || "",
+    status: reminderStatus === "paid" ? "paid-reminder" : "manual-reminder",
+    chitsPlan: "Manual",
+    created_at: row.created_at || row.updated_at || null,
+    reminderNote: row.reminder_note || reminderPayload?.note || "",
+    reminderBorrowDate: row.reminder_borrow_date || reminderPayload?.borrowDate || null,
+    reminderRepaymentDate: row.reminder_repayment_date || reminderPayload?.repaymentDate || null,
+    reminderAmount: row.reminder_amount ?? reminderPayload?.reminderAmount ?? null,
+    reminderInterest: row.reminder_interest ?? reminderPayload?.reminderInterest ?? null,
+    reminderStatus: reminderStatus || "manual",
+    reminderPaidAt: row.paid_at || reminderPayload?.paidAt || null,
+  };
+}
+
+const paymentRemindersTable = "payment_reminders";
 
 function mapBankDetailRow(row) {
   return {
@@ -865,7 +894,6 @@ const borrowDocsDir = path.join(storageBaseDir, "uploads", "borrow-docs");
 const borrowDocsIndexPath = path.join(storageBaseDir, "uploads", "borrow-docs-index.json");
 const paymentScreenshotsDir = path.join(storageBaseDir, "uploads", "payment-screenshots");
 const paymentScreenshotsIndexPath = path.join(storageBaseDir, "uploads", "payment-screenshots-index.json");
-const paymentRemindersIndexPath = path.join(storageBaseDir, "uploads", "payment-reminders.json");
 const paymentScreenshotBucket = String(process.env.PAYMENT_SCREENSHOT_BUCKET || "payment-screenshots").trim();
 const auctionChatFallbackPath = path.join(storageBaseDir, "uploads", "auction-chat-fallback.json");
 try {
@@ -966,121 +994,83 @@ function writePaymentScreenshotsIndex(indexData) {
   }
 }
 
-function readPaymentRemindersIndex() {
-  try {
-    if (!fs.existsSync(paymentRemindersIndexPath)) {
-      return { byId: {}, byMobile: {} };
-    }
-
-    const raw = fs.readFileSync(paymentRemindersIndexPath, "utf8");
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") {
-      return { byId: {}, byMobile: {} };
-    }
-
-    return {
-      byId: parsed.byId && typeof parsed.byId === "object" ? parsed.byId : {},
-      byMobile: parsed.byMobile && typeof parsed.byMobile === "object" ? parsed.byMobile : {},
-    };
-  } catch (_error) {
-    return { byId: {}, byMobile: {} };
-  }
-}
-
-function writePaymentRemindersIndex(indexData) {
-  try {
-    const directory = path.dirname(paymentRemindersIndexPath);
-    if (!fs.existsSync(directory)) {
-      fs.mkdirSync(directory, { recursive: true });
-    }
-
-    fs.writeFileSync(paymentRemindersIndexPath, JSON.stringify(indexData, null, 2), "utf8");
-  } catch (error) {
-    console.error("Failed to save payment reminder index:", error);
-  }
-}
-
-function normalizeReminderBucket(bucket) {
-  if (Array.isArray(bucket)) {
-    return bucket
-      .filter((entry) => entry && typeof entry === "object")
-      .map((entry) => ({ ...entry }));
-  }
-
-  if (bucket && typeof bucket === "object") {
-    return [{ ...bucket }];
-  }
-
-  return [];
-}
-
-function pickLatestReminder(bucket) {
-  const entries = normalizeReminderBucket(bucket);
-  if (!entries.length) {
-    return null;
-  }
-
-  entries.sort((a, b) => {
-    const aTime = Date.parse(a?.updatedAt || a?.createdAt || 0) || 0;
-    const bTime = Date.parse(b?.updatedAt || b?.createdAt || 0) || 0;
-    return bTime - aTime;
-  });
-
-  return entries[0];
-}
-
-function getStoredReminderForPayment(row) {
-  const store = readPaymentRemindersIndex();
-  const byId = pickLatestReminder(store.byId[String(row?.id || "").trim()]);
-  if (byId) {
-    return byId;
-  }
-
-  const byMobile = pickLatestReminder(store.byMobile[normalizeMobile(row?.mobile || "")]);
-  if (byMobile) {
-    return byMobile;
-  }
-
-  return null;
-}
-
-function setStoredReminderForPayment({ recordId, mobile, reminderData }) {
-  const store = readPaymentRemindersIndex();
-  const normalizedId = String(recordId || "").trim();
-  const normalizedMobile = normalizeMobile(mobile || "");
-
-  if (!reminderData) {
-    if (normalizedId) {
-      delete store.byId[normalizedId];
-    }
-    if (normalizedMobile) {
-      delete store.byMobile[normalizedMobile];
-    }
-    writePaymentRemindersIndex(store);
-    return null;
-  }
-
-  const nowIso = new Date().toISOString();
-  const storedReminder = {
-    ...reminderData,
-    reminderId: crypto.randomUUID(),
-    createdAt: nowIso,
-    updatedAt: nowIso,
+async function upsertPaymentReminderRow({ paymentId = null, mobile, name = null, reminderData }) {
+  const reminderRow = {
+    payment_id: paymentId || null,
+    payment_mobile: normalizeMobile(mobile || ""),
+    payment_name: String(name || "").trim() || null,
+    reminder_note: reminderData?.note || "",
+    reminder_borrow_date: reminderData?.borrowDate || null,
+    reminder_repayment_date: reminderData?.repaymentDate || null,
+    reminder_amount: reminderData?.reminderAmount ?? null,
+    reminder_interest: reminderData?.reminderInterest ?? null,
+    reminder_status: reminderData?.reminderStatus || "manual",
+    paid_at: reminderData?.paidAt || null,
   };
 
-  if (normalizedId) {
-    const idBucket = normalizeReminderBucket(store.byId[normalizedId]);
-    idBucket.push(storedReminder);
-    store.byId[normalizedId] = idBucket;
-  }
-  if (normalizedMobile) {
-    const mobileBucket = normalizeReminderBucket(store.byMobile[normalizedMobile]);
-    mobileBucket.push(storedReminder);
-    store.byMobile[normalizedMobile] = mobileBucket;
+  const { data, error } = await supabase
+    .from(paymentRemindersTable)
+    .insert(reminderRow)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
   }
 
-  writePaymentRemindersIndex(store);
-  return storedReminder;
+  return data;
+}
+
+async function clearPaymentReminderRows({ paymentId = null, mobile = null }) {
+  let query = supabase.from(paymentRemindersTable).delete();
+
+  if (paymentId) {
+    query = query.eq("payment_id", paymentId);
+  }
+
+  if (mobile) {
+    query = query.eq("payment_mobile", normalizeMobile(mobile));
+  }
+
+  const { error } = await query;
+  if (error) {
+    throw error;
+  }
+}
+
+async function syncReminderColumnsOnPayment(paymentId, reminderData) {
+  if (!paymentId) {
+    return null;
+  }
+
+  const updatePayload = reminderData
+    ? {
+        reminder_note: encodeReminderPayload(reminderData),
+        reminder_borrow_date: reminderData.borrowDate || null,
+        reminder_repayment_date: reminderData.repaymentDate || null,
+        reminder_amount: reminderData.reminderAmount ?? null,
+        reminder_interest: reminderData.reminderInterest ?? null,
+      }
+    : {
+        reminder_note: null,
+        reminder_borrow_date: null,
+        reminder_repayment_date: null,
+        reminder_amount: null,
+        reminder_interest: null,
+      };
+
+  const { data, error } = await supabase
+    .from("payments")
+    .update(updatePayload)
+    .eq("id", paymentId)
+    .select("*")
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }
 
 function setPaymentScreenshotPath(recordId, utrNumber, screenshotPath) {
@@ -2670,40 +2660,21 @@ app.get("/api/payments", requireAdmin, async (_req, res) => {
   }
 
   const mappedPayments = data.map(mapPaymentRow);
-  
-  // Include all manual reminder entries stored by mobile.
-  const reminders = readPaymentRemindersIndex();
-  
-  const manualOnlyReminders = [];
-  for (const [mobile, reminderBucket] of Object.entries(reminders.byMobile || {})) {
-    const entries = normalizeReminderBucket(reminderBucket);
-    entries.forEach((reminderData) => {
-      const reminderStatus = String(reminderData.reminderStatus || "manual").toLowerCase();
-      manualOnlyReminders.push({
-        id: `manual-reminder-${mobile}`,
-        _id: `manual-reminder-${mobile}`,
-        reminderId: reminderData.reminderId || null,
-        name: reminderData.name || "Manual Reminder",
-        mobile,
-        status: reminderStatus === "paid" ? "paid-reminder" : "manual-reminder",
-        chitsPlan: "Manual",
-        created_at: reminderData.paidAt || reminderData.createdAt || reminderData.updatedAt || null,
-        reminderNote: reminderData.note,
-        reminderBorrowDate: reminderData.borrowDate,
-        reminderRepaymentDate: reminderData.repaymentDate,
-        reminderAmount: reminderData.reminderAmount,
-        reminderInterest: reminderData.reminderInterest,
-        reminderStatus: reminderData.reminderStatus || "manual",
-        reminderPaidAt: reminderData.paidAt || null,
-      });
-    });
+
+  const { data: reminderRows, error: reminderError } = await supabase
+    .from(paymentRemindersTable)
+    .select("*")
+    .is("payment_id", null)
+    .order("created_at", { ascending: false });
+
+  if (reminderError) {
+    console.error("list manual reminders error", reminderError);
+    return res.status(500).json({ error: "Failed to fetch reminder records" });
   }
 
-  manualOnlyReminders.sort((a, b) => {
-    const aTime = Date.parse(a?.created_at || 0) || 0;
-    const bTime = Date.parse(b?.created_at || 0) || 0;
-    return bTime - aTime;
-  });
+  const manualOnlyReminders = (reminderRows || [])
+    .map(normalizeReminderRow)
+    .filter(Boolean);
 
   return res.json([...mappedPayments, ...manualOnlyReminders]);
 });
@@ -2814,38 +2785,63 @@ app.put("/api/payments/:id/reminder", requireAdmin, paymentAdminActionLimiter, a
       })
     : null;
 
-  // Store reminder even if no payment exists (for manual-only reminders)
-  setStoredReminderForPayment({
-    recordId: targetId,
-    mobile: targetMobile,
-    reminderData,
-  });
+  try {
+    if (paymentRecord) {
+      const updatedPayment = await syncReminderColumnsOnPayment(targetId, reminderData);
 
-  // Return mock payment object if no actual payment exists
-  if (!paymentRecord) {
-    return res.json({
-      message: reminderData ? "Reminder saved successfully" : "Reminder cleared successfully",
-      payment: {
-        id: targetId || `manual-${targetMobile}`,
-        name: rawName,
-        mobile: targetMobile,
-        status: rawReminderStatus === "paid" ? "paid-reminder" : "manual-reminder",
-        chitsPlan: "N/A",
-        reminderNote: reminderNote,
-        reminderBorrowDate: borrowDate,
-        reminderRepaymentDate: repaymentDate,
-        reminderAmount: reminderAmount,
-        reminderInterest: reminderInterest,
-        reminderStatus: rawReminderStatus === "paid" ? "paid" : "manual",
-        reminderPaidAt: rawReminderStatus === "paid" ? (rawPaidAt || new Date().toISOString()) : null,
-      },
+      if (reminderData) {
+        await upsertPaymentReminderRow({
+          paymentId: targetId,
+          mobile: targetMobile,
+          name: rawName || paymentRecord.name,
+          reminderData,
+        });
+      } else {
+        await clearPaymentReminderRows({ paymentId: targetId, mobile: targetMobile });
+      }
+
+      return res.json({
+        message: reminderData ? "Reminder note saved successfully" : "Reminder note cleared successfully",
+        payment: mapPaymentRow(updatedPayment || paymentRecord),
+      });
+    }
+
+    if (!reminderData) {
+      await clearPaymentReminderRows({ mobile: targetMobile });
+      return res.json({
+        message: "Reminder cleared successfully",
+        payment: {
+          id: `manual-${targetMobile}`,
+          name: rawName,
+          mobile: targetMobile,
+          status: "manual-reminder",
+          chitsPlan: "N/A",
+          reminderNote: "",
+          reminderBorrowDate: null,
+          reminderRepaymentDate: null,
+          reminderAmount: null,
+          reminderInterest: null,
+          reminderStatus: "manual",
+          reminderPaidAt: null,
+        },
+      });
+    }
+
+    const manualReminderRow = await upsertPaymentReminderRow({
+      paymentId: null,
+      mobile: targetMobile,
+      name: rawName,
+      reminderData,
     });
-  }
 
-  return res.json({
-    message: reminderData ? "Reminder note saved successfully" : "Reminder note cleared successfully",
-    payment: mapPaymentRow(paymentRecord),
-  });
+    return res.json({
+      message: "Reminder saved successfully",
+      payment: normalizeReminderRow(manualReminderRow),
+    });
+  } catch (error) {
+    console.error("save reminder error", error);
+    return res.status(500).json({ message: "Failed to save reminder" });
+  }
 });
 
 app.delete("/api/payments/:id", requireAdmin, paymentAdminActionLimiter, async (req, res) => {
