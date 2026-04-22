@@ -198,6 +198,7 @@
                         <th>UTR Number</th>
                         <th>Type</th>
                         <th>Status</th>
+                        <th>Reminder Note</th>
                     </tr>
                 </thead>
                 <tbody id="payment-history"></tbody>
@@ -261,7 +262,7 @@
                 document.getElementById('pending-count').textContent = pendingCount;
 
                 if (payments.length === 0) {
-                    paymentHistory.innerHTML = '<tr><td colspan="7" style="text-align:center; font-weight:600; color:#3f5573;">No payments found.</td></tr>';
+                    paymentHistory.innerHTML = '<tr><td colspan="8" style="text-align:center; font-weight:600; color:#3f5573;">No payments found.</td></tr>';
                 }
 
                 payments.forEach((payment) => {
@@ -274,6 +275,7 @@
                         <td>${payment.utrNumber || ''}</td>
                         <td>${payment.type || ''}</td>
                         <td>${payment.status || ''}</td>
+                        <td>${payment.reminderNote || '-'}</td>
                     `;
                     paymentHistory.appendChild(row);
                 });

@@ -1,0 +1,2140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Reminder Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    :root {
+      --ink: #102739;
+      --muted: #496a81;
+      --brand: #0e8b9c;
+      --brand-dark: #0d6f85;
+      --accent: #0f9a5f;
+      --danger: #b8304e;
+      --surface: rgba(255, 255, 255, 0.84);
+      --surface-strong: rgba(255, 255, 255, 0.94);
+      --stroke: rgba(255, 255, 255, 0.72);
+      --shadow-lg: 0 22px 54px rgba(8, 35, 55, 0.2);
+      --shadow-md: 0 12px 28px rgba(11, 41, 64, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Manrope', sans-serif;
+    }
+
+    body {
+      position: relative;
+      overflow-x: hidden;
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 8% 10%, rgba(14, 139, 156, 0.22), transparent 42%),
+        radial-gradient(circle at 92% 14%, rgba(27, 153, 111, 0.22), transparent 38%),
+        linear-gradient(150deg, #edf8ff, #dff2fa 46%, #e9f7f0 100%);
+      color: var(--ink);
+      touch-action: manipulation;
+    }
+
+    button {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    input, textarea {
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+      user-select: text;
+    }
+
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      border-radius: 999px;
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(1px);
+    }
+
+    body::before {
+      width: 420px;
+      height: 420px;
+      left: -160px;
+      top: 280px;
+      background: radial-gradient(circle, rgba(10, 132, 163, 0.18), rgba(10, 132, 163, 0));
+    }
+
+    body::after {
+      width: 360px;
+      height: 360px;
+      right: -130px;
+      top: 120px;
+      background: radial-gradient(circle, rgba(38, 161, 105, 0.18), rgba(38, 161, 105, 0));
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+      margin-left: 250px;
+      padding: 28px;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .page-head h1 {
+      margin: 0;
+      font-family: 'Fraunces', serif;
+      font-size: clamp(1.5rem, 2.4vw, 2.2rem);
+      font-weight: 700;
+      color: #0d2d43;
+      letter-spacing: 0.2px;
+    }
+
+    .page-tagline {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.92rem;
+    }
+
+    .toolbar-btn {
+      border: none;
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(120deg, var(--brand-dark), #1b9f7c);
+      cursor: pointer;
+      box-shadow: 0 10px 18px rgba(10, 76, 102, 0.25);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .toolbar-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.04);
+      box-shadow: 0 14px 24px rgba(10, 76, 102, 0.3);
+    }
+
+    .toolbar-btn:active {
+      transform: translateY(0);
+    }
+
+    .toolbar-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(290px, 360px) 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    @media screen and (min-width: 1200px) {
+      .layout {
+        grid-template-columns: minmax(320px, 380px) 1fr;
+        gap: 20px;
+      }
+
+      .content {
+        padding: 32px;
+      }
+
+      table {
+        font-size: 0.95rem;
+      }
+
+      .form-card {
+        position: sticky;
+        top: 20px;
+      }
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(10px);
+      padding: 14px;
+      overflow-x: auto;
+      animation: cardEnter 0.45s ease both;
+    }
+
+    .form-card {
+      background: var(--surface-strong);
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(10px);
+      padding: 14px;
+      animation: cardEnter 0.4s ease both;
+    }
+
+    .form-title {
+      margin: 0 0 10px;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #10344d;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .grid.single {
+      grid-template-columns: 1fr;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #2a546d;
+    }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      border: 1px solid #ccdde8;
+      border-radius: 10px;
+      padding: 10px 11px;
+      font-size: 0.9rem;
+      color: #18374a;
+      background: linear-gradient(180deg, #ffffff, #fafdff);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+      min-height: 44px;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+
+    .field input[type="date"],
+    .field input[type="number"],
+    .field input[type="text"] {
+      font-size: 1rem;
+    }
+
+    .field input[readonly] {
+      background: linear-gradient(180deg, #f5f8fa, #f0f5f9);
+      color: #2a546d;
+      font-weight: 600;
+      cursor: not-allowed;
+      border-color: #dce9f1;
+    }
+
+    .selected-user-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(13, 124, 145, 0.18);
+      background: linear-gradient(135deg, rgba(14, 139, 156, 0.09), rgba(15, 154, 95, 0.08));
+      color: #12374d;
+      font-weight: 800;
+      min-height: 46px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    }
+
+    .selected-user-chip .label {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(13, 124, 145, 0.12);
+      color: #0d6f85;
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .selected-user-chip .value {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.92rem;
+    }
+
+    .manual-badge {
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 154, 95, 0.1);
+      color: #0b7a75;
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .field input:focus,
+    .field textarea:focus,
+    .search-box:focus {
+      outline: none;
+      border-color: rgba(13, 124, 145, 0.6);
+      box-shadow: 0 0 0 3px rgba(13, 124, 145, 0.12);
+    }
+
+    .view-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .view-tab {
+      border: 1px solid rgba(75, 102, 126, 0.65);
+      background: rgba(10, 16, 24, 0.6);
+      color: #d9e6f2;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .view-tab.active {
+      background: linear-gradient(135deg, #0f6488, #0e8b9c);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 10px 20px rgba(10, 76, 102, 0.25);
+    }
+
+    .bills-board {
+      background: #06080d;
+      border-radius: 16px;
+      border: 1px solid rgba(37, 52, 67, 0.95);
+      padding: 14px;
+      color: #ecf4ff;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    .bill-top-total {
+      margin-bottom: 14px;
+      border: 1px solid rgba(235, 74, 74, 0.7);
+      border-radius: 12px;
+      background: linear-gradient(120deg, rgba(56, 4, 4, 0.9), rgba(24, 4, 4, 0.95));
+      padding: 10px 12px;
+    }
+
+    .bill-top-total .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .bill-top-total .row:last-child {
+      margin-bottom: 0;
+    }
+
+    .bill-top-total .title {
+      color: #ff7d7d;
+      font-size: 0.98rem;
+      font-weight: 800;
+    }
+
+    .bill-top-total .amount {
+      color: #ff716b;
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+
+    .bill-top-total .summary {
+      color: #ffc7c2;
+      font-size: 0.84rem;
+      opacity: 0.96;
+    }
+
+    .bill-section {
+      margin-bottom: 16px;
+    }
+
+    .bill-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .bill-section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 9px;
+    }
+
+    .bill-section-head h3 {
+      margin: 0;
+      color: #f3f7ff;
+      font-size: 1.02rem;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+
+    .bill-section-head .section-total {
+      color: #f3f7ff;
+      font-size: 1.02rem;
+      font-weight: 800;
+    }
+
+    .bill-list {
+      border: 1px solid rgba(52, 66, 83, 0.95);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #030509;
+    }
+
+    .bill-item {
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 11px;
+      border-bottom: 1px solid rgba(53, 68, 86, 0.75);
+    }
+
+    .bill-item:last-child {
+      border-bottom: none;
+    }
+
+    .bill-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 34% 28%, #4e7bff, #30206d 70%);
+      color: #fff;
+      font-weight: 800;
+      font-size: 1.05rem;
+      box-shadow: 0 8px 16px rgba(53, 46, 128, 0.35);
+    }
+
+    .bill-main {
+      min-width: 0;
+    }
+
+    .bill-name {
+      color: #f8fbff;
+      font-weight: 700;
+      font-size: 1rem;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bill-meta {
+      margin-top: 2px;
+      color: #a7b6c8;
+      font-size: 0.83rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .bill-amount {
+      color: #f8fbff;
+      font-weight: 800;
+      font-size: 1.02rem;
+      white-space: nowrap;
+      margin-left: 8px;
+    }
+
+    .bill-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .bill-actions .btn {
+      margin-right: 0;
+      min-height: 34px;
+      padding: 6px 10px;
+      font-size: 0.76rem;
+    }
+
+    .bill-empty {
+      border: 1px dashed rgba(76, 95, 118, 0.85);
+      border-radius: 10px;
+      padding: 10px;
+      color: #9db1c7;
+      font-size: 0.85rem;
+      background: rgba(10, 16, 24, 0.65);
+    }
+
+    .field textarea {
+      min-height: 88px;
+      resize: vertical;
+    }
+
+    .hint {
+      margin: 8px 0 0;
+      font-size: 0.8rem;
+      color: #41647d;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 11px 13px;
+      border: 1px solid #ccdde8;
+      border-radius: 11px;
+      margin-bottom: 13px;
+      font-size: 0.95rem;
+      background: linear-gradient(180deg, #ffffff, #fafdff);
+      min-height: 44px;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+
+    .search-box:focus {
+      outline: none;
+      border-color: rgba(13, 124, 145, 0.6);
+      box-shadow: 0 0 0 3px rgba(13, 124, 145, 0.12);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #dce9f1;
+      display: table;
+    }
+
+    .panel {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #e4eef4;
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+      font-size: 0.92rem;
+    }
+
+    th {
+      background: linear-gradient(125deg, #197ba3, #0f6488);
+      color: #fff;
+      font-weight: 700;
+      position: sticky;
+      top: 0;
+      box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.12);
+    }
+
+    tr:hover {
+      background: #f3fbff;
+    }
+
+    .reminder-note {
+      white-space: pre-wrap;
+      max-width: 320px;
+      color: #173a4d;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 9px;
+      padding: 7px 11px;
+      margin-right: 6px;
+      cursor: pointer;
+      font-weight: 700;
+      color: #fff;
+      transition: transform 0.18s ease, filter 0.18s ease;
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.04);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-edit {
+      background: #0b7a75;
+    }
+
+    .btn-clear {
+      background: #a61f46;
+    }
+
+    .btn-share {
+      background: #16803b;
+    }
+
+    .btn-save {
+      background: #0b7a75;
+    }
+
+    .btn-paid {
+      background: #0e6ecf;
+    }
+
+    .btn-unpaid {
+      background: #37556a;
+    }
+
+    .btn-reset {
+      background: #37556a;
+    }
+
+    .actions {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .status {
+      margin: 10px 0 0;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #234761;
+    }
+
+    @keyframes cardEnter {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media screen and (max-width: 768px) {
+      .content {
+        margin-left: 0;
+        padding: 12px;
+      }
+
+      .page-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .page-head h1 {
+        font-size: 1.35rem;
+        margin: 0;
+      }
+
+      .page-tagline {
+        font-size: 0.8rem;
+      }
+
+      .toolbar-btn {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        align-self: flex-start;
+      }
+
+      .toolbar-group {
+        justify-content: flex-start;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .form-card {
+        padding: 12px;
+        order: 1;
+      }
+
+      .panel {
+        order: 2;
+        padding: 10px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .field label {
+        font-size: 0.75rem;
+      }
+
+      .field input,
+      .field textarea {
+        padding: 8px 9px;
+        font-size: 0.85rem;
+      }
+
+      .field input[readonly] {
+        font-size: 0.85rem;
+      }
+
+      .field textarea {
+        min-height: 70px;
+      }
+
+      .form-title {
+        font-size: 1rem;
+        margin: 0 0 8px;
+      }
+
+      .manual-badge {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+        margin-top: 6px;
+      }
+
+      .selected-user-chip {
+        font-size: 0.85rem;
+        padding: 8px 10px;
+        min-height: 40px;
+      }
+
+      .selected-user-chip .label {
+        font-size: 0.65rem;
+      }
+
+      .selected-user-chip .value {
+        font-size: 0.8rem;
+      }
+
+      .hint {
+        font-size: 0.75rem;
+        margin: 6px 0 0;
+      }
+
+      .actions {
+        margin-top: 8px;
+        gap: 6px;
+      }
+
+      .actions .btn {
+        flex: 1 1 100%;
+        padding: 8px 10px;
+        font-size: 0.8rem;
+        margin-right: 0;
+      }
+
+      .search-box {
+        padding: 8px 10px;
+        font-size: 0.85rem;
+        margin-bottom: 10px;
+      }
+
+      .view-tabs {
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+
+      .view-tab {
+        padding: 7px 11px;
+        font-size: 0.8rem;
+      }
+
+      .bills-board {
+        padding: 10px;
+      }
+
+      .bill-item {
+        grid-template-columns: 42px 1fr auto;
+        padding: 9px;
+      }
+
+      .bill-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 0.95rem;
+      }
+
+      .bill-name {
+        font-size: 0.92rem;
+      }
+
+      .bill-meta {
+        font-size: 0.76rem;
+      }
+
+      .bill-amount,
+      .bill-section-head .section-total,
+      .bill-top-total .amount {
+        font-size: 0.9rem;
+      }
+
+      .bill-actions .btn {
+        flex: 1 1 auto;
+      }
+
+      table {
+        font-size: 0.75rem;
+        min-width: 100%;
+        margin-bottom: 10px;
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      th,
+      td {
+        padding: 6px 5px;
+        font-size: 0.7rem;
+      }
+
+      .reminder-note {
+        max-width: 150px;
+        font-size: 0.7rem;
+      }
+
+      .btn {
+        padding: 5px 8px;
+        font-size: 0.7rem;
+        margin-right: 4px;
+      }
+
+      .status {
+        font-size: 0.8rem;
+        margin: 8px 0 0;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      .content {
+        padding: 8px;
+        margin-left: 0;
+      }
+
+      .page-head h1 {
+        font-size: 1.2rem;
+      }
+
+      .page-tagline {
+        font-size: 0.75rem;
+        display: none;
+      }
+
+      .toolbar-btn {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+      }
+
+      .toolbar-group {
+        gap: 6px;
+      }
+
+      .form-card {
+        padding: 10px;
+      }
+
+      .panel {
+        padding: 8px;
+      }
+
+      .form-title {
+        font-size: 0.95rem;
+        margin-bottom: 6px;
+      }
+
+      .grid {
+        gap: 6px;
+      }
+
+      .field label {
+        font-size: 0.72rem;
+      }
+
+      .field input,
+      .field textarea {
+        padding: 6px 8px;
+        font-size: 0.8rem;
+      }
+
+      .field textarea {
+        min-height: 60px;
+      }
+
+      table {
+        font-size: 0.65rem;
+      }
+
+      th,
+      td {
+        padding: 4px 3px;
+        font-size: 0.65rem;
+      }
+
+      .btn {
+        padding: 4px 6px;
+        font-size: 0.65rem;
+        margin-right: 2px;
+      }
+
+      .actions .btn {
+        padding: 6px 8px;
+        font-size: 0.75rem;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="admin-sidebar.css">
+  <link rel="stylesheet" href="index-theme.css">
+</head>
+<body>
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+  <div class="sidebar">
+    <h2>Admin Panel</h2>
+    <a href="admin.html"><i class="fas fa-tachometer-alt"></i> <span class="menu-text">Dashboard</span></a>
+    <a href="users.html"><i class="fas fa-users"></i> <span class="menu-text">Users</span></a>
+    <a href="adminbank.html"><i class="fas fa-university"></i> <span class="menu-text">Admin-Bank</span></a>
+    <a href="bankdetailA.html"><i class="fas fa-university"></i> <span class="menu-text">Bank Details</span></a>
+    <a href="borrowA.html"><i class="fas fa-hand-holding-usd"></i> <span class="menu-text">Borrows</span></a>
+    <a href="ChitidA.html"><i class="fas fa-university"></i> <span class="menu-text">chit-ids Approve</span></a>
+    <a href="paymentA.html"><i class="fas fa-credit-card"></i> <span class="menu-text">Payments</span></a>
+    <a href="payment-reminderA.html"><i class="fas fa-bell"></i> <span class="menu-text">Payment Reminder</span></a>
+    <a href="contactA.html"><i class="fas fa-envelope"></i> <span class="menu-text">Contact Details</span></a>
+    <a href="/Login.html" class="logout-btn" onclick="return logout(event)"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
+  </div>
+
+  <div class="content">
+    <div class="page-head">
+      <div>
+        <h1>Payment Reminder Center</h1>
+        <p class="page-tagline">Showing all manual-reminder records.</p>
+      </div>
+      <div class="toolbar-group">
+        <button class="toolbar-btn" onclick="fetchPayments()">Refresh</button>
+        <button class="toolbar-btn" onclick="downloadPaymentsPdf('overdue')">Overdue PDF</button>
+        <button class="toolbar-btn" onclick="downloadPaymentsPdf('reminders')">Reminder PDF</button>
+        <button class="toolbar-btn" onclick="downloadPaymentsPdf('paid')">Paid PDF</button>
+        <button class="toolbar-btn" onclick="downloadPaymentsPdf('all')">All PDF</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="form-card" id="reminderFormCard">
+        <h2 class="form-title">Create / Update Reminder</h2>
+        <div class="manual-badge">Manual Entry Enabled</div>
+        <div class="grid single" style="margin-top: 10px;">
+          <div class="field full">
+            <label for="selectedUser">User Name</label>
+            <input type="text" id="selectedUser" placeholder="Enter user name manually">
+            <div id="selectedUserChip" class="selected-user-chip" style="margin-top: 8px;">
+              <span class="label">Current</span>
+              <span class="value">No user selected yet</span>
+            </div>
+          </div>
+          <div class="field full">
+            <label for="manualMobile">Mobile Number</label>
+            <input type="text" id="manualMobile" maxlength="10" placeholder="Enter mobile number manually">
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label for="borrowDate">Borrow Date</label>
+            <input type="date" id="borrowDate">
+          </div>
+          <div class="field">
+            <label for="repaymentDate">Repayment Date</label>
+            <input type="date" id="repaymentDate" oninput="calculateDaysRemaining()">
+          </div>
+          <div class="field">
+            <label for="daysRemaining">Days Until Repayment</label>
+            <input type="text" id="daysRemaining" readonly placeholder="Auto-calculated">
+          </div>
+          <div class="field">
+            <label for="reminderAmount">Amount (Principal)</label>
+            <input type="number" id="reminderAmount" min="0" step="0.01" placeholder="e.g. 1500" oninput="calculateAmounts('principal')">
+          </div>
+          <div class="field">
+            <label for="reminderInterest">Interest (%)</label>
+            <input type="number" id="reminderInterest" min="0" step="0.01" placeholder="Enter interest %" oninput="calculateAmounts('interest')">
+          </div>
+          <div class="field">
+            <label for="interestAmount">Interest Amount</label>
+            <input type="text" id="interestAmount" readonly placeholder="Auto-calculated">
+          </div>
+          <div class="field">
+            <label for="totalAmount">Total Amount (Principal + Interest)</label>
+            <input type="number" id="totalAmount" min="0" step="0.01" placeholder="Enter total amount" oninput="calculateAmounts('total')">
+          </div>
+          <div class="field full">
+            <label for="reminderNote">Note</label>
+            <textarea id="reminderNote" maxlength="500" placeholder="Optional note for user"></textarea>
+          </div>
+        </div>
+        <p class="hint">Tip: If note is empty, system auto-builds message from date, amount and interest.</p>
+        <div class="actions">
+          <button class="btn btn-save" onclick="saveReminderFromForm()">Save Reminder</button>
+          <button class="btn btn-share" onclick="shareSelectedToWhatsApp()">Share to WhatsApp</button>
+          <button class="btn btn-reset" onclick="resetReminderForm()">Reset</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <input type="text" id="searchInput" class="search-box" placeholder="Search manual reminder records" onkeyup="renderPayments()">
+        <div class="view-tabs">
+          <button type="button" class="view-tab active" data-view="all" onclick="setPaymentView('all')">All</button>
+          <button type="button" class="view-tab" data-view="overdue" onclick="setPaymentView('overdue')">Overdue</button>
+          <button type="button" class="view-tab" data-view="reminders" onclick="setPaymentView('reminders')">Reminders</button>
+          <button type="button" class="view-tab" data-view="paid" onclick="setPaymentView('paid')">Paid</button>
+        </div>
+        <div class="bills-board">
+          <div id="overdueSummary" class="bill-top-total"></div>
+          <div id="overdueSection" class="bill-section"></div>
+          <div id="thisMonthSection" class="bill-section"></div>
+          <div id="nextMonthSection" class="bill-section"></div>
+          <div id="laterSection" class="bill-section"></div>
+          <div id="paidSection" class="bill-section"></div>
+        </div>
+        <p id="statusLine" class="status">Loading payment records...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let paymentCache = [];
+    let selectedPaymentId = '';
+    let selectedPaymentMobile = '';
+    let paymentViewMode = 'all';
+
+    async function apiFetch(url, options = {}) {
+      const response = await fetch(url, {
+        credentials: 'include',
+        ...options,
+        headers: {
+          ...(options.headers || {}),
+        },
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        const message = response.status === 401
+          ? 'Admin session expired. Please login again.'
+          : 'You are not authorized to access this page.';
+        alert(message);
+        window.location.href = 'Login.html';
+        throw new Error(message);
+      }
+
+      return response;
+    }
+
+    function normalizeText(value) {
+      return String(value || '').toLowerCase().trim();
+    }
+
+    function formatAmount(value) {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) {
+        return '-';
+      }
+
+      return parsed.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+    }
+
+    function digitsOnly(value) {
+      return String(value || '').replace(/\D/g, '');
+    }
+
+    function getWhatsAppNumber(rawMobile) {
+      const digits = digitsOnly(rawMobile);
+      if (!digits) {
+        return '';
+      }
+
+      if (digits.length === 10) {
+        return `91${digits}`;
+      }
+
+      return digits;
+    }
+
+    function calculateAmounts(source = 'sync') {
+      const principalInput = document.getElementById('reminderAmount');
+      const totalInput = document.getElementById('totalAmount');
+      const interestRateInput = document.getElementById('reminderInterest');
+      const interestAmountInput = document.getElementById('interestAmount');
+
+      const principal = Number(principalInput.value);
+      let totalAmount = Number(totalInput.value);
+      let interestRate = Number(interestRateInput.value);
+
+      if (!Number.isFinite(principal) || principal < 0) {
+        interestRateInput.value = '';
+        interestAmountInput.value = '';
+        totalInput.value = '';
+        return;
+      }
+
+      if (source === 'interest') {
+        if (!Number.isFinite(interestRate) || interestRate < 0) {
+          interestRate = 0;
+          interestRateInput.value = '0';
+        }
+        const interestAmount = (principal * interestRate) / 100;
+        totalAmount = principal + interestAmount;
+        totalInput.value = String(Number(totalAmount.toFixed(2)));
+        interestAmountInput.value = formatAmount(interestAmount);
+        return;
+      }
+
+      if (!Number.isFinite(totalAmount) || totalAmount < 0) {
+        totalAmount = principal;
+        totalInput.value = String(Number(principal.toFixed(2)));
+      }
+
+      if (principal > 0 && totalAmount < principal) {
+        totalAmount = principal;
+        totalInput.value = String(Number(totalAmount.toFixed(2)));
+      }
+
+      let interestAmount = totalAmount - principal;
+      if (!Number.isFinite(interestAmount) || interestAmount < 0) {
+        interestAmount = 0;
+      }
+
+      interestRate = principal > 0 ? (interestAmount / principal) * 100 : 0;
+      interestRateInput.value = Number.isFinite(interestRate) ? String(Number(interestRate.toFixed(2))) : '';
+      interestAmountInput.value = formatAmount(interestAmount);
+    }
+
+    function calculateDaysRemaining() {
+      const repaymentDateInput = document.getElementById('repaymentDate').value;
+      if (!repaymentDateInput) {
+        document.getElementById('daysRemaining').value = '';
+        return;
+      }
+      
+      const repaymentDate = new Date(repaymentDateInput);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      repaymentDate.setHours(0, 0, 0, 0);
+      
+      const timeDiff = repaymentDate - today;
+      const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+      
+      if (daysDiff < 0) {
+        document.getElementById('daysRemaining').value = `${Math.abs(daysDiff)} days overdue`;
+      } else if (daysDiff === 0) {
+        document.getElementById('daysRemaining').value = 'Today';
+      } else {
+        document.getElementById('daysRemaining').value = `${daysDiff} days`;
+      }
+    }
+
+    function getDaysRemainingValue(repaymentDateString) {
+      if (!repaymentDateString) return null;
+      
+      const repaymentDate = new Date(repaymentDateString);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      repaymentDate.setHours(0, 0, 0, 0);
+      
+      const timeDiff = repaymentDate - today;
+      const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+      
+      if (daysDiff < 0) {
+        return { display: `${Math.abs(daysDiff)} overdue`, value: daysDiff, color: '#b8304e' };
+      } else if (daysDiff === 0) {
+        return { display: 'Today', value: 0, color: '#d97e2a' };
+      } else if (daysDiff <= 3) {
+        return { display: `${daysDiff} days`, value: daysDiff, color: '#d97e2a' };
+      } else {
+        return { display: `${daysDiff} days`, value: daysDiff, color: '#0b7a75' };
+      }
+    }
+
+    function buildWhatsAppMessage(payment) {
+      const name = payment.name || 'Customer';
+      const lines = [
+        `Dear ${name},`,
+        'Payment reminder details:',
+      ];
+
+      if (payment.reminderBorrowDate) {
+        lines.push(`Borrow Date: ${payment.reminderBorrowDate}`);
+      }
+      if (payment.reminderRepaymentDate) {
+        lines.push(`Repayment Date: ${payment.reminderRepaymentDate}`);
+        const daysInfo = getDaysRemainingValue(payment.reminderRepaymentDate);
+        if (daysInfo) {
+          lines.push(`Days Remaining: ${daysInfo.display}`);
+        }
+      }
+      if (payment.reminderAmount !== null && payment.reminderAmount !== undefined && String(payment.reminderAmount) !== '') {
+        const principal = parseFloat(payment.reminderAmount);
+        lines.push(`Principal Amount: ${formatAmount(principal)}`);
+        
+        if (payment.reminderInterest !== null && payment.reminderInterest !== undefined && String(payment.reminderInterest) !== '') {
+          const interestRate = parseFloat(payment.reminderInterest);
+          const interestAmount = (principal * interestRate) / 100;
+          const totalAmount = principal + interestAmount;
+          
+          lines.push(`Interest Rate: ${payment.reminderInterest}%`);
+          lines.push(`Interest Amount: ${formatAmount(interestAmount)}`);
+          lines.push(`Total Payable: ${formatAmount(totalAmount)}`);
+        }
+      }
+      if (payment.reminderNote) {
+        lines.push(`Note: ${payment.reminderNote}`);
+      }
+
+      lines.push('Please repay on time. Thank you.');
+      return lines.join('\n');
+    }
+
+    function getAdminPaymentsOnly() {
+      // Show only manual reminder rows.
+      const allReminders = [];
+
+      paymentCache.forEach((item) => {
+        const status = normalizeText(item.status);
+        console.log(`Item: ${item.name} | Status: ${status} | Mobile: ${item.mobile}`);
+        
+        // Accept only active manual reminders (exclude reminders already marked as paid)
+        if (status !== 'manual-reminder') {
+          console.log('  -> FILTERED OUT: status not manual-reminder');
+          return;
+        }
+
+        console.log('  -> INCLUDED: manual-reminder record');
+        allReminders.push(item);
+      });
+
+      console.log('Final Reminders Count:', allReminders.length);
+      return allReminders;
+    }
+
+    function getFilteredPayments() {
+      const adminOnlyRecords = getAdminPaymentsOnly();
+      const query = normalizeText(document.getElementById('searchInput').value);
+      if (!query) {
+        return adminOnlyRecords;
+      }
+
+      return adminOnlyRecords.filter((item) => {
+        const haystack = [
+          item.name,
+          item.mobile,
+          item.chitsPlan,
+          item.status,
+          item.reminderBorrowDate,
+          item.reminderRepaymentDate,
+          item.reminderAmount,
+          item.reminderInterest,
+          item.reminderNote,
+        ]
+          .map((part) => normalizeText(part))
+          .join(' ');
+        return haystack.includes(query);
+      });
+    }
+
+    function getPaidPayments() {
+      const query = normalizeText(document.getElementById('searchInput').value);
+
+      const paidRecords = paymentCache.filter((item) => {
+        const status = normalizeText(item.status);
+        if (status !== 'approved' && status !== 'paid' && status !== 'completed' && status !== 'paid-reminder') {
+          return false;
+        }
+
+        const hasReminderData = Boolean(
+          String(item.reminderNote || '').trim() ||
+          String(item.reminderBorrowDate || '').trim() ||
+          String(item.reminderRepaymentDate || '').trim() ||
+          String(item.reminderAmount ?? '').trim() ||
+          String(item.reminderInterest ?? '').trim()
+        );
+
+        if (!hasReminderData) {
+          return false;
+        }
+
+        if (!query) {
+          return true;
+        }
+
+        const haystack = [
+          item.name,
+          item.mobile,
+          item.chitsPlan,
+          item.status,
+          item.amount,
+          item.created_at,
+        ]
+          .map((part) => normalizeText(part))
+          .join(' ');
+
+        return haystack.includes(query);
+      });
+
+      return paidRecords.sort((a, b) => {
+        const aTime = Date.parse(a?.created_at || 0) || 0;
+        const bTime = Date.parse(b?.created_at || 0) || 0;
+        return bTime - aTime;
+      });
+    }
+
+    function toDateStart(dateInput) {
+      const d = new Date(dateInput);
+      if (Number.isNaN(d.getTime())) {
+        return null;
+      }
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+
+    function totalPayable(payment) {
+      const principal = parseFloat(payment.reminderAmount) || 0;
+      const interestRate = parseFloat(payment.reminderInterest) || 0;
+      const interestAmount = (principal * interestRate) / 100;
+      return principal + interestAmount;
+    }
+
+    function formatCurrency(value) {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) {
+        return '₹0';
+      }
+      return `₹${parsed.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+    }
+    function pdfCurrency(value) {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) {
+        return 'Rs. 0';
+      }
+      return `Rs. ${parsed.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+    }
+
+    function formatDisplayDate(value) {
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) {
+        return 'N/A';
+      }
+
+      return parsed.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    }
+
+    function getSectionKey(payment, today) {
+      const repaymentDate = toDateStart(payment.reminderRepaymentDate);
+      if (!repaymentDate) {
+        return 'later';
+      }
+
+      if (repaymentDate < today) {
+        return 'overdue';
+      }
+
+      const dueMonth = repaymentDate.getMonth();
+      const dueYear = repaymentDate.getFullYear();
+      const nowMonth = today.getMonth();
+      const nowYear = today.getFullYear();
+
+      if (dueMonth === nowMonth && dueYear === nowYear) {
+        return 'thisMonth';
+      }
+
+      const nextMonthDate = new Date(nowYear, nowMonth + 1, 1);
+      if (dueMonth === nextMonthDate.getMonth() && dueYear === nextMonthDate.getFullYear()) {
+        return 'nextMonth';
+      }
+
+      return 'later';
+    }
+
+    function sortByRemainingDays(items) {
+      return [...items].sort((a, b) => {
+        const aDays = getDaysRemainingValue(a.reminderRepaymentDate)?.value;
+        const bDays = getDaysRemainingValue(b.reminderRepaymentDate)?.value;
+
+        const aScore = Number.isFinite(aDays) ? aDays : Number.MAX_SAFE_INTEGER;
+        const bScore = Number.isFinite(bDays) ? bDays : Number.MAX_SAFE_INTEGER;
+
+        if (aScore !== bScore) {
+          return aScore - bScore;
+        }
+
+        const aTime = Date.parse(a?.created_at || 0) || 0;
+        const bTime = Date.parse(b?.created_at || 0) || 0;
+        return bTime - aTime;
+      });
+    }
+
+    function getReminderBuckets() {
+      const active = getFilteredPayments();
+      const paid = getPaidPayments();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const grouped = {
+        overdue: [],
+        thisMonth: [],
+        nextMonth: [],
+        later: [],
+      };
+
+      active.forEach((payment) => {
+        const key = getSectionKey(payment, today);
+        grouped[key].push(payment);
+      });
+
+      grouped.overdue = sortByRemainingDays(grouped.overdue);
+      grouped.thisMonth = sortByRemainingDays(grouped.thisMonth);
+      grouped.nextMonth = sortByRemainingDays(grouped.nextMonth);
+      grouped.later = sortByRemainingDays(grouped.later);
+
+      return { active, paid, grouped };
+    }
+
+    function setPaymentView(view) {
+      paymentViewMode = view;
+      document.querySelectorAll('.view-tab').forEach((button) => {
+        button.classList.toggle('active', button.dataset.view === view);
+      });
+      renderPayments();
+    }
+
+    function buildPdfRows(items, mode = 'reminder') {
+      return items.map((payment) => {
+        const dueInfo = mode === 'paid' ? null : getDaysRemainingValue(payment.reminderRepaymentDate);
+        const dueLabel = mode === 'paid' ? 'Settled' : (dueInfo ? dueInfo.display : 'No due date');
+        const dateLabel = mode === 'paid'
+          ? formatDisplayDate(payment.paidAt || payment.created_at)
+          : (payment.reminderRepaymentDate || 'No due date');
+        const principal = Number(payment.reminderAmount || payment.amount || 0);
+        const interestRate = Number(payment.reminderInterest || 0);
+        const interestAmount = mode === 'paid' ? 0 : ((principal * interestRate) / 100);
+        const total = mode === 'paid' ? Number(payment.amount || payment.reminderAmount || 0) : totalPayable(payment);
+
+        return [
+          payment.name || '-',
+          payment.mobile || '-',
+          payment.chitsPlan || '-',
+          dateLabel,
+          dueLabel,
+          pdfCurrency(principal),
+          mode === 'paid' ? '-' : `${interestRate || 0}%`,
+          mode === 'paid' ? '-' : pdfCurrency(interestAmount),
+          pdfCurrency(total),
+          payment.reminderNote || '-',
+        ];
+      });
+    }
+
+    function pdfSetDarkBackground(doc) {
+      const width = doc.internal.pageSize.getWidth();
+      const height = doc.internal.pageSize.getHeight();
+      doc.setFillColor(11, 34, 66);
+      doc.rect(0, 0, width, height, 'F');
+    }
+
+    function pdfAddHeader(doc, title, subtitle) {
+      const width = doc.internal.pageSize.getWidth();
+      doc.setFillColor(9, 10, 11);
+      doc.roundedRect(14, 10, width - 28, 20, 5, 5, 'F');
+
+      doc.setFillColor(102, 16, 242);
+      doc.roundedRect(width - 70, 10, 56, 20, 5, 5, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.text('Dhanam Chits Pvt. Ltd', 18, 19);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.text('Trusted Chit Services', 18, 25);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text(title, width - 42, 22, { align: 'center' });
+
+      doc.setFillColor(215, 154, 0);
+      doc.rect(14, 33, width - 28, 1, 'F');
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(166, 184, 201);
+      doc.setFontSize(9);
+      doc.text(subtitle, 14, 41);
+    }
+
+    function pdfEnsureSpace(doc, y, needed, headerTitle, headerSubtitle) {
+      const height = doc.internal.pageSize.getHeight();
+      if (y + needed <= height - 10) {
+        return y;
+      }
+
+      doc.addPage();
+      pdfSetDarkBackground(doc);
+      pdfAddHeader(doc, headerTitle, headerSubtitle);
+      return 50;
+    }
+
+    function pdfSectionTotal(items, mode) {
+      return items.reduce((sum, payment) => {
+        if (mode === 'paid') {
+          return sum + Number(payment.amount || payment.reminderAmount || 0);
+        }
+
+        return sum + totalPayable(payment);
+      }, 0);
+    }
+
+    function pdfDrawSectionTitle(doc, title, total, y, accentColor) {
+      const width = doc.internal.pageSize.getWidth();
+      const boxWidth = width - 28;
+
+      doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
+      doc.roundedRect(14, y, boxWidth, 10, 3, 3, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text(title, 18, y + 6.6);
+      return y + 12;
+    }
+
+    function pdfDrawBillCard(doc, payment, mode, y, headerTitle, headerSubtitle) {
+      const width = doc.internal.pageSize.getWidth();
+      const cardX = 14;
+      const cardW = width - 28;
+      const isPaid = mode === 'paid';
+      const dueInfo = isPaid ? null : getDaysRemainingValue(payment.reminderRepaymentDate);
+      const dueText = isPaid ? 'Settled' : (dueInfo ? dueInfo.display : 'No due date');
+      const dateText = isPaid
+        ? `Paid on ${formatDisplayDate(payment.paidAt || payment.created_at)}`
+        : (payment.reminderRepaymentDate || 'No due date');
+      const principal = Number(payment.reminderAmount || payment.amount || 0);
+      const interestRate = Number(payment.reminderInterest || 0);
+      const interestAmount = isPaid ? 0 : ((principal * interestRate) / 100);
+      const total = isPaid ? Number(payment.amount || payment.reminderAmount || 0) : totalPayable(payment);
+      const note = String(payment.reminderNote || '').trim() || 'No note';
+      const noteText = doc.splitTextToSize(`Note: ${note}`, cardW - 18);
+      const cardH = isPaid ? 46 : 52;
+
+      y = pdfEnsureSpace(doc, y, cardH + 4, headerTitle, headerSubtitle);
+
+      doc.setFillColor(14, 28, 51);
+      doc.setDrawColor(52, 66, 83);
+      doc.roundedRect(cardX, y, cardW, cardH, 4, 4, 'FD');
+
+      doc.setFillColor(71, 95, 255);
+      doc.circle(cardX + 9, y + 10, 7, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('R', cardX + 9, y + 12.2, { align: 'center' });
+
+      doc.setTextColor(248, 251, 255);
+      doc.setFontSize(12);
+      doc.text(String(payment.name || 'Manual Reminder'), cardX + 20, y + 9);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(167, 182, 200);
+      doc.setFontSize(8.5);
+      doc.text(dateText, cardX + 20, y + 15);
+      doc.text(`${dueText}  ${payment.mobile || ''}`.trim(), cardX + 20, y + 20);
+
+      doc.setTextColor(248, 251, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text(`Total ${pdfCurrency(total)}`, cardX + 20, y + 25);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(167, 182, 200);
+      doc.setFontSize(8.5);
+      doc.text(`Principal ${pdfCurrency(principal)}`, cardX + 20, y + 30);
+      if (!isPaid) {
+        doc.text(`Interest ${interestRate || 0}%  Amt ${pdfCurrency(interestAmount)}`, cardX + 20, y + 35);
+      }
+
+      doc.setTextColor(200, 211, 224);
+      doc.setFontSize(8);
+      doc.text(noteText, cardX + 20, y + 41);
+
+      return y + cardH + 4;
+    }
+
+    function pdfDrawSection(doc, title, items, mode, y, accentColor, headerTitle, headerSubtitle) {
+      const sectionTotal = pdfSectionTotal(items, mode);
+      y = pdfEnsureSpace(doc, y, 18, headerTitle, headerSubtitle);
+      y = pdfDrawSectionTitle(doc, title, sectionTotal, y, accentColor);
+
+      y = pdfEnsureSpace(doc, y, 8, headerTitle, headerSubtitle);
+      doc.setTextColor(200, 211, 224);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text(`Total ${pdfCurrency(sectionTotal)}`, 18, y + 4);
+      y += 8;
+
+      if (!items.length) {
+        y = pdfEnsureSpace(doc, y, 14, headerTitle, headerSubtitle);
+        doc.setDrawColor(52, 66, 83);
+        doc.setFillColor(14, 28, 51);
+        doc.roundedRect(14, y, doc.internal.pageSize.getWidth() - 28, 11, 3, 3, 'FD');
+        doc.setTextColor(153, 170, 189);
+        doc.setFontSize(9);
+        doc.text(`No records in ${title.toLowerCase()}.`, 18, y + 7.2);
+        return y + 15;
+      }
+
+      items.forEach((payment) => {
+        y = pdfDrawBillCard(doc, payment, mode, y, headerTitle, headerSubtitle);
+      });
+
+      return y + 2;
+    }
+
+    function downloadSingleSectionPdf(title, items, mode = 'reminder') {
+      const jspdfApi = window.jspdf;
+      if (!jspdfApi || !jspdfApi.jsPDF) {
+        alert('PDF library is still loading. Please try again in a moment.');
+        return;
+      }
+
+      const doc = new jspdfApi.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      pdfSetDarkBackground(doc);
+      pdfAddHeader(doc, title, `Generated on ${new Date().toLocaleString('en-IN')}`);
+
+      const subtitle = `Generated on ${new Date().toLocaleString('en-IN')}`;
+      let y = 50;
+      y = pdfDrawSection(doc, title, items, mode, y, [15, 100, 136], title, subtitle);
+
+      doc.save(`${title.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+    }
+
+    function downloadPaymentsPdf(type) {
+      const { active, paid, grouped } = getReminderBuckets();
+
+      if (type === 'overdue') {
+        return downloadSingleSectionPdf('Overdue Payments', grouped.overdue, 'reminder');
+      }
+
+      if (type === 'reminders') {
+        const reminderItems = [...grouped.overdue, ...grouped.thisMonth, ...grouped.nextMonth, ...grouped.later];
+        return downloadSingleSectionPdf('Reminder Payments', reminderItems, 'reminder');
+      }
+
+      if (type === 'paid') {
+        return downloadSingleSectionPdf('Paid Payments', paid, 'paid');
+      }
+
+      const jspdfApi = window.jspdf;
+      if (!jspdfApi || !jspdfApi.jsPDF) {
+        alert('PDF library is still loading. Please try again in a moment.');
+        return;
+      }
+
+      const doc = new jspdfApi.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const sections = [
+        { title: 'Overdue Payments', items: grouped.overdue, mode: 'reminder' },
+        { title: 'Reminder Payments', items: [...grouped.overdue, ...grouped.thisMonth, ...grouped.nextMonth, ...grouped.later], mode: 'reminder' },
+        { title: 'Paid Payments', items: paid, mode: 'paid' },
+      ];
+
+      pdfSetDarkBackground(doc);
+      const headerSubtitle = `Generated on ${new Date().toLocaleString('en-IN')}`;
+      pdfAddHeader(doc, 'All Payment Records', headerSubtitle);
+
+      let y = 50;
+      sections.forEach((section, index) => {
+        if (index > 0) {
+          y += 4;
+        }
+
+        const accent = index === 0 ? [178, 48, 78] : index === 1 ? [15, 100, 136] : [15, 154, 95];
+        y = pdfDrawSection(doc, section.title, section.items, section.mode, y, accent, 'All Payment Records', headerSubtitle);
+      });
+
+      doc.save('all-payment-records.pdf');
+    }
+
+    function buildBillItem(payment) {
+      const item = document.createElement('div');
+      item.className = 'bill-item';
+
+      const isPaidEntry = Boolean(payment.paidMode);
+      const dueInfo = isPaidEntry ? null : getDaysRemainingValue(payment.reminderRepaymentDate);
+      const dueLabel = isPaidEntry ? 'Settled' : (dueInfo ? dueInfo.display : 'No due date');
+      const repaymentText = isPaidEntry
+        ? `Paid on ${formatDisplayDate(payment.paidDate || payment.created_at)}`
+        : (payment.reminderRepaymentDate || 'No due date');
+      const total = totalPayable(payment);
+      const status = normalizeText(payment.status);
+      const isPaidReminder = status === 'paid-reminder' || normalizeText(payment.reminderStatus) === 'paid';
+
+      item.innerHTML = `
+        <div class="bill-icon">₹</div>
+        <div class="bill-main">
+          <div class="bill-name">${payment.name || 'Manual Reminder'}</div>
+          <div class="bill-meta">
+            <span>${repaymentText}</span>
+            <span>${dueLabel}</span>
+            <span>${payment.mobile || ''}</span>
+          </div>
+        </div>
+        <div class="bill-amount">${formatCurrency(total)}</div>
+        <div class="bill-actions">
+          <button type="button" class="btn btn-edit">Manage</button>
+          <button type="button" class="btn btn-share">WhatsApp</button>
+          ${isPaidEntry || isPaidReminder ? '<button type="button" class="btn btn-reset btn-unpaid">Unpaid</button>' : '<button type="button" class="btn btn-save btn-paid">Paid</button>'}
+          <button type="button" class="btn btn-clear">Clear</button>
+        </div>
+      `;
+
+      const editBtn = item.querySelector('.btn-edit');
+      const shareBtn = item.querySelector('.btn-share');
+      const paidBtn = item.querySelector('.btn-paid');
+      const unpaidBtn = item.querySelector('.btn-unpaid');
+      const clearBtn = item.querySelector('.btn-clear');
+      editBtn.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        populateReminderForm(payment);
+      };
+      shareBtn.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        shareToWhatsApp(payment);
+      };
+      if (paidBtn) {
+        paidBtn.onclick = async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          await markReminderPaid(payment);
+        };
+      }
+      if (unpaidBtn) {
+        unpaidBtn.onclick = async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          await markReminderUnpaid(payment);
+        };
+      }
+      clearBtn.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        clearReminder(payment._id || payment.id);
+      };
+
+      return item;
+    }
+
+    function renderBillSection(sectionEl, title, items) {
+      const total = items.reduce((sum, payment) => sum + totalPayable(payment), 0);
+
+      sectionEl.innerHTML = `
+        <div class="bill-section-head">
+          <h3>${title}</h3>
+          <div class="section-total">${formatCurrency(total)}</div>
+        </div>
+      `;
+
+      if (!items.length) {
+        const empty = document.createElement('div');
+        empty.className = 'bill-empty';
+        empty.textContent = `No records in ${title.toLowerCase()}.`;
+        sectionEl.appendChild(empty);
+        return;
+      }
+
+      const list = document.createElement('div');
+      list.className = 'bill-list';
+      items.forEach((payment) => {
+        list.appendChild(buildBillItem(payment));
+      });
+      sectionEl.appendChild(list);
+    }
+
+    function renderPayments() {
+      const statusLine = document.getElementById('statusLine');
+      const overdueSummary = document.getElementById('overdueSummary');
+      const overdueSection = document.getElementById('overdueSection');
+      const thisMonthSection = document.getElementById('thisMonthSection');
+      const nextMonthSection = document.getElementById('nextMonthSection');
+      const laterSection = document.getElementById('laterSection');
+      const paidSection = document.getElementById('paidSection');
+
+      overdueSummary.innerHTML = '';
+      overdueSection.innerHTML = '';
+      thisMonthSection.innerHTML = '';
+      nextMonthSection.innerHTML = '';
+      laterSection.innerHTML = '';
+      paidSection.innerHTML = '';
+
+      const { active: filtered, paid: paidRecords, grouped } = getReminderBuckets();
+
+      renderBillSection(overdueSection, 'Overdue Payments', grouped.overdue);
+      console.log('Filtered Results:', filtered);
+      console.log('Filtered Length:', filtered.length);
+      
+      if (!filtered.length) {
+        overdueSummary.innerHTML = `
+          <div class="row">
+            <div class="title">Overdue</div>
+            <div class="amount">${formatCurrency(0)}</div>
+          </div>
+          <div class="summary">No manual reminder records found.</div>
+        `;
+        statusLine.textContent = 'No manual reminder records to show.';
+        return;
+      }
+
+      const overdueTotal = grouped.overdue.reduce((sum, p) => sum + totalPayable(p), 0);
+      const overdueNames = grouped.overdue.map((p) => p.name || p.mobile || 'Reminder').slice(0, 3);
+      const extraCount = Math.max(0, grouped.overdue.length - overdueNames.length);
+
+      overdueSummary.innerHTML = `
+        <div class="row">
+          <div class="title">Overdue</div>
+          <div class="amount">${formatCurrency(overdueTotal)}</div>
+        </div>
+        <div class="summary">${grouped.overdue.length ? `${overdueNames.join(', ')}${extraCount ? ` and ${extraCount} more.` : '.'}` : 'No overdue manual reminders.'}</div>
+      `;
+
+      renderBillSection(thisMonthSection, 'This month', grouped.thisMonth);
+      renderBillSection(nextMonthSection, 'Next month', grouped.nextMonth);
+      renderBillSection(laterSection, 'Later', grouped.later);
+
+      const paidItems = paidRecords.map((item) => ({
+        ...item,
+        reminderRepaymentDate: item.reminderRepaymentDate || null,
+        paidDate: item.created_at || null,
+        paidMode: true,
+        reminderAmount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : (item.reminderAmount || 0),
+        reminderInterest: 0,
+      }));
+      renderBillSection(paidSection, 'Paid', paidItems);
+
+      const visibility = {
+        all: ['overdueSummary', 'overdueSection', 'thisMonthSection', 'nextMonthSection', 'laterSection', 'paidSection'],
+        overdue: ['overdueSummary', 'overdueSection'],
+        reminders: ['overdueSummary', 'overdueSection', 'thisMonthSection', 'nextMonthSection', 'laterSection'],
+        paid: ['paidSection'],
+      }[paymentViewMode] || ['overdueSummary', 'overdueSection', 'thisMonthSection', 'nextMonthSection', 'laterSection', 'paidSection'];
+
+      ['overdueSummary', 'overdueSection', 'thisMonthSection', 'nextMonthSection', 'laterSection', 'paidSection'].forEach((id) => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.style.display = visibility.includes(id) ? '' : 'none';
+        }
+      });
+
+      const statusLabel = paymentViewMode === 'overdue'
+        ? `Showing ${grouped.overdue.length} overdue reminders.`
+        : paymentViewMode === 'paid'
+          ? `Showing ${paidRecords.length} paid payments.`
+          : paymentViewMode === 'reminders'
+            ? `Showing ${filtered.length} manual reminders.`
+            : `Showing ${filtered.length} manual reminders and ${paidRecords.length} paid payments.`;
+
+      statusLine.textContent = statusLabel;
+    }
+
+    async function fetchPayments() {
+      try {
+        document.getElementById('statusLine').textContent = 'Loading payment records...';
+        const response = await apiFetch('/api/payments');
+        const data = await response.json();
+
+        console.log('API Response Status:', response.status);
+        console.log('API Response Data:', data);
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to load payments');
+        }
+
+        paymentCache = Array.isArray(data) ? data : [];
+        console.log('Payment Cache:', paymentCache);
+        console.log('Cache Length:', paymentCache.length);
+        renderPayments();
+      } catch (error) {
+        console.error('Error loading payments:', error);
+        document.getElementById('statusLine').textContent = error.message || 'Failed to load payments.';
+      }
+    }
+
+    function getFormPayload() {
+      const principalRaw = document.getElementById('reminderAmount').value;
+      const totalRaw = document.getElementById('totalAmount').value;
+      const interestRaw = document.getElementById('reminderInterest').value;
+
+      const principal = Number(principalRaw);
+      const total = Number(totalRaw);
+      let computedInterest = interestRaw;
+
+      if (Number.isFinite(principal) && principal > 0 && Number.isFinite(total) && total >= principal) {
+        const rate = ((total - principal) / principal) * 100;
+        computedInterest = Number.isFinite(rate) ? String(Number(rate.toFixed(2))) : interestRaw;
+      }
+
+      return {
+        name: document.getElementById('selectedUser').value.trim(),
+        mobile: document.getElementById('manualMobile').value.trim(),
+        borrowDate: document.getElementById('borrowDate').value,
+        repaymentDate: document.getElementById('repaymentDate').value,
+        reminderAmount: principalRaw,
+        reminderInterest: computedInterest,
+        totalAmount: totalRaw,
+        reminderNote: document.getElementById('reminderNote').value.trim(),
+      };
+    }
+
+    function populateReminderForm(payment) {
+      selectedPaymentId = payment._id || payment.id;
+      selectedPaymentMobile = payment.mobile || '';
+      const plainName = String(payment.name || 'Unknown User').trim();
+      const selectedText = `${plainName} / ${payment.mobile || 'No mobile'}`.trim();
+      document.getElementById('selectedUser').value = plainName;
+      document.getElementById('manualMobile').value = payment.mobile || '';
+      document.getElementById('selectedUserChip').querySelector('.value').textContent = selectedText;
+      document.getElementById('borrowDate').value = payment.reminderBorrowDate || '';
+      document.getElementById('repaymentDate').value = payment.reminderRepaymentDate || '';
+      const principal = payment.reminderAmount ?? '';
+      const storedRate = payment.reminderInterest ?? '';
+      document.getElementById('reminderAmount').value = principal;
+      document.getElementById('reminderInterest').value = storedRate;
+      if (principal !== '' && storedRate !== '' && Number.isFinite(Number(principal)) && Number.isFinite(Number(storedRate))) {
+        const p = Number(principal);
+        const r = Number(storedRate);
+        const total = p + ((p * r) / 100);
+        document.getElementById('totalAmount').value = String(Number(total.toFixed(2)));
+      } else {
+        document.getElementById('totalAmount').value = '';
+      }
+      document.getElementById('reminderNote').value = payment.reminderNote || '';
+      calculateAmounts();
+      calculateDaysRemaining();
+
+      const formCard = document.getElementById('reminderFormCard');
+      if (formCard) {
+        formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    function resetReminderForm() {
+      selectedPaymentId = '';
+      selectedPaymentMobile = '';
+      document.getElementById('selectedUser').value = '';
+      document.getElementById('manualMobile').value = '';
+      document.getElementById('selectedUserChip').querySelector('.value').textContent = 'No user selected yet';
+      document.getElementById('borrowDate').value = '';
+      document.getElementById('repaymentDate').value = '';
+      document.getElementById('reminderAmount').value = '';
+      document.getElementById('reminderInterest').value = '';
+      document.getElementById('reminderNote').value = '';
+      document.getElementById('interestAmount').value = '';
+      document.getElementById('totalAmount').value = '';
+      document.getElementById('daysRemaining').value = '';
+    }
+
+    async function saveReminderFromForm() {
+      calculateAmounts('sync');
+      const payload = getFormPayload();
+      if (!payload.name || !payload.mobile) {
+        alert('Please enter both user name and mobile number.');
+        return;
+      }
+
+      await saveReminder(selectedPaymentId || payload.mobile, payload);
+    }
+
+    async function clearReminder(paymentId) {
+      if (!confirm('Clear reminder details for this payment?')) {
+        return;
+      }
+
+      await saveReminder(paymentId, {
+        borrowDate: '',
+        repaymentDate: '',
+        reminderAmount: '',
+        reminderInterest: '',
+        reminderNote: '',
+      });
+    }
+
+    async function markReminderPaid(payment) {
+      if (!confirm('Mark this reminder as paid?')) {
+        return;
+      }
+
+      const payload = {
+        name: payment.name || '',
+        mobile: payment.mobile || '',
+        borrowDate: payment.reminderBorrowDate || '',
+        repaymentDate: payment.reminderRepaymentDate || '',
+        reminderAmount: payment.reminderAmount ?? '',
+        reminderInterest: payment.reminderInterest ?? '',
+        reminderNote: payment.reminderNote || '',
+        reminderStatus: 'paid',
+        paidAt: new Date().toISOString(),
+      };
+
+      await saveReminder(payment._id || payment.id || payment.mobile, payload);
+    }
+
+    async function markReminderUnpaid(payment) {
+      if (!confirm('Move this paid reminder back to reminder list?')) {
+        return;
+      }
+
+      const payload = {
+        name: payment.name || '',
+        mobile: payment.mobile || '',
+        borrowDate: payment.reminderBorrowDate || '',
+        repaymentDate: payment.reminderRepaymentDate || '',
+        reminderAmount: payment.reminderAmount ?? '',
+        reminderInterest: payment.reminderInterest ?? '',
+        reminderNote: payment.reminderNote || '',
+        reminderStatus: 'manual',
+        paidAt: '',
+      };
+
+      await saveReminder(payment._id || payment.id || payment.mobile, payload);
+    }
+
+    async function saveReminder(paymentId, payload) {
+      try {
+        const response = await apiFetch(`/api/payments/${paymentId}/reminder`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(result.message || 'Failed to save reminder');
+        }
+
+        document.getElementById('statusLine').textContent = result.message || 'Reminder updated successfully.';
+        await fetchPayments();
+        if (result.payment) {
+          populateReminderForm(result.payment);
+        }
+      } catch (error) {
+        console.error('Error saving reminder note:', error);
+        alert(error.message || 'Failed to save reminder note.');
+      }
+    }
+
+    function shareToWhatsApp(payment) {
+      const waNumber = getWhatsAppNumber(payment.mobile);
+      if (!waNumber) {
+        alert('No valid mobile number for this user.');
+        return;
+      }
+
+      const message = buildWhatsAppMessage(payment);
+      const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank', 'noopener');
+    }
+
+    function shareSelectedToWhatsApp() {
+      const payload = getFormPayload();
+      if (!payload.name || !payload.mobile) {
+        alert('Please enter both user name and mobile number.');
+        return;
+      }
+
+      const payment = {
+        name: payload.name,
+        mobile: payload.mobile,
+        reminderBorrowDate: payload.borrowDate,
+        reminderRepaymentDate: payload.repaymentDate,
+        reminderAmount: payload.reminderAmount,
+        reminderInterest: payload.reminderInterest,
+        reminderNote: payload.reminderNote,
+      };
+
+      shareToWhatsApp(payment);
+    }
+
+    function toggleSidebar() {
+      document.body.classList.toggle('sidebar-open');
+    }
+
+    async function logout(event) {
+      if (event) {
+        event.preventDefault();
+      }
+
+      try {
+        await fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'include',
+        });
+      } catch (_error) {
+      }
+
+      localStorage.removeItem('user');
+      window.location.href = '/Login.html';
+      return false;
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchPayments);
+  </script>
+</body>
+</html>

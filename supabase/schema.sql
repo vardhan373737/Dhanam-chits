@@ -52,9 +52,29 @@ create table if not exists public.payments (
   utr_number text,
   type text,
   status public.payment_status not null default 'Pending',
+  reminder_note text,
+  reminder_borrow_date date,
+  reminder_repayment_date date,
+  reminder_amount numeric(12,2),
+  reminder_interest numeric(8,2),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table if exists public.payments
+  add column if not exists reminder_note text;
+
+alter table if exists public.payments
+  add column if not exists reminder_borrow_date date;
+
+alter table if exists public.payments
+  add column if not exists reminder_repayment_date date;
+
+alter table if exists public.payments
+  add column if not exists reminder_amount numeric(12,2);
+
+alter table if exists public.payments
+  add column if not exists reminder_interest numeric(8,2);
 
 create index if not exists idx_payments_mobile on public.payments (mobile);
 create unique index if not exists idx_payments_utr_unique on public.payments (utr_number) where utr_number is not null;
