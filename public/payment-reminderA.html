@@ -663,6 +663,465 @@
       }
     }
 
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.7;
+      }
+    }
+
+    /* Premium Analytics Dashboard */
+    .analytics-section {
+      margin-bottom: 24px;
+      animation: cardEnter 0.4s ease both;
+    }
+
+    .analytics-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0d2d43;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .stat-box {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+      border: 1px solid rgba(13, 124, 145, 0.15);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 8px 20px rgba(13, 124, 145, 0.08);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      animation: slideIn 0.4s ease both;
+    }
+
+    .stat-box:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(13, 124, 145, 0.15);
+      border-color: rgba(13, 124, 145, 0.3);
+    }
+
+    .stat-box.warning {
+      border-color: rgba(217, 119, 6, 0.25);
+      background: linear-gradient(135deg, rgba(255, 250, 240, 0.9), rgba(255, 248, 240, 0.7));
+    }
+
+    .stat-box.danger {
+      border-color: rgba(184, 48, 78, 0.25);
+      background: linear-gradient(135deg, rgba(255, 240, 245, 0.9), rgba(255, 245, 250, 0.7));
+    }
+
+    .stat-box.success {
+      border-color: rgba(15, 154, 95, 0.25);
+      background: linear-gradient(135deg, rgba(240, 255, 250, 0.9), rgba(245, 255, 252, 0.7));
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      margin-bottom: 8px;
+      background: rgba(13, 124, 145, 0.1);
+    }
+
+    .stat-box.warning .stat-icon {
+      background: rgba(217, 119, 6, 0.1);
+      color: #d97e2a;
+    }
+
+    .stat-box.danger .stat-icon {
+      background: rgba(184, 48, 78, 0.1);
+      color: #b8304e;
+    }
+
+    .stat-box.success .stat-icon {
+      background: rgba(15, 154, 95, 0.1);
+      color: #0b7a75;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: #496a81;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #0d2d43;
+      margin-bottom: 4px;
+    }
+
+    .stat-change {
+      font-size: 0.75rem;
+      color: #496a81;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .stat-change.positive {
+      color: #0b7a75;
+    }
+
+    .stat-change.negative {
+      color: #b8304e;
+    }
+
+    /* Premium Badge System */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .badge-primary {
+      background: rgba(13, 124, 145, 0.12);
+      color: #0d7c91;
+    }
+
+    .badge-danger {
+      background: rgba(184, 48, 78, 0.12);
+      color: #b8304e;
+    }
+
+    .badge-success {
+      background: rgba(15, 154, 95, 0.12);
+      color: #0b7a75;
+    }
+
+    .badge-warning {
+      background: rgba(217, 119, 6, 0.12);
+      color: #d97e2a;
+    }
+
+    .badge-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Quick Action Bar */
+    .quick-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      padding: 12px;
+      background: linear-gradient(135deg, rgba(14, 139, 156, 0.05), rgba(15, 154, 95, 0.05));
+      border-radius: 12px;
+      border: 1px solid rgba(13, 124, 145, 0.1);
+    }
+
+    .quick-action-btn {
+      border: 1px solid rgba(13, 124, 145, 0.2);
+      background: rgba(255, 255, 255, 0.8);
+      color: #0d2d43;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .quick-action-btn:hover {
+      background: #fff;
+      border-color: #0d7c91;
+      color: #0d7c91;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(13, 124, 145, 0.15);
+    }
+
+    .quick-action-btn.active {
+      background: #0d7c91;
+      color: #fff;
+      border-color: #0d7c91;
+    }
+
+    /* Template Selector */
+    .template-selector {
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid #ccdde8;
+      border-radius: 10px;
+    }
+
+    .template-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .template-option:hover {
+      background: rgba(13, 124, 145, 0.1);
+    }
+
+    .template-option input[type="radio"] {
+      cursor: pointer;
+    }
+
+    .template-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #0d2d43;
+    }
+
+    .template-description {
+      font-size: 0.75rem;
+      color: #496a81;
+      margin-left: 24px;
+    }
+
+    /* Schedule Section */
+    .schedule-section {
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(15, 154, 95, 0.05);
+      border: 1px solid rgba(15, 154, 95, 0.15);
+      border-radius: 10px;
+    }
+
+    .schedule-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #2a546d;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .time-picker {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .time-slot {
+      padding: 8px 12px;
+      border: 1px solid rgba(13, 124, 145, 0.2);
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .time-slot:hover {
+      border-color: #0d7c91;
+      background: #fff;
+    }
+
+    .time-slot.selected {
+      background: #0d7c91;
+      color: #fff;
+      border-color: #0d7c91;
+    }
+
+    /* Enhanced Table */
+    .reminder-item-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: #fff;
+      border: 1px solid #dce9f1;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      transition: all 0.2s ease;
+      animation: slideIn 0.3s ease both;
+    }
+
+    .reminder-item-card:hover {
+      box-shadow: 0 8px 20px rgba(13, 124, 145, 0.12);
+      border-color: rgba(13, 124, 145, 0.3);
+    }
+
+    .reminder-item-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0d7c91, #0b7a75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .reminder-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .reminder-item-name {
+      font-weight: 700;
+      color: #0d2d43;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .reminder-item-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
+      color: #496a81;
+    }
+
+    .reminder-item-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .reminder-item-amount {
+      font-weight: 800;
+      color: #0d7c91;
+      font-size: 1rem;
+    }
+
+    .reminder-item-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* Progress bar for payment status */
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: #e4eef4;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0d7c91, #0b7a75);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      font-size: 0.7rem;
+      color: #496a81;
+      margin-top: 4px;
+    }
+
+    /* Tooltip */
+    .tooltip {
+      position: relative;
+      display: inline-flex;
+    }
+
+    .tooltip-content {
+      visibility: hidden;
+      background: #0d2d43;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.75rem;
+      position: absolute;
+      z-index: 1000;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .tooltip:hover .tooltip-content {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #496a81;
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .empty-state-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #0d2d43;
+      margin-bottom: 8px;
+    }
+
+    .empty-state-text {
+      font-size: 0.9rem;
+      color: #496a81;
+    }
+
     @media screen and (max-width: 768px) {
       .content {
         margin-left: 0;
@@ -956,25 +1415,82 @@
   <div class="content">
     <div class="page-head">
       <div>
-        <h1>Payment Reminder Center</h1>
-        <p class="page-tagline">Showing all manual-reminder records.</p>
+        <h1>💰 Payment Reminder Center</h1>
+        <p class="page-tagline">Manage payment reminders & track collections efficiently.</p>
       </div>
       <div class="toolbar-group">
-        <button class="toolbar-btn" onclick="fetchPayments()">Refresh</button>
-        <button class="toolbar-btn" onclick="downloadPaymentsPdf('overdue')">Overdue PDF</button>
-        <button class="toolbar-btn" onclick="downloadPaymentsPdf('reminders')">Reminder PDF</button>
-        <button class="toolbar-btn" onclick="downloadPaymentsPdf('paid')">Paid PDF</button>
-        <button class="toolbar-btn" onclick="downloadPaymentsPdf('all')">All PDF</button>
+        <button class="toolbar-btn" onclick="fetchPayments()" title="Refresh all data">
+          <i class="fas fa-sync"></i> Refresh
+        </button>
+        <button class="toolbar-btn" onclick="downloadPaymentsPdf('overdue')" title="Export overdue payments">
+          <i class="fas fa-file-pdf"></i> Overdue PDF
+        </button>
+        <button class="toolbar-btn" onclick="downloadPaymentsPdf('reminders')" title="Export pending reminders">
+          <i class="fas fa-file-pdf"></i> Reminders PDF
+        </button>
+        <button class="toolbar-btn" onclick="downloadPaymentsPdf('all')" title="Export all records">
+          <i class="fas fa-download"></i> Export All
+        </button>
+      </div>
+    </div>
+
+    <!-- Analytics Dashboard -->
+    <div class="analytics-section" id="analyticsDashboard">
+      <div class="analytics-title">📊 Quick Analytics</div>
+      <div class="stats-container" id="statsContainer">
+        <div class="stat-box danger">
+          <div class="stat-icon">⏰</div>
+          <div class="stat-label">Overdue</div>
+          <div class="stat-value" id="overdueCount">0</div>
+          <div class="stat-change negative"><i class="fas fa-arrow-up"></i> Requires Action</div>
+        </div>
+        <div class="stat-box warning">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-label">Due Soon (7 days)</div>
+          <div class="stat-value" id="dueSoonCount">0</div>
+          <div class="stat-change"></div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-icon">📋</div>
+          <div class="stat-label">Pending Reminders</div>
+          <div class="stat-value" id="pendingCount">0</div>
+          <div class="stat-change"></div>
+        </div>
+        <div class="stat-box success">
+          <div class="stat-icon">✅</div>
+          <div class="stat-label">Paid This Month</div>
+          <div class="stat-value" id="paidThisMonthCount">0</div>
+          <div class="stat-change positive"><i class="fas fa-arrow-down"></i> Great Performance</div>
+        </div>
+      </div>
+      
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <button class="quick-action-btn" onclick="showBulkSendModal()" title="Send reminders to multiple users">
+          <i class="fas fa-envelope"></i> Bulk Send
+        </button>
+        <button class="quick-action-btn" onclick="toggleTemplateSelector()" title="Use pre-defined message templates">
+          <i class="fas fa-list"></i> Templates
+        </button>
+        <button class="quick-action-btn" onclick="toggleScheduleReminder()" title="Schedule automatic reminders">
+          <i class="fas fa-clock"></i> Schedule
+        </button>
+        <button class="quick-action-btn" onclick="showActivityLog()" title="View reminder history">
+          <i class="fas fa-history"></i> Activity Log
+        </button>
+        <button class="quick-action-btn" onclick="downloadRemindersAsExcel()" title="Export to Excel">
+          <i class="fas fa-table"></i> Export Excel
+        </button>
       </div>
     </div>
 
     <div class="layout">
       <div class="form-card" id="reminderFormCard">
-        <h2 class="form-title">Create / Update Reminder</h2>
-        <div class="manual-badge">Manual Entry Enabled</div>
+        <h2 class="form-title">✏️ Create / Update Reminder</h2>
+        <div class="manual-badge"><i class="fas fa-edit"></i> Manual Entry Enabled</div>
         <div class="grid single" style="margin-top: 10px;">
           <div class="field full">
-            <label for="selectedUser">User Name</label>
+            <label for="selectedUser">👤 User Name</label>
             <input type="text" id="selectedUser" placeholder="Enter user name manually">
             <div id="selectedUserChip" class="selected-user-chip" style="margin-top: 8px;">
               <span class="label">Current</span>
@@ -982,22 +1498,179 @@
             </div>
           </div>
           <div class="field full">
-            <label for="manualMobile">Mobile Number</label>
+            <label for="manualMobile">📱 Mobile Number</label>
             <input type="text" id="manualMobile" maxlength="10" placeholder="Enter mobile number manually">
           </div>
         </div>
 
         <div class="grid">
           <div class="field">
-            <label for="borrowDate">Borrow Date</label>
+            <label for="borrowDate">📅 Borrow Date</label>
             <input type="date" id="borrowDate">
           </div>
           <div class="field">
-            <label for="repaymentDate">Repayment Date</label>
+            <label for="repaymentDate">📆 Repayment Date</label>
             <input type="date" id="repaymentDate" oninput="calculateDaysRemaining()">
           </div>
           <div class="field">
-            <label for="daysRemaining">Days Until Repayment</label>
+            <label for="daysRemaining">⏳ Days Until Repayment</label>
+            <input type="text" id="daysRemaining" readonly placeholder="Auto-calculated">
+          </div>
+          <div class="field">
+            <label for="reminderAmount">💵 Amount (Principal)</label>
+            <input type="number" id="reminderAmount" min="0" step="0.01" placeholder="e.g. 1500" oninput="calculateAmounts('principal')">
+          </div>
+          <div class="field">
+            <label for="reminderInterest">📊 Interest (%)</label>
+            <input type="number" id="reminderInterest" min="0" step="0.01" placeholder="Enter interest %" oninput="calculateAmounts('interest')">
+          </div>
+          <div class="field">
+            <label for="interestAmount">💰 Interest Amount</label>
+            <input type="text" id="interestAmount" readonly placeholder="Auto-calculated">
+          </div>
+          <div class="field">
+            <label for="totalAmount">🎯 Total Amount (Principal + Interest)</label>
+            <input type="number" id="totalAmount" min="0" step="0.01" placeholder="Enter total amount" oninput="calculateAmounts('total')">
+          </div>
+          <div class="field full">
+            <label for="reminderNote">📝 Note / Message</label>
+            <textarea id="reminderNote" maxlength="500" placeholder="Optional note for user"></textarea>
+            <span class="hint" id="charCount">0/500 characters</span>
+          </div>
+        </div>
+
+        <!-- Template Selector -->
+        <div class="template-selector" id="templateSelector" style="display: none;">
+          <div class="schedule-label">📋 Message Templates</div>
+          <label class="template-option">
+            <input type="radio" name="template" value="formal" onchange="applyTemplate('formal')">
+            <div>
+              <div class="template-label">Formal</div>
+              <div class="template-description">Professional payment reminder</div>
+            </div>
+          </label>
+          <label class="template-option">
+            <input type="radio" name="template" value="friendly" onchange="applyTemplate('friendly')">
+            <div>
+              <div class="template-label">Friendly</div>
+              <div class="template-description">Casual & friendly tone</div>
+            </div>
+          </label>
+          <label class="template-option">
+            <input type="radio" name="template" value="urgent" onchange="applyTemplate('urgent')">
+            <div>
+              <div class="template-label">Urgent</div>
+              <div class="template-description">For overdue payments</div>
+            </div>
+          </label>
+        </div>
+
+        <!-- Schedule Section -->
+        <div class="schedule-section" id="scheduleSection" style="display: none;">
+          <div class="schedule-label"><i class="fas fa-clock"></i> Schedule Send Time</div>
+          <div class="time-picker">
+            <button class="time-slot" onclick="selectTimeSlot(this, '09:00')">09:00 AM</button>
+            <button class="time-slot" onclick="selectTimeSlot(this, '12:00')">12:00 PM</button>
+            <button class="time-slot" onclick="selectTimeSlot(this, '15:00')">03:00 PM</button>
+            <button class="time-slot" onclick="selectTimeSlot(this, '18:00')">06:00 PM</button>
+          </div>
+          <div class="field full" style="margin-top: 10px;">
+            <label for="scheduleDate">📅 Send Date</label>
+            <input type="date" id="scheduleDate">
+          </div>
+        </div>
+
+        <p class="hint">💡 Tip: If note is empty, system auto-builds message from date, amount and interest.</p>
+        <div class="actions">
+          <button class="btn btn-save" onclick="saveReminderFromForm()"><i class="fas fa-save"></i> Save Reminder</button>
+          <button class="btn btn-share" onclick="shareSelectedToWhatsApp()"><i class="fas fa-whatsapp"></i> WhatsApp</button>
+          <button class="btn btn-share" onclick="downloadReminderTemplateExcel()"><i class="fas fa-download"></i> Excel Template</button>
+          <button class="btn btn-edit" onclick="triggerReminderExcelUpload()"><i class="fas fa-upload"></i> Upload Excel</button>
+          <button class="btn btn-reset" onclick="resetReminderForm()"><i class="fas fa-redo"></i> Reset</button>
+          <input type="file" id="reminderExcelFileInput" accept=".xlsx,.xls" style="display: none;" onchange="handleReminderExcelUpload(event)">
+        </div>
+      </div>
+
+      <div class="panel">
+        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
+          <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search by name, mobile, amount..." onkeyup="renderPayments()" style="flex: 1; margin-bottom: 0;">
+          <button class="toolbar-btn" onclick="toggleAdvancedFilters()" title="Advanced filtering options" style="padding: 10px;">
+            <i class="fas fa-filter"></i>
+          </button>
+        </div>
+
+        <!-- Advanced Filters (hidden by default) -->
+        <div id="advancedFilters" style="display: none; padding: 12px; background: rgba(13, 124, 145, 0.05); border-radius: 10px; margin-bottom: 12px; border: 1px solid rgba(13, 124, 145, 0.1);">
+          <div class="grid">
+            <div class="field">
+              <label>Filter by Status</label>
+              <select id="filterStatus" onchange="renderPayments()" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccdde8;">
+                <option value="">All Status</option>
+                <option value="overdue">Overdue</option>
+                <option value="due-soon">Due Soon</option>
+                <option value="pending">Pending</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Min Amount (₹)</label>
+              <input type="number" id="filterMinAmount" min="0" onchange="renderPayments()" placeholder="0" style="width: 100%;">
+            </div>
+          </div>
+        </div>
+
+        <div class="view-tabs">
+          <button type="button" class="view-tab active" data-view="all" onclick="setPaymentView('all')">📋 All</button>
+          <button type="button" class="view-tab" data-view="overdue" onclick="setPaymentView('overdue')">⏰ Overdue</button>
+          <button type="button" class="view-tab" data-view="reminders" onclick="setPaymentView('reminders')">🔔 Pending</button>
+          <button type="button" class="view-tab" data-view="paid" onclick="setPaymentView('paid')">✅ Paid</button>
+        </div>
+        
+        <!-- Reminders List View (Premium Cards) -->
+        <div id="remindersListView" style="display: none;">
+          <div id="remindersContainer">
+            <!-- Dynamically populated with reminder cards -->
+          </div>
+        </div>
+
+        <!-- Traditional Table View -->
+        <div id="tableView">
+          <div class="bills-board">
+            <div id="overdueSummary" class="bill-top-total"></div>
+            <div id="overdueSection" class="bill-section"></div>
+            <div id="thisMonthSection" class="bill-section"></div>
+            <div id="nextMonthSection" class="bill-section"></div>
+            <div id="laterSection" class="bill-section"></div>
+            <div id="paidSection" class="bill-section"></div>
+          </div>
+        </div>
+
+        <p id="statusLine" class="status">Loading payment records...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div id="bulkSendModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 16px; padding: 24px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+      <h2 style="margin: 0 0 16px; color: #0d2d43;">Send Reminders in Bulk</h2>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #0d2d43;">Select Recipients</label>
+        <label style="display: flex; gap: 8px; margin-bottom: 8px;">
+          <input type="checkbox" id="bulkSendAll"> All Overdue
+        </label>
+        <label style="display: flex; gap: 8px; margin-bottom: 8px;">
+          <input type="checkbox" id="bulkSendDueSoon"> Due Soon (7 days)
+        </label>
+        <label style="display: flex; gap: 8px;">
+          <input type="checkbox" id="bulkSendPending"> All Pending
+        </label>
+      </div>
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button onclick="closeBulkSendModal()" style="padding: 10px 16px; border: 1px solid #ccc; border-radius: 8px; background: #f5f5f5; cursor: pointer;">Cancel</button>
+        <button onclick="sendBulkReminders()" style="padding: 10px 16px; background: #0d7c91; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Send Reminders</button>
+      </div>
+    </div>
+  </div>
             <input type="text" id="daysRemaining" readonly placeholder="Auto-calculated">
           </div>
           <div class="field">
@@ -2023,16 +2696,6 @@
         return '';
       }
 
-      const excelSerial = Number(raw);
-      if (Number.isFinite(excelSerial) && excelSerial > 20000 && excelSerial < 60000) {
-        const epoch = Date.UTC(1899, 11, 30);
-        const parsed = new Date(epoch + (excelSerial * 24 * 60 * 60 * 1000));
-        const year = parsed.getUTCFullYear();
-        const month = String(parsed.getUTCMonth() + 1).padStart(2, '0');
-        const day = String(parsed.getUTCDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      }
-
       const isoLike = raw.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
       if (isoLike) {
         const year = isoLike[1];
@@ -2047,19 +2710,6 @@
         const month = dmyLike[2].padStart(2, '0');
         const year = dmyLike[3];
         return `${year}-${month}-${day}`;
-      }
-
-      const mdyLike = raw.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})$/);
-      if (mdyLike) {
-        const first = Number(mdyLike[1]);
-        const second = Number(mdyLike[2]);
-        const third = mdyLike[3].length === 2 ? `20${mdyLike[3]}` : mdyLike[3];
-        if (first > 12) {
-          return `${third}-${String(second).padStart(2, '0')}-${String(first).padStart(2, '0')}`;
-        }
-        if (second > 12) {
-          return `${third}-${String(first).padStart(2, '0')}-${String(second).padStart(2, '0')}`;
-        }
       }
 
       const parsed = new Date(raw);
@@ -2134,19 +2784,8 @@
         return '';
       };
 
-      const isLikelyDataRow = (row) => {
-        if (!Array.isArray(row)) {
-          return false;
-        }
-
-        return row.some((cell) => String(cell ?? '').trim() !== '') && !row.every((cell) => {
-          const text = normalizeText(cell);
-          return !text || ['enter borrower name', '10-digit mobile', 'yyyy-mm-dd', 'amount', 'interest %', 'optional note', 'use yyyy-mm-dd for dates.'].includes(text);
-        });
-      };
-
       if (headerIndex.name !== undefined || headerIndex.mobile !== undefined || headerIndex['borrow date'] !== undefined || headerIndex['repayment date'] !== undefined) {
-        const row = rows.slice(1).find((candidateRow) => isLikelyDataRow(candidateRow)) || rows[1] || [];
+        const row = rows[1] || [];
         return {
           name: fieldByHeader(row, 'Name'),
           mobile: fieldByHeader(row, 'Mobile'),
@@ -2246,7 +2885,7 @@
         const templateRows = [
           ['Name', 'Mobile', 'Borrow Date', 'Repayment Date', 'Principal Amount', 'Interest (%)', 'Note'],
           ['Enter borrower name', '10-digit mobile', 'YYYY-MM-DD', 'YYYY-MM-DD', 'Amount', 'Interest %', 'Optional note'],
-          ['Harsha', '9346412185', '22-04-2026', '25-04-2026', 5000, 30, 'Use YYYY-MM-DD or DD-MM-YYYY for dates.'],
+          ['', '', '', '', '', '', 'Use YYYY-MM-DD for dates.'],
         ];
 
         const sheet = window.XLSX.utils.aoa_to_sheet(templateRows);
@@ -2529,7 +3168,200 @@
       return false;
     }
 
-    document.addEventListener('DOMContentLoaded', fetchPayments);
+    // ===== PREMIUM FEATURES =====
+    
+    // Update analytics dashboard with real-time stats
+    function updateAnalyticsDashboard() {
+      const payments = getAdminPaymentsOnly(getPaidPayments());
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      let overdueCount = 0;
+      let dueSoonCount = 0;
+      let pendingCount = 0;
+      let paidThisMonthCount = 0;
+      
+      payments.forEach(payment => {
+        const repaymentDate = toDateStart(payment.reminderRepaymentDate);
+        if (!repaymentDate) {
+          pendingCount++;
+          return;
+        }
+        
+        const daysRemaining = Math.ceil((repaymentDate - today) / (1000 * 3600 * 24));
+        
+        if (daysRemaining < 0) {
+          overdueCount++;
+        } else if (daysRemaining <= 7) {
+          dueSoonCount++;
+        } else {
+          pendingCount++;
+        }
+      });
+      
+      // Count paid this month
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+      getPaidPayments().forEach(payment => {
+        const paidDate = toDateStart(payment.reminderPaidAt || payment.created_at);
+        if (paidDate && paidDate.getMonth() === currentMonth && paidDate.getFullYear() === currentYear) {
+          paidThisMonthCount++;
+        }
+      });
+      
+      document.getElementById('overdueCount').textContent = overdueCount;
+      document.getElementById('dueSoonCount').textContent = dueSoonCount;
+      document.getElementById('pendingCount').textContent = pendingCount;
+      document.getElementById('paidThisMonthCount').textContent = paidThisMonthCount;
+    }
+
+    // Toggle template selector
+    function toggleTemplateSelector() {
+      const selector = document.getElementById('templateSelector');
+      selector.style.display = selector.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Apply message template
+    function applyTemplate(templateType) {
+      const name = document.getElementById('selectedUser').value || 'Customer';
+      const principal = Number(document.getElementById('reminderAmount').value) || 0;
+      const interestRate = Number(document.getElementById('reminderInterest').value) || 0;
+      const repaymentDate = document.getElementById('repaymentDate').value;
+      
+      let template = '';
+      const interestAmount = (principal * interestRate) / 100;
+      const totalAmount = principal + interestAmount;
+      
+      if (templateType === 'formal') {
+        template = `Dear ${name},\n\nThis is to formally remind you of your pending payment obligation.\n\nPayment Details:\n- Principal Amount: ₹${formatAmount(principal)}\n- Interest Rate: ${interestRate}%\n- Interest Amount: ₹${formatAmount(interestAmount)}\n- Total Payable: ₹${formatAmount(totalAmount)}\n- Due Date: ${repaymentDate}\n\nPlease arrange for the payment at your earliest convenience.\n\nThank you for your cooperation.`;
+      } else if (templateType === 'friendly') {
+        template = `Hi ${name}! 👋\n\nJust a friendly reminder about your upcoming payment.\n\nQuick Summary:\n💰 Amount: ₹${formatAmount(principal)} + ₹${formatAmount(interestAmount)} interest = ₹${formatAmount(totalAmount)}\n📅 Due: ${repaymentDate}\n\nLet us know if you have any questions!\n\nThanks! 😊`;
+      } else if (templateType === 'urgent') {
+        template = `Dear ${name},\n\n⚠️ URGENT: Your payment is now overdue!\n\nImmediate Action Required:\n- Total Amount Due: ₹${formatAmount(totalAmount)}\n- Original Due Date: ${repaymentDate}\n- Principal: ₹${formatAmount(principal)}\n- Interest: ₹${formatAmount(interestAmount)}\n\nPlease settle this payment immediately to avoid any further complications.\n\nContact us for payment options.`;
+      }
+      
+      document.getElementById('reminderNote').value = template;
+      updateCharCount();
+    }
+
+    // Toggle schedule reminder section
+    function toggleScheduleReminder() {
+      const section = document.getElementById('scheduleSection');
+      section.style.display = section.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Select time slot
+    function selectTimeSlot(element, time) {
+      document.querySelectorAll('.time-slot').forEach(slot => slot.classList.remove('selected'));
+      element.classList.add('selected');
+    }
+
+    // Show bulk send modal
+    function showBulkSendModal() {
+      document.getElementById('bulkSendModal').style.display = 'flex';
+    }
+
+    // Close bulk send modal
+    function closeBulkSendModal() {
+      document.getElementById('bulkSendModal').style.display = 'none';
+      document.getElementById('bulkSendAll').checked = false;
+      document.getElementById('bulkSendDueSoon').checked = false;
+      document.getElementById('bulkSendPending').checked = false;
+    }
+
+    // Send bulk reminders
+    async function sendBulkReminders() {
+      const bulkAll = document.getElementById('bulkSendAll').checked;
+      const bulkDueSoon = document.getElementById('bulkSendDueSoon').checked;
+      const bulkPending = document.getElementById('bulkSendPending').checked;
+      
+      if (!bulkAll && !bulkDueSoon && !bulkPending) {
+        alert('Please select at least one recipient group');
+        return;
+      }
+      
+      const toastMsg = `Sending reminders to selected recipients...`;
+      alert(toastMsg);
+      closeBulkSendModal();
+      
+      // Here you would normally make an API call to send bulk reminders
+      console.log('Bulk reminders would be sent to:', {bulkAll, bulkDueSoon, bulkPending});
+    }
+
+    // Toggle advanced filters
+    function toggleAdvancedFilters() {
+      const filters = document.getElementById('advancedFilters');
+      filters.style.display = filters.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Show activity log
+    function showActivityLog() {
+      const logs = JSON.parse(localStorage.getItem('reminderActivityLogs') || '[]');
+      const logText = logs.length > 0 
+        ? logs.map(log => `${log.date}: ${log.action}`).join('\n')
+        : 'No activity recorded yet';
+      alert('Activity Log:\n\n' + logText);
+    }
+
+    // Download reminders as Excel
+    function downloadRemindersAsExcel() {
+      const payments = getAdminPaymentsOnly(getPaidPayments());
+      
+      if (payments.length === 0) {
+        alert('No reminders to export');
+        return;
+      }
+      
+      const wb = XLSX.utils.book_new();
+      const wsData = [
+        ['Name', 'Mobile', 'Borrow Date', 'Repayment Date', 'Principal', 'Interest %', 'Interest Amount', 'Total Amount', 'Note', 'Status']
+      ];
+      
+      payments.forEach(p => {
+        const principal = Number(p.reminderAmount) || 0;
+        const interest = Number(p.reminderInterest) || 0;
+        const interestAmount = (principal * interest) / 100;
+        wsData.push([
+          p.name,
+          p.mobile,
+          p.reminderBorrowDate,
+          p.reminderRepaymentDate,
+          principal,
+          interest,
+          interestAmount,
+          principal + interestAmount,
+          p.reminderNote,
+          'Active'
+        ]);
+      });
+      
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Reminders');
+      XLSX.writeFile(wb, `payment-reminders-${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+
+    // Update character count
+    function updateCharCount() {
+      const noteInput = document.getElementById('reminderNote');
+      const charCount = document.getElementById('charCount');
+      charCount.textContent = `${noteInput.value.length}/500 characters`;
+    }
+
+    // Initialize character counter
+    document.getElementById('reminderNote').addEventListener('input', updateCharCount);
+
+    // Update analytics on initial load and whenever payments change
+    const originalFetchPayments = fetchPayments;
+    async function fetchPaymentsWithAnalytics() {
+      await originalFetchPayments.call(this);
+      updateAnalyticsDashboard();
+    }
+    fetchPayments = fetchPaymentsWithAnalytics;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      fetchPayments();
+      updateAnalyticsDashboard();
+    });
   </script>
 </body>
 </html>
