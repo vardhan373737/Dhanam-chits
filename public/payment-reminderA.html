@@ -1494,6 +1494,24 @@
       margin-bottom: 8px;
     }
 
+    .settings-select {
+      min-width: 170px;
+      border: 1px solid #c9dde9;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      color: #0d2d43;
+      background: #ffffff;
+      font-weight: 600;
+    }
+
+    .settings-help {
+      font-size: 0.78rem;
+      color: #5c7387;
+      margin-top: 8px;
+      line-height: 1.35;
+    }
+
     .toggle-switch {
       position: relative;
       width: 50px;
@@ -3110,6 +3128,19 @@
         </div>
       </div>
 
+      <div class="settings-group">
+        <div class="settings-group-title">Testing Role</div>
+        <div class="settings-option">
+          <span>Current Role</span>
+          <select id="roleSwitcher" class="settings-select" onchange="changeUserRole(this.value)">
+            <option value="admin">Admin</option>
+            <option value="manager">Manager</option>
+            <option value="viewer">Viewer</option>
+          </select>
+        </div>
+        <div class="settings-help" id="rolePermissionsHint">Role capabilities will appear here.</div>
+      </div>
+
       <button onclick="closeSettingsModal()" style="width: 100%; padding: 10px; background: #0d7c91; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Close Settings</button>
     </div>
   </div>
@@ -3601,7 +3632,14 @@
 
     function getCurrentUserContext() {
       const raw = localStorage.getItem('user');
-      const parsed = raw ? JSON.parse(raw) : {};
+      let parsed = {};
+      if (raw) {
+        try {
+          parsed = JSON.parse(raw);
+        } catch (_error) {
+          parsed = {};
+        }
+      }
       const role = String(parsed.role || localStorage.getItem('userRole') || 'admin').toLowerCase();
       const actor = parsed.name || parsed.username || 'Admin User';
       return { actor, role };
@@ -5487,11 +5525,51 @@
       const emailNotif = localStorage.getItem('emailNotifications') !== 'false';
       const pushNotif = localStorage.getItem('pushNotifications') !== 'false';
       const autoRefresh = localStorage.getItem('autoRefresh') === 'true';
+      const currentRole = getCurrentUserContext().role;
 
       updateToggleState('darkModeToggle', darkMode);
       updateToggleState('emailToggle', emailNotif);
       updateToggleState('pushToggle', pushNotif);
       updateToggleState('autoRefreshToggle', autoRefresh);
+
+      const roleSwitcher = document.getElementById('roleSwitcher');
+      if (roleSwitcher) {
+        roleSwitcher.value = currentRole;
+      }
+      updateRolePermissionsHint(currentRole);
+    }
+
+    function updateRolePermissionsHint(role) {
+      const allow = ROLE_PERMISSIONS[role] || [];
+      const hint = document.getElementById('rolePermissionsHint');
+      if (!hint) return;
+
+      if (!allow.length) {
+        hint.textContent = 'No privileged actions allowed for this role.';
+        return;
+      }
+
+      hint.textContent = `Allowed: ${allow.join(', ')}`;
+    }
+
+    function changeUserRole(role) {
+      const normalizedRole = String(role || 'viewer').toLowerCase();
+      localStorage.setItem('userRole', normalizedRole);
+
+      const rawUser = localStorage.getItem('user');
+      if (rawUser) {
+        try {
+          const parsedUser = JSON.parse(rawUser);
+          parsedUser.role = normalizedRole;
+          localStorage.setItem('user', JSON.stringify(parsedUser));
+        } catch (_error) {
+        }
+      }
+
+      updateRolePermissionsHint(normalizedRole);
+      logActivity('Role switched', `Changed to ${normalizedRole}`);
+      showToast(`Role changed to ${normalizedRole}`, 'success', 'Role Switcher');
+      renderPayments();
     }
 
     function updateToggleState(elementId, active) {
