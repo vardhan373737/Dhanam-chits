@@ -697,6 +697,8 @@
       margin-bottom: 24px;
       animation: cardEnter 0.4s ease both;
       width: 100%;
+      display: block !important;
+      visibility: visible !important;
     }
 
     .analytics-title {
@@ -708,7 +710,7 @@
     }
 
     .stats-container {
-      display: grid;
+      display: grid !important;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 12px;
       margin-bottom: 12px;
@@ -722,8 +724,37 @@
     }
 
     @media screen and (min-width: 1024px) and (max-width: 1199px) {
+      .analytics-section {
+        margin-bottom: 24px !important;
+        padding: 0 !important;
+        width: 100% !important;
+      }
+
+      .kpi-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 14px !important;
+        margin-bottom: 16px !important;
+      }
+
+      .kpi-card {
+        padding: 14px !important;
+        display: block !important;
+      }
+
+      .kpi-value {
+        font-size: 1.3rem;
+      }
+
       .stats-container {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 14px !important;
+      }
+
+      .quick-actions {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important;
+        gap: 10px !important;
       }
     }
 
@@ -2178,10 +2209,11 @@
 
     /* KPI Cards */
     .kpi-grid {
-      display: grid;
+      display: grid !important;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 12px;
       margin-bottom: 16px;
+      width: 100%;
     }
 
     .kpi-card {
@@ -2191,6 +2223,7 @@
       border: 1px solid #e4eef4;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
       transition: all 0.3s ease;
+      display: block !important;
     }
 
     .kpi-card:hover {
@@ -2236,9 +2269,10 @@
       border-radius: 8px;
       padding: 12px;
       margin-bottom: 12px;
-      display: flex;
+      display: flex !important;
       align-items: center;
       gap: 10px;
+      visibility: visible !important;
     }
 
     .alert-banner.warning {
@@ -2286,20 +2320,77 @@
       padding: 0;
     }
 
+    /* Contextual Alerts Container */
+    #contextualAlerts {
+      display: flex !important;
+      flex-direction: column;
+      gap: 10px;
+      width: 100% !important;
+      margin-bottom: 16px;
+      visibility: visible !important;
+    }
+
     @media screen and (min-width: 1200px) {
       .analytics-section {
-        margin-bottom: 32px;
-        padding: 0;
+        margin-bottom: 32px !important;
+        padding: 0 !important;
+        width: 100% !important;
+        display: block !important;
+        visibility: visible !important;
+      }
+
+      .analytics-title {
+        font-size: 1.1rem;
+        margin-bottom: 16px;
+      }
+
+      #contextualAlerts {
+        display: flex !important;
+        flex-direction: column;
+        gap: 16px !important;
+        margin-bottom: 20px !important;
+        width: 100% !important;
+      }
+
+      .alert-banner {
+        display: flex !important;
+        margin-bottom: 16px !important;
+      }
+
+      .kpi-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 16px !important;
+        margin-bottom: 20px !important;
+        width: 100% !important;
+      }
+
+      .kpi-card {
+        padding: 16px !important;
+        display: block !important;
+        visibility: visible !important;
+      }
+
+      .kpi-label {
+        font-size: 0.85rem;
+      }
+
+      .kpi-value {
+        font-size: 1.6rem !important;
       }
 
       .stats-container {
+        display: grid !important;
         grid-template-columns: repeat(4, 1fr) !important;
-        gap: 16px;
+        gap: 16px !important;
+        width: 100% !important;
       }
 
       .quick-actions {
         padding: 16px;
         gap: 12px;
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
       }
 
       .quick-action-btn {
@@ -2342,7 +2433,85 @@
 
       .analytics-section {
         margin-bottom: 16px;
-        padding: 0;
+        padding: 0 !important;
+        width: 100% !important;
+        display: block !important;
+        visibility: visible !important;
+      }
+
+      .analytics-title {
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+      }
+
+      #contextualAlerts {
+        display: flex !important;
+        flex-direction: column;
+        gap: 10px !important;
+        margin-bottom: 12px !important;
+        width: 100% !important;
+      }
+
+      .alert-banner {
+        display: flex !important;
+        padding: 10px !important;
+        margin-bottom: 10px !important;
+        font-size: 0.8rem !important;
+      }
+
+      .kpi-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+        margin-bottom: 12px !important;
+        width: 100% !important;
+      }
+
+      .kpi-card {
+        padding: 12px !important;
+        display: block !important;
+        border-radius: 10px;
+        visibility: visible !important;
+      }
+
+      .kpi-label {
+        font-size: 0.7rem !important;
+      }
+
+      .kpi-value {
+        font-size: 1rem !important;
+      }
+
+      .kpi-change {
+        font-size: 0.65rem !important;
+      }
+
+      .stats-container {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+      }
+
+      .quick-actions {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) !important;
+        gap: 8px !important;
+      }
+
+      .quick-action-btn {
+        padding: 10px 8px !important;
+        font-size: 0.8rem !important;
+      }
+
+      .alert-icon {
+        font-size: 1rem;
+      }
+
+      .alert-title {
+        font-size: 0.85rem;
+      }
+
+      .alert-message {
+        font-size: 0.8rem;
       }
 
       .stats-container {
@@ -2358,6 +2527,24 @@
       .stat-value {
         font-size: 1.2rem;
       }
+
+      .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .quick-action-btn {
+        padding: 10px 8px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+      }
+
+      .quick-action-btn i {
+        margin-right: 4px;
+      }
+    }
 
       .stat-label {
         font-size: 0.7rem;
@@ -2533,6 +2720,123 @@
       .status {
         font-size: 0.8rem;
         margin: 8px 0 0;
+      }
+    }
+
+    /* Tablet Breakpoint */
+    @media screen and (min-width: 769px) and (max-width: 1199px) {
+      .analytics-section {
+        display: block !important;
+        visibility: visible !important;
+        width: 100% !important;
+        margin-bottom: 20px !important;
+      }
+
+      #contextualAlerts {
+        display: flex !important;
+        flex-direction: column;
+        gap: 12px !important;
+        margin-bottom: 16px !important;
+        width: 100% !important;
+      }
+
+      .alert-banner {
+        display: flex !important;
+        margin-bottom: 12px !important;
+      }
+
+      .kpi-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+        margin-bottom: 16px !important;
+        width: 100% !important;
+      }
+
+      .kpi-card {
+        padding: 14px !important;
+        display: block !important;
+      }
+
+      .kpi-value {
+        font-size: 1.3rem;
+      }
+
+      .stats-container {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px;
+      }
+
+      .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+
+      .quick-action-btn {
+        padding: 10px 12px;
+        font-size: 0.8rem;
+      }
+    }
+
+    @media screen and (max-width: 600px) {
+      .analytics-section {
+        margin-bottom: 12px !important;
+        padding: 0 !important;
+        display: block !important;
+        visibility: visible !important;
+        width: 100% !important;
+      }
+
+      #contextualAlerts {
+        display: flex !important;
+        flex-direction: column;
+        gap: 8px !important;
+        margin-bottom: 12px !important;
+        width: 100% !important;
+      }
+
+      .alert-banner {
+        display: flex !important;
+        margin-bottom: 10px !important;
+        padding: 10px !important;
+      }
+
+      .kpi-grid {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+        width: 100% !important;
+        margin-bottom: 12px !important;
+      }
+
+      .kpi-card {
+        padding: 10px !important;
+        display: block !important;
+        visibility: visible !important;
+      }
+
+      .kpi-label {
+        font-size: 0.65rem !important;
+      }
+
+      .kpi-value {
+        font-size: 0.9rem !important;
+      }
+
+      .stats-container {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+      }
+
+      .quick-actions {
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)) !important;
+        gap: 6px !important;
+      }
+
+      .quick-action-btn {
+        padding: 8px 6px !important;
+        font-size: 0.7rem !important;
       }
     }
 
@@ -3993,6 +4297,10 @@
       nextMonthSection.innerHTML = '';
       laterSection.innerHTML = '';
       paidSection.innerHTML = '';
+      
+      // Update analytics whenever payments are rendered
+      updateAnalyticsDashboard();
+      updateKPICards();
 
       const { active: filtered, paid: paidRecords, grouped } = getReminderBuckets();
 
@@ -4052,6 +4360,10 @@
             : `Showing ${filtered.length} manual reminders and ${paidRecords.length} paid payments.`;
 
       statusLine.textContent = statusLabel;
+      
+      // Update analytics dashboard
+      updateAnalyticsDashboard();
+      updateKPICards();
     }
 
     async function fetchPayments() {
@@ -4071,6 +4383,9 @@
         console.log('Payment Cache:', paymentCache);
         console.log('Cache Length:', paymentCache.length);
         renderPayments();
+        // Update analytics after data is loaded
+        updateAnalyticsDashboard();
+        updateKPICards();
       } catch (error) {
         console.error('Error loading payments:', error);
         document.getElementById('statusLine').textContent = error.message || 'Failed to load payments.';
@@ -4972,10 +5287,10 @@
     }
     fetchPayments = fetchPaymentsWithAnalytics;
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
       initPremiumFeatures();
-      fetchPayments();
-      updateAnalyticsDashboard();
+      await fetchPayments();
+      // Analytics are now updated by fetchPayments after data loads
     });
 
     // Close modals when clicking outside
