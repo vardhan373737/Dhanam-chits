@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkR4j8Y7P8R2R7fYk0lA5r9xM4q8K/ux+Q2g==" crossorigin="anonymous" referrerpolicy="no-referrer">
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -130,6 +131,28 @@
       display: inline-flex;
       align-items: center;
       -webkit-tap-highlight-color: transparent;
+    }
+
+    .toolbar-btn.icon-only {
+      justify-content: center;
+      min-width: 44px;
+      padding: 10px;
+      position: relative;
+    }
+
+    .toolbar-btn.icon-only .btn-fallback {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .toolbar-btn.icon-only .btn-fallback-emoji {
+      font-size: 1rem;
+      line-height: 1;
     }
 
     .toolbar-btn:hover {
@@ -3040,12 +3063,18 @@
         <button class="toolbar-btn" onclick="downloadPaymentsPdf('all')" title="Export all records">
           <i class="fas fa-download"></i> Export All
         </button>
-        <button class="toolbar-btn" onclick="openNotificationPanel()" title="View notifications" style="position: relative;">
-          <i class="fas fa-bell"></i>
+        <button class="toolbar-btn icon-only" onclick="openNotificationPanel()" title="View notifications" aria-label="View notifications">
+          <span class="btn-fallback" aria-hidden="true">
+            <span class="btn-fallback-emoji">🔔</span>
+            <span>Alerts</span>
+          </span>
           <span id="notificationBadge" style="position: absolute; top: -8px; right: -8px; background: #b8304e; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem; display: none; align-items: center; justify-content: center;">0</span>
         </button>
-        <button class="toolbar-btn" onclick="openSettingsModal()" title="Settings">
-          <i class="fas fa-cog"></i>
+        <button class="toolbar-btn icon-only" onclick="openSettingsModal()" title="Settings" aria-label="Open settings">
+          <span class="btn-fallback" aria-hidden="true">
+            <span class="btn-fallback-emoji">⚙️</span>
+            <span>Settings</span>
+          </span>
         </button>
       </div>
     </div>
@@ -3386,60 +3415,6 @@
       <button class="bulk-action-btn" onclick="resendReminders()">📤 Resend</button>
       <button class="bulk-action-btn" onclick="deleteBulkReminders()">🗑️ Delete</button>
       <button class="bulk-action-btn" onclick="cancelBulkSelection()">✕ Cancel</button>
-    </div>
-  </div>
-            <input type="text" id="daysRemaining" readonly placeholder="Auto-calculated">
-          </div>
-          <div class="field">
-            <label for="reminderAmount">Amount (Principal)</label>
-            <input type="number" id="reminderAmount" min="0" step="0.01" placeholder="e.g. 1500" oninput="calculateAmounts('principal')">
-          </div>
-          <div class="field">
-            <label for="reminderInterest">Interest (%)</label>
-            <input type="number" id="reminderInterest" min="0" step="0.01" placeholder="Enter interest %" oninput="calculateAmounts('interest')">
-          </div>
-          <div class="field">
-            <label for="interestAmount">Interest Amount</label>
-            <input type="text" id="interestAmount" readonly placeholder="Auto-calculated">
-          </div>
-          <div class="field">
-            <label for="totalAmount">Total Amount (Principal + Interest)</label>
-            <input type="number" id="totalAmount" min="0" step="0.01" placeholder="Enter total amount" oninput="calculateAmounts('total')">
-          </div>
-          <div class="field full">
-            <label for="reminderNote">Note</label>
-            <textarea id="reminderNote" maxlength="500" placeholder="Optional note for user"></textarea>
-          </div>
-        </div>
-        <p class="hint">Tip: If note is empty, system auto-builds message from date, amount and interest.</p>
-        <div class="actions">
-          <button class="btn btn-save" onclick="saveReminderFromForm()">Save Reminder</button>
-          <button class="btn btn-share" onclick="shareSelectedToWhatsApp()">Share to WhatsApp</button>
-          <button class="btn btn-share" onclick="downloadReminderTemplateExcel()">Download Empty Excel</button>
-          <button class="btn btn-edit" onclick="triggerReminderExcelUpload()">Upload Excel File</button>
-          <button class="btn btn-reset" onclick="resetReminderForm()">Reset</button>
-          <input type="file" id="reminderExcelFileInput" accept=".xlsx,.xls" style="display: none;" onchange="handleReminderExcelUpload(event)">
-        </div>
-      </div>
-
-      <div class="panel">
-        <input type="text" id="searchInput" class="search-box" placeholder="Search manual reminder records" onkeyup="renderPayments()">
-        <div class="view-tabs">
-          <button type="button" class="view-tab active" data-view="all" onclick="setPaymentView('all')">All</button>
-          <button type="button" class="view-tab" data-view="overdue" onclick="setPaymentView('overdue')">Overdue</button>
-          <button type="button" class="view-tab" data-view="reminders" onclick="setPaymentView('reminders')">Reminders</button>
-          <button type="button" class="view-tab" data-view="paid" onclick="setPaymentView('paid')">Paid</button>
-        </div>
-        <div class="bills-board">
-          <div id="overdueSummary" class="bill-top-total"></div>
-          <div id="overdueSection" class="bill-section"></div>
-          <div id="thisMonthSection" class="bill-section"></div>
-          <div id="nextMonthSection" class="bill-section"></div>
-          <div id="laterSection" class="bill-section"></div>
-          <div id="paidSection" class="bill-section"></div>
-        </div>
-        <p id="statusLine" class="status">Loading payment records...</p>
-      </div>
     </div>
   </div>
 
@@ -5270,7 +5245,7 @@
     saveReminderFromForm = saveReminderFromFormWithToast;
 
     // Initialize
-    function initPremiumFeatures() {
+    function initPremiumFeaturesCore() {
       updateNotificationBadge(0);
       // Load settings on page load
       if (localStorage.getItem('darkMode') === 'true') {
@@ -5288,7 +5263,8 @@
     fetchPayments = fetchPaymentsWithAnalytics;
 
     document.addEventListener('DOMContentLoaded', async function() {
-      initPremiumFeatures();
+      initPremiumFeaturesCore();
+      initAdvancedPremiumFeatures();
       await fetchPayments();
       // Analytics are now updated by fetchPayments after data loads
     });
@@ -5820,7 +5796,7 @@
     }
 
     // Initialize Premium Features on Load
-    function initPremiumFeatures() {
+    function initAdvancedPremiumFeatures() {
       updateKPICards();
       updateContextualAlerts();
       
@@ -5839,8 +5815,7 @@
       });
     }
 
-    // Call on page load
-    window.addEventListener('load', initPremiumFeatures);
+    // Advanced premium init is called from DOMContentLoaded startup flow.
   </script>
 </body>
 </html>
