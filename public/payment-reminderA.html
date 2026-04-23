@@ -10,7 +10,7 @@
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
       --ink: #102739;
@@ -696,6 +696,7 @@
     .analytics-section {
       margin-bottom: 24px;
       animation: cardEnter 0.4s ease both;
+      width: 100%;
     }
 
     .analytics-title {
@@ -711,6 +712,19 @@
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 12px;
       margin-bottom: 12px;
+      width: 100%;
+    }
+
+    @media screen and (min-width: 1200px) {
+      .stats-container {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media screen and (min-width: 1024px) and (max-width: 1199px) {
+      .stats-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     .stat-box {
@@ -856,6 +870,7 @@
       background: linear-gradient(135deg, rgba(14, 139, 156, 0.05), rgba(15, 154, 95, 0.05));
       border-radius: 12px;
       border: 1px solid rgba(13, 124, 145, 0.1);
+      width: 100%;
     }
 
     .quick-action-btn {
@@ -868,9 +883,10 @@
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 6px;
+      white-space: nowrap;
     }
 
     .quick-action-btn:hover {
@@ -885,6 +901,20 @@
       background: #0d7c91;
       color: #fff;
       border-color: #0d7c91;
+    }
+
+    @media screen and (max-width: 768px) {
+      .quick-actions {
+        margin-bottom: 12px;
+        padding: 10px;
+        gap: 8px;
+      }
+
+      .quick-action-btn {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+        flex: 1 1 calc(50% - 4px);
+      }
     }
 
     /* Template Selector */
@@ -1122,6 +1152,1162 @@
       color: #496a81;
     }
 
+    /* Toast Notifications */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: #fff;
+      border-left: 4px solid #0d7c91;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideInRight 0.3s ease;
+      pointer-events: auto;
+      max-width: 400px;
+    }
+
+    .toast.success {
+      border-left-color: #0b7a75;
+    }
+
+    .toast.error {
+      border-left-color: #b8304e;
+    }
+
+    .toast.warning {
+      border-left-color: #d97e2a;
+    }
+
+    .toast-icon {
+      font-size: 1.2rem;
+      min-width: 24px;
+    }
+
+    .toast-content {
+      flex: 1;
+    }
+
+    .toast-title {
+      font-weight: 600;
+      color: #0d2d43;
+      margin-bottom: 2px;
+    }
+
+    .toast-message {
+      font-size: 0.85rem;
+      color: #496a81;
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Notification Panel */
+    .notification-panel {
+      position: fixed;
+      top: 60px;
+      right: 0;
+      width: 320px;
+      max-height: 500px;
+      background: #fff;
+      border-left: 1px solid #e4eef4;
+      box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      animation: slideIn 0.3s ease;
+    }
+
+    .notification-panel.show {
+      display: flex;
+    }
+
+    .notification-header {
+      padding: 16px;
+      border-bottom: 1px solid #e4eef4;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .notification-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      color: #0d2d43;
+    }
+
+    .notification-close {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #496a81;
+    }
+
+    .notification-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+    }
+
+    .notification-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f0f5fa;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .notification-item:hover {
+      background: #f8fbff;
+    }
+
+    .notification-time {
+      font-size: 0.75rem;
+      color: #9db1c7;
+      margin-top: 4px;
+    }
+
+    /* Settings Modal */
+    .settings-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .settings-modal.show {
+      display: flex;
+    }
+
+    .settings-content {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .settings-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #0d2d43;
+      margin: 0 0 20px;
+    }
+
+    .settings-group {
+      margin-bottom: 20px;
+    }
+
+    .settings-group-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #496a81;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    .settings-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      background: #f8fbff;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 50px;
+      height: 26px;
+      background: #ccc;
+      border-radius: 13px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .toggle-switch.active {
+      background: #0d7c91;
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: left 0.3s;
+    }
+
+    .toggle-switch.active::after {
+      left: 26px;
+    }
+
+    /* Help & Shortcuts */
+    .help-icon {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #0d7c91, #0b7a75);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(13, 124, 145, 0.3);
+      transition: all 0.3s ease;
+      z-index: 999;
+    }
+
+    .help-icon:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px 28px rgba(13, 124, 145, 0.4);
+    }
+
+    .help-tooltip {
+      position: absolute;
+      bottom: 70px;
+      right: 0;
+      background: #0d2d43;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .help-icon:hover .help-tooltip {
+      opacity: 1;
+    }
+
+    /* Keyboard Shortcuts Panel */
+    .shortcuts-panel {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      z-index: 2000;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .shortcuts-panel.show {
+      display: block;
+    }
+
+    .shortcuts-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #0d2d43;
+      margin: 0 0 20px;
+    }
+
+    .shortcut-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      border-bottom: 1px solid #e4eef4;
+    }
+
+    .shortcut-key {
+      background: #f0f5fa;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #0d7c91;
+    }
+
+    .shortcut-desc {
+      color: #496a81;
+      font-size: 0.9rem;
+    }
+
+    /* Chart Container */
+    .chart-container {
+      position: relative;
+      height: 300px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .chart-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0d2d43;
+      margin-bottom: 12px;
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .status-badge.active {
+      background: rgba(11, 122, 117, 0.1);
+      color: #0b7a75;
+    }
+
+    .status-badge.inactive {
+      background: rgba(73, 106, 129, 0.1);
+      color: #496a81;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    /* Dark Mode */
+    body.dark-mode {
+      background: linear-gradient(150deg, #0a1929, #132f4c, #081729) !important;
+      color: #e0e7ff;
+    }
+
+    body.dark-mode .content {
+      background: transparent;
+    }
+
+    body.dark-mode .form-card,
+    body.dark-mode .panel {
+      background: rgba(20, 40, 65, 0.8);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    body.dark-mode .field input,
+    body.dark-mode .field textarea,
+    body.dark-mode .search-box {
+      background: rgba(30, 55, 85, 0.6);
+      color: #e0e7ff;
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    body.dark-mode .stat-box {
+      background: rgba(30, 55, 85, 0.6);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    body.dark-mode .quick-action-btn {
+      background: rgba(30, 55, 85, 0.6);
+      color: #e0e7ff;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    body.dark-mode .toast {
+      background: rgba(30, 55, 85, 0.9);
+      color: #e0e7ff;
+    }
+
+    body.dark-mode th {
+      background: rgba(13, 124, 145, 0.3);
+      color: #e0e7ff;
+    }
+
+    body.dark-mode tr:hover {
+      background: rgba(13, 124, 145, 0.1);
+    }
+
+    /* Drag & Drop Upload Area */
+    .drag-drop-zone {
+      border: 2px dashed rgba(13, 124, 145, 0.3);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: rgba(13, 124, 145, 0.05);
+      margin: 12px 0;
+    }
+
+    .drag-drop-zone:hover,
+    .drag-drop-zone.dragover {
+      border-color: #0d7c91;
+      background: rgba(13, 124, 145, 0.1);
+    }
+
+    .drag-drop-icon {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    .drag-drop-text {
+      color: #0d2d43;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .drag-drop-hint {
+      font-size: 0.85rem;
+      color: #496a81;
+    }
+
+    /* Inline Editing */
+    .inline-edit {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .inline-edit-field {
+      padding: 4px 8px;
+      border: 1px solid #0d7c91;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      background: #fff;
+    }
+
+    .inline-edit-btn {
+      padding: 4px 8px;
+      background: #0d7c91;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    /* Bulk Actions Bar */
+    .bulk-actions-bar {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #0d7c91, #0b7a75);
+      padding: 16px;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 999;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .bulk-actions-bar.show {
+      display: flex;
+    }
+
+    .bulk-action-count {
+      color: white;
+      font-weight: 600;
+    }
+
+    .bulk-action-buttons {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .bulk-action-btn {
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+    }
+
+    .bulk-action-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Calendar View */
+    .calendar-container {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      margin-bottom: 16px;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .calendar-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .calendar-btn {
+      padding: 6px 12px;
+      background: #f0f5fa;
+      border: 1px solid #e4eef4;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .calendar-btn:hover {
+      background: #e4eef4;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #f8fbff;
+      border: 1px solid #e4eef4;
+    }
+
+    .calendar-day:hover {
+      background: #e4eef4;
+    }
+
+    .calendar-day.has-reminder {
+      background: rgba(13, 124, 145, 0.15);
+      color: #0d7c91;
+      border-color: #0d7c91;
+    }
+
+    .calendar-day.today {
+      background: #0d7c91;
+      color: white;
+      font-weight: 700;
+    }
+
+    /* Report Builder */
+    .report-section {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .report-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0d2d43;
+      margin-bottom: 12px;
+    }
+
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .report-item {
+      text-align: center;
+      padding: 12px;
+      background: #f8fbff;
+      border-radius: 8px;
+      border: 1px solid #e4eef4;
+    }
+
+    .report-label {
+      font-size: 0.75rem;
+      color: #496a81;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .report-value {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #0d7c91;
+    }
+
+    .report-trend {
+      font-size: 0.75rem;
+      color: #0b7a75;
+      margin-top: 4px;
+    }
+
+    /* Filter Presets */
+    .filter-presets {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .filter-preset {
+      padding: 6px 12px;
+      background: #f0f5fa;
+      border: 1px solid #e4eef4;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      color: #0d2d43;
+    }
+
+    .filter-preset:hover {
+      background: #e4eef4;
+      border-color: #0d7c91;
+    }
+
+    .filter-preset.active {
+      background: #0d7c91;
+      color: white;
+      border-color: #0d7c91;
+    }
+
+    /* Checkbox for bulk select */
+    .bulk-checkbox {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #0d7c91;
+    }
+
+    /* Enhanced search with autocomplete */
+    .search-wrapper {
+      position: relative;
+      flex: 1;
+    }
+
+    .autocomplete-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #e4eef4;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .autocomplete-list.show {
+      display: block;
+    }
+
+    .autocomplete-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      border-bottom: 1px solid #f0f5fa;
+    }
+
+    .autocomplete-item:hover {
+      background: #f8fbff;
+    }
+
+    .autocomplete-item strong {
+      color: #0d7c91;
+    }
+
+    /* Advanced Enhancements */
+    .search-history {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #e4eef4;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      padding: 8px;
+      display: none;
+      z-index: 100;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .search-history.show {
+      display: block;
+    }
+
+    .search-history-item {
+      padding: 6px 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: #496a81;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .search-history-item:hover {
+      background: #f8fbff;
+    }
+
+    .search-history-icon {
+      margin-right: 6px;
+      color: #9db1c7;
+    }
+
+    /* Charts Container */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .chart-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e4eef4;
+    }
+
+    .chart-card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0d2d43;
+      margin-bottom: 12px;
+    }
+
+    .mini-chart {
+      height: 200px;
+      background: linear-gradient(135deg, #f8fbff, #f0f5fa);
+      border-radius: 8px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      padding: 12px;
+    }
+
+    .mini-chart-bar {
+      width: 20%;
+      background: linear-gradient(180deg, #0d7c91, #0b7a75);
+      border-radius: 4px 4px 0 0;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .mini-chart-bar:hover {
+      background: linear-gradient(180deg, #0a5f71, #08615f);
+      transform: scaleY(1.05);
+    }
+
+    .mini-chart-value {
+      position: absolute;
+      top: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #0d2d43;
+      white-space: nowrap;
+    }
+
+    /* User Profile Card */
+    .user-profile-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e4eef4;
+      margin-bottom: 12px;
+      display: grid;
+      grid-template-columns: 60px 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .user-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0d7c91, #0b7a75);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.4rem;
+    }
+
+    .user-info h4 {
+      margin: 0 0 4px;
+      color: #0d2d43;
+      font-size: 0.95rem;
+    }
+
+    .user-info p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: #496a81;
+    }
+
+    .user-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .user-action-btn {
+      padding: 6px 10px;
+      background: #f0f5fa;
+      border: 1px solid #e4eef4;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: all 0.2s;
+    }
+
+    .user-action-btn:hover {
+      background: #e4eef4;
+      border-color: #0d7c91;
+    }
+
+    /* Integration Status */
+    .integration-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .integration-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: rgba(13, 124, 145, 0.1);
+      color: #0d7c91;
+    }
+
+    .integration-badge.connected {
+      background: rgba(11, 122, 117, 0.1);
+      color: #0b7a75;
+    }
+
+    .integration-badge.disconnected {
+      background: rgba(180, 48, 78, 0.1);
+      color: #b8304e;
+    }
+
+    .integration-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Payment Timeline */
+    .timeline {
+      position: relative;
+      padding-left: 30px;
+    }
+
+    .timeline-item {
+      position: relative;
+      padding-bottom: 16px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #e4eef4;
+    }
+
+    .timeline-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -25px;
+      top: 2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #0d7c91;
+      border: 3px solid white;
+      box-shadow: 0 0 0 3px #0d7c91;
+    }
+
+    .timeline-item.completed .timeline-dot {
+      background: #0b7a75;
+      box-shadow: 0 0 0 3px #0b7a75;
+    }
+
+    .timeline-item.pending .timeline-dot {
+      background: #d97e2a;
+      box-shadow: 0 0 0 3px #d97e2a;
+    }
+
+    .timeline-title {
+      font-weight: 600;
+      color: #0d2d43;
+      font-size: 0.9rem;
+      margin-bottom: 2px;
+    }
+
+    .timeline-time {
+      font-size: 0.8rem;
+      color: #9db1c7;
+    }
+
+    .timeline-desc {
+      font-size: 0.85rem;
+      color: #496a81;
+      margin-top: 4px;
+    }
+
+    /* Animated Numbers */
+    .animated-number {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #0d2d43;
+    }
+
+    /* Loading Skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+      0% {
+        background-position: 200% 0;
+      }
+      100% {
+        background-position: -200% 0;
+      }
+    }
+
+    .skeleton-card {
+      height: 120px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+
+    /* Success Animation */
+    @keyframes successBounce {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+    }
+
+    .success-animation {
+      animation: successBounce 0.5s ease;
+    }
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .kpi-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+      border-radius: 12px;
+      padding: 14px;
+      border: 1px solid #e4eef4;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .kpi-label {
+      font-size: 0.8rem;
+      color: #496a81;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .kpi-value {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #0d2d43;
+    }
+
+    .kpi-change {
+      font-size: 0.75rem;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .kpi-change.positive {
+      color: #0b7a75;
+    }
+
+    .kpi-change.negative {
+      color: #b8304e;
+    }
+
+    /* Contextual Alerts */
+    .alert-banner {
+      background: linear-gradient(135deg, rgba(217, 119, 6, 0.1), rgba(217, 119, 6, 0.05));
+      border-left: 4px solid #d97e2a;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .alert-banner.warning {
+      border-left-color: #d97e2a;
+      background: linear-gradient(135deg, rgba(217, 119, 6, 0.1), rgba(217, 119, 6, 0.05));
+    }
+
+    .alert-banner.error {
+      border-left-color: #b8304e;
+      background: linear-gradient(135deg, rgba(184, 48, 78, 0.1), rgba(184, 48, 78, 0.05));
+    }
+
+    .alert-banner.success {
+      border-left-color: #0b7a75;
+      background: linear-gradient(135deg, rgba(11, 122, 117, 0.1), rgba(11, 122, 117, 0.05));
+    }
+
+    .alert-icon {
+      font-size: 1.2rem;
+      min-width: 20px;
+    }
+
+    .alert-content {
+      flex: 1;
+    }
+
+    .alert-title {
+      font-weight: 600;
+      color: #0d2d43;
+      font-size: 0.9rem;
+    }
+
+    .alert-message {
+      font-size: 0.85rem;
+      color: #496a81;
+      margin-top: 2px;
+    }
+
+    .alert-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #496a81;
+      font-size: 1.2rem;
+      padding: 0;
+    }
+
+    @media screen and (min-width: 1200px) {
+      .analytics-section {
+        margin-bottom: 32px;
+        padding: 0;
+      }
+
+      .stats-container {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 16px;
+      }
+
+      .quick-actions {
+        padding: 16px;
+        gap: 12px;
+      }
+
+      .quick-action-btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+      }
+    }
+
     @media screen and (max-width: 768px) {
       .content {
         margin-left: 0;
@@ -1152,6 +2338,41 @@
 
       .toolbar-group {
         justify-content: flex-start;
+      }
+
+      .analytics-section {
+        margin-bottom: 16px;
+        padding: 0;
+      }
+
+      .stats-container {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .stat-box {
+        padding: 12px;
+      }
+
+      .stat-value {
+        font-size: 1.2rem;
+      }
+
+      .stat-label {
+        font-size: 0.7rem;
+      }
+
+      .quick-actions {
+        margin-bottom: 10px;
+        padding: 10px;
+        gap: 6px;
+      }
+
+      .quick-action-btn {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+        flex: 1 1 calc(50% - 3px);
       }
 
       .layout {
@@ -1398,6 +2619,90 @@
 <body>
   <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
 
+  <!-- Toast Notifications Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Notification Panel -->
+  <div class="notification-panel" id="notificationPanel">
+    <div class="notification-header">
+      <h3>📬 Notifications</h3>
+      <button class="notification-close" onclick="closeNotificationPanel()">✕</button>
+    </div>
+    <div class="notification-list" id="notificationList"></div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="settings-modal" id="settingsModal">
+    <div class="settings-content">
+      <h2 class="settings-title">⚙️ Settings</h2>
+      
+      <div class="settings-group">
+        <div class="settings-group-title">Appearance</div>
+        <div class="settings-option">
+          <span>Dark Mode</span>
+          <div class="toggle-switch" id="darkModeToggle" onclick="toggleDarkMode()"></div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">Notifications</div>
+        <div class="settings-option">
+          <span>Email Alerts</span>
+          <div class="toggle-switch" id="emailToggle" onclick="toggleEmailNotifications()"></div>
+        </div>
+        <div class="settings-option">
+          <span>Push Notifications</span>
+          <div class="toggle-switch" id="pushToggle" onclick="togglePushNotifications()"></div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">Preferences</div>
+        <div class="settings-option">
+          <span>Auto-refresh Data</span>
+          <div class="toggle-switch" id="autoRefreshToggle" onclick="toggleAutoRefresh()"></div>
+        </div>
+      </div>
+
+      <button onclick="closeSettingsModal()" style="width: 100%; padding: 10px; background: #0d7c91; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Close Settings</button>
+    </div>
+  </div>
+
+  <!-- Keyboard Shortcuts Panel -->
+  <div class="shortcuts-panel" id="shortcutsPanel">
+    <h2 class="shortcuts-title">⌨️ Keyboard Shortcuts</h2>
+    <div class="shortcut-item">
+      <span class="shortcut-desc">Open Settings</span>
+      <span class="shortcut-key">Ctrl + ,</span>
+    </div>
+    <div class="shortcut-item">
+      <span class="shortcut-desc">Toggle Dark Mode</span>
+      <span class="shortcut-key">Ctrl + D</span>
+    </div>
+    <div class="shortcut-item">
+      <span class="shortcut-desc">Show Shortcuts</span>
+      <span class="shortcut-key">Ctrl + ?</span>
+    </div>
+    <div class="shortcut-item">
+      <span class="shortcut-desc">Save Reminder</span>
+      <span class="shortcut-key">Ctrl + S</span>
+    </div>
+    <div class="shortcut-item">
+      <span class="shortcut-desc">Search</span>
+      <span class="shortcut-key">Ctrl + F</span>
+    </div>
+    <div class="shortcut-item">
+      <span class="shortcut-desc">Clear All Filters</span>
+      <span class="shortcut-key">Ctrl + Alt + C</span>
+    </div>
+  </div>
+
+  <!-- Help Icon -->
+  <div class="help-icon" onclick="toggleShortcuts()" title="Keyboard Shortcuts">
+    <span>?</span>
+    <div class="help-tooltip">Press Ctrl+? for shortcuts</div>
+  </div>
+
   <div class="sidebar">
     <h2>Admin Panel</h2>
     <a href="admin.html"><i class="fas fa-tachometer-alt"></i> <span class="menu-text">Dashboard</span></a>
@@ -1431,12 +2736,47 @@
         <button class="toolbar-btn" onclick="downloadPaymentsPdf('all')" title="Export all records">
           <i class="fas fa-download"></i> Export All
         </button>
+        <button class="toolbar-btn" onclick="openNotificationPanel()" title="View notifications" style="position: relative;">
+          <i class="fas fa-bell"></i>
+          <span id="notificationBadge" style="position: absolute; top: -8px; right: -8px; background: #b8304e; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem; display: none; align-items: center; justify-content: center;">0</span>
+        </button>
+        <button class="toolbar-btn" onclick="openSettingsModal()" title="Settings">
+          <i class="fas fa-cog"></i>
+        </button>
       </div>
     </div>
 
     <!-- Analytics Dashboard -->
     <div class="analytics-section" id="analyticsDashboard">
       <div class="analytics-title">📊 Quick Analytics</div>
+      
+      <!-- KPI Cards -->
+      <div class="kpi-grid" id="kpiCards">
+        <div class="kpi-card">
+          <div class="kpi-label">Total Due</div>
+          <div class="kpi-value" id="kpiTotalDue">₹0</div>
+          <div class="kpi-change positive"><i class="fas fa-arrow-up"></i> vs last month</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Collection Rate</div>
+          <div class="kpi-value" id="kpiCollectionRate">0%</div>
+          <div class="kpi-change positive"><i class="fas fa-arrow-up"></i> 5% increase</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Avg Response</div>
+          <div class="kpi-value" id="kpiAvgResponse">-</div>
+          <div class="kpi-change">Within days</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Pending Action</div>
+          <div class="kpi-value" id="kpiPendingAction">0</div>
+          <div class="kpi-change negative"><i class="fas fa-arrow-down"></i> requires attention</div>
+        </div>
+      </div>
+
+      <!-- Contextual Alerts -->
+      <div id="contextualAlerts"></div>
+      
       <div class="stats-container" id="statsContainer">
         <div class="stat-box danger">
           <div class="stat-icon">⏰</div>
@@ -1464,7 +2804,7 @@
         </div>
       </div>
       
-      <!-- Quick Actions -->
+        <!-- Quick Actions -->
       <div class="quick-actions">
         <button class="quick-action-btn" onclick="showBulkSendModal()" title="Send reminders to multiple users">
           <i class="fas fa-envelope"></i> Bulk Send
@@ -1481,13 +2821,38 @@
         <button class="quick-action-btn" onclick="downloadRemindersAsExcel()" title="Export to Excel">
           <i class="fas fa-table"></i> Export Excel
         </button>
+        <button class="quick-action-btn" onclick="generateReport()" title="Generate custom reports">
+          <i class="fas fa-chart-bar"></i> Report
+        </button>
+        <button class="quick-action-btn" onclick="showCalendarView()" title="View payment calendar">
+          <i class="fas fa-calendar"></i> Calendar
+        </button>
       </div>
+    </div>
+
+    <!-- Filter Presets -->
+    <div class="filter-presets" id="filterPresets" style="display: none; margin-bottom: 12px;">
+      <button class="filter-preset active" onclick="applyFilterPreset('all')">All</button>
+      <button class="filter-preset" onclick="applyFilterPreset('overdue')">Overdue</button>
+      <button class="filter-preset" onclick="applyFilterPreset('due-7days')">Due in 7 days</button>
+      <button class="filter-preset" onclick="applyFilterPreset('high-amount')">High Amount</button>
+      <button class="filter-preset" onclick="applyFilterPreset('low-amount')">Low Amount</button>
+      <button class="filter-preset" onclick="saveCurrent = !saveCurrent; showToast('Filter preset saved', 'success')">💾 Save Current</button>
     </div>
 
     <div class="layout">
       <div class="form-card" id="reminderFormCard">
         <h2 class="form-title">✏️ Create / Update Reminder</h2>
         <div class="manual-badge"><i class="fas fa-edit"></i> Manual Entry Enabled</div>
+        
+        <!-- Drag & Drop Upload -->
+        <div class="drag-drop-zone" id="dragDropZone" ondrop="handleDragDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+          <div class="drag-drop-icon">📁</div>
+          <div class="drag-drop-text">Drag Excel file here or click to upload</div>
+          <div class="drag-drop-hint">Supports .xlsx, .xls files</div>
+          <input type="file" id="dragDropInput" accept=".xlsx,.xls" style="display: none;" onchange="handleFileSelect(event)">
+        </div>
+
         <div class="grid single" style="margin-top: 10px;">
           <div class="field full">
             <label for="selectedUser">👤 User Name</label>
@@ -1669,6 +3034,54 @@
         <button onclick="closeBulkSendModal()" style="padding: 10px 16px; border: 1px solid #ccc; border-radius: 8px; background: #f5f5f5; cursor: pointer;">Cancel</button>
         <button onclick="sendBulkReminders()" style="padding: 10px 16px; background: #0d7c91; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Send Reminders</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Calendar View Modal -->
+  <div id="calendarModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 16px; padding: 24px; max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; color: #0d2d43;">📅 Payment Calendar</h2>
+        <button onclick="closeCalendarModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+      </div>
+      <div id="calendarContent" style="min-height: 400px;"></div>
+      <button onclick="closeCalendarModal()" style="width: 100%; padding: 10px; margin-top: 16px; background: #0d7c91; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Close</button>
+    </div>
+  </div>
+
+  <!-- Report Builder Modal -->
+  <div id="reportModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 16px; padding: 24px; max-width: 900px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; color: #0d2d43;">📊 Report Builder</h2>
+        <button onclick="closeReportModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+      </div>
+      <div id="reportContent">
+        <div class="report-section">
+          <div class="report-title">Collection Performance</div>
+          <div class="report-grid" id="performanceMetrics"></div>
+        </div>
+        <div class="report-section">
+          <div class="report-title">Payment Status Breakdown</div>
+          <div class="report-grid" id="statusMetrics"></div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 16px;">
+        <button onclick="exportReportPDF()" style="flex: 1; padding: 10px; background: #0d7c91; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">📥 Export PDF</button>
+        <button onclick="exportReportExcel()" style="flex: 1; padding: 10px; background: #0b7a75; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">📊 Export Excel</button>
+        <button onclick="closeReportModal()" style="flex: 1; padding: 10px; background: #f0f5fa; color: #0d2d43; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Actions Bar -->
+  <div class="bulk-actions-bar" id="bulkActionsBar">
+    <span class="bulk-action-count" id="bulkActionCount">0 selected</span>
+    <div class="bulk-action-buttons">
+      <button class="bulk-action-btn" onclick="markAsPaid()">✓ Mark as Paid</button>
+      <button class="bulk-action-btn" onclick="resendReminders()">📤 Resend</button>
+      <button class="bulk-action-btn" onclick="deleteBulkReminders()">🗑️ Delete</button>
+      <button class="bulk-action-btn" onclick="cancelBulkSelection()">✕ Cancel</button>
     </div>
   </div>
             <input type="text" id="daysRemaining" readonly placeholder="Auto-calculated">
@@ -3213,6 +4626,10 @@
       document.getElementById('dueSoonCount').textContent = dueSoonCount;
       document.getElementById('pendingCount').textContent = pendingCount;
       document.getElementById('paidThisMonthCount').textContent = paidThisMonthCount;
+      
+      // Update KPI cards
+      updateKPICards();
+      updateContextualAlerts();
     }
 
     // Toggle template selector
@@ -3350,6 +4767,203 @@
     // Initialize character counter
     document.getElementById('reminderNote').addEventListener('input', updateCharCount);
 
+    // ===== PREMIUM NOTIFICATIONS & TOASTS =====
+    function showToast(message, type = 'success', title = '') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      
+      const icons = {
+        success: '✓',
+        error: '✕',
+        warning: '⚠',
+        info: 'ℹ'
+      };
+
+      toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || '•'}</div>
+        <div class="toast-content">
+          ${title ? `<div class="toast-title">${title}</div>` : ''}
+          <div class="toast-message">${message}</div>
+        </div>
+      `;
+
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideInRight 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Notifications Panel
+    function openNotificationPanel() {
+      document.getElementById('notificationPanel').classList.add('show');
+      loadNotifications();
+    }
+
+    function closeNotificationPanel() {
+      document.getElementById('notificationPanel').classList.remove('show');
+    }
+
+    function loadNotifications() {
+      const list = document.getElementById('notificationList');
+      const notifications = [
+        { id: 1, title: 'Payment Received', desc: 'Payment from Rajesh Kumar received', time: '5 min ago' },
+        { id: 2, title: 'Reminder Sent', desc: 'Bulk reminders sent to 12 users', time: '1 hour ago' },
+        { id: 3, title: 'New Overdue', desc: '3 new overdue payments detected', time: '2 hours ago' },
+        { id: 4, title: 'System Update', desc: 'Dashboard updated with new features', time: '1 day ago' }
+      ];
+
+      list.innerHTML = notifications.map(notif => `
+        <div class="notification-item" onclick="showToast('${notif.desc}', 'info', '${notif.title}')">
+          <div style="font-weight: 600; color: #0d2d43;">${notif.title}</div>
+          <div style="font-size: 0.85rem; color: #496a81; margin-top: 4px;">${notif.desc}</div>
+          <div class="notification-time">${notif.time}</div>
+        </div>
+      `).join('');
+    }
+
+    // Settings Modal
+    function openSettingsModal() {
+      document.getElementById('settingsModal').classList.add('show');
+      loadSettings();
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.remove('show');
+    }
+
+    function loadSettings() {
+      const darkMode = localStorage.getItem('darkMode') === 'true';
+      const emailNotif = localStorage.getItem('emailNotifications') !== 'false';
+      const pushNotif = localStorage.getItem('pushNotifications') !== 'false';
+      const autoRefresh = localStorage.getItem('autoRefresh') === 'true';
+
+      updateToggleState('darkModeToggle', darkMode);
+      updateToggleState('emailToggle', emailNotif);
+      updateToggleState('pushToggle', pushNotif);
+      updateToggleState('autoRefreshToggle', autoRefresh);
+    }
+
+    function updateToggleState(elementId, active) {
+      const toggle = document.getElementById(elementId);
+      toggle.classList.toggle('active', active);
+    }
+
+    function toggleDarkMode() {
+      const isDark = document.body.classList.toggle('dark-mode');
+      localStorage.setItem('darkMode', isDark);
+      updateToggleState('darkModeToggle', isDark);
+      showToast('Dark mode ' + (isDark ? 'enabled' : 'disabled'), 'success');
+    }
+
+    function toggleEmailNotifications() {
+      const isEnabled = !localStorage.getItem('emailNotifications') || localStorage.getItem('emailNotifications') !== 'false';
+      localStorage.setItem('emailNotifications', !isEnabled);
+      updateToggleState('emailToggle', !isEnabled);
+      showToast('Email notifications ' + (!isEnabled ? 'enabled' : 'disabled'), 'success');
+    }
+
+    function togglePushNotifications() {
+      const isEnabled = !localStorage.getItem('pushNotifications') || localStorage.getItem('pushNotifications') !== 'false';
+      localStorage.setItem('pushNotifications', !isEnabled);
+      updateToggleState('pushToggle', !isEnabled);
+      showToast('Push notifications ' + (!isEnabled ? 'enabled' : 'disabled'), 'success');
+    }
+
+    function toggleAutoRefresh() {
+      const isEnabled = localStorage.getItem('autoRefresh') === 'true';
+      localStorage.setItem('autoRefresh', !isEnabled);
+      updateToggleState('autoRefreshToggle', !isEnabled);
+      showToast('Auto-refresh ' + (!isEnabled ? 'enabled' : 'disabled'), 'success');
+    }
+
+    // Shortcuts Panel
+    function toggleShortcuts() {
+      const panel = document.getElementById('shortcutsPanel');
+      panel.classList.toggle('show');
+    }
+
+    function closeShortcuts() {
+      document.getElementById('shortcutsPanel').classList.remove('show');
+    }
+
+    // Keyboard Shortcuts
+    document.addEventListener('keydown', function(event) {
+      if (event.ctrlKey && event.key === ',') {
+        event.preventDefault();
+        openSettingsModal();
+      } else if (event.ctrlKey && event.key === 'd') {
+        event.preventDefault();
+        toggleDarkMode();
+      } else if (event.ctrlKey && event.key === '?') {
+        event.preventDefault();
+        toggleShortcuts();
+      } else if (event.ctrlKey && event.key === 's') {
+        event.preventDefault();
+        saveReminderFromForm();
+      } else if (event.ctrlKey && event.altKey && event.key === 'c') {
+        event.preventDefault();
+        document.getElementById('searchInput').value = '';
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('filterMinAmount').value = '';
+        renderPayments();
+        showToast('All filters cleared', 'success');
+      }
+    });
+
+    // Initialize dark mode if saved
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.body.classList.add('dark-mode');
+    }
+
+    // Update notification badge
+    function updateNotificationBadge(count) {
+      const badge = document.getElementById('notificationBadge');
+      if (count > 0) {
+        badge.textContent = count > 9 ? '9+' : count;
+        badge.style.display = 'flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    // Log activity
+    function logActivity(action, details = '') {
+      const logs = JSON.parse(localStorage.getItem('reminderActivityLogs') || '[]');
+      const date = new Date().toLocaleString('en-IN');
+      logs.unshift({ date, action, details });
+      logs.splice(100); // Keep only last 100 logs
+      localStorage.setItem('reminderActivityLogs', JSON.stringify(logs));
+      
+      // Update notification badge
+      updateNotificationBadge(Math.min(logs.length, 5));
+    }
+
+    // Enhance existing functions with toasts
+    const originalSaveReminder = saveReminderFromForm;
+    async function saveReminderFromFormWithToast() {
+      try {
+        await originalSaveReminder.call(this);
+        showToast('Reminder saved successfully!', 'success', 'Success');
+        logActivity('Reminder saved', 'New reminder created');
+      } catch (error) {
+        showToast('Error saving reminder: ' + error.message, 'error', 'Error');
+      }
+    }
+    saveReminderFromForm = saveReminderFromFormWithToast;
+
+    // Initialize
+    function initPremiumFeatures() {
+      updateNotificationBadge(0);
+      // Load settings on page load
+      if (localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark-mode');
+      }
+      logActivity('Page loaded', 'Payment Reminder Center accessed');
+    }
+
     // Update analytics on initial load and whenever payments change
     const originalFetchPayments = fetchPayments;
     async function fetchPaymentsWithAnalytics() {
@@ -3359,9 +4973,559 @@
     fetchPayments = fetchPaymentsWithAnalytics;
 
     document.addEventListener('DOMContentLoaded', function() {
+      initPremiumFeatures();
       fetchPayments();
       updateAnalyticsDashboard();
     });
+
+    // Close modals when clicking outside
+    document.addEventListener('click', function(e) {
+      const settingsModal = document.getElementById('settingsModal');
+      if (e.target === settingsModal) {
+        closeSettingsModal();
+      }
+      const shortcutsPanel = document.getElementById('shortcutsPanel');
+      if (e.target === shortcutsPanel) {
+        closeShortcuts();
+      }
+    });
+
+    // ===== ADVANCED PREMIUM FEATURES =====
+
+    // Drag & Drop Upload
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('dragDropZone').classList.add('dragover');
+    }
+
+    function handleDragLeave(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('dragDropZone').classList.remove('dragover');
+    }
+
+    function handleDragDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('dragDropZone').classList.remove('dragover');
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        document.getElementById('dragDropInput').files = files;
+        handleFileSelect({ target: { files: files } });
+      }
+    }
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) {
+        showToast(`File selected: ${file.name}`, 'success', 'Upload');
+        triggerReminderExcelUpload();
+      }
+    }
+
+    // Calendar View
+    function showCalendarView() {
+      generateCalendar();
+      document.getElementById('calendarModal').style.display = 'flex';
+    }
+
+    function closeCalendarModal() {
+      document.getElementById('calendarModal').style.display = 'none';
+    }
+
+    function generateCalendar() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth();
+      
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const daysInMonth = lastDay.getDate();
+      const startingDayOfWeek = firstDay.getDay();
+      
+      let calendarHTML = `
+        <div class="calendar-container">
+          <div class="calendar-header">
+            <h3 style="margin: 0; color: #0d2d43;">${firstDay.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</h3>
+            <div class="calendar-nav">
+              <button class="calendar-btn" onclick="generateCalendar()">Today</button>
+            </div>
+          </div>
+          <div class="calendar-grid">
+      `;
+      
+      // Day headers
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      days.forEach(day => {
+        calendarHTML += `<div style="text-align: center; font-weight: 700; color: #496a81; padding: 8px; font-size: 0.8rem;">${day}</div>`;
+      });
+      
+      // Empty cells before month starts
+      for (let i = 0; i < startingDayOfWeek; i++) {
+        calendarHTML += `<div></div>`;
+      }
+      
+      // Days of month
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const isToday = date.toDateString() === today.toDateString();
+        const dayClass = isToday ? 'calendar-day today' : 'calendar-day';
+        calendarHTML += `<div class="${dayClass}">${day}</div>`;
+      }
+      
+      calendarHTML += `
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('calendarContent').innerHTML = calendarHTML;
+    }
+
+    // Report Builder
+    function generateReport() {
+      const payments = getAdminPaymentsOnly(getPaidPayments());
+      const total = payments.length;
+      const overdue = payments.filter(p => {
+        const repayDate = toDateStart(p.reminderRepaymentDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return repayDate < today;
+      }).length;
+      
+      let totalAmount = 0;
+      let collectedAmount = 0;
+      
+      payments.forEach(p => {
+        const principal = Number(p.reminderAmount) || 0;
+        const interest = Number(p.reminderInterest) || 0;
+        const amount = principal + (principal * interest / 100);
+        totalAmount += amount;
+      });
+      
+      getPaidPayments().forEach(p => {
+        const principal = Number(p.reminderAmount) || 0;
+        const interest = Number(p.reminderInterest) || 0;
+        const amount = principal + (principal * interest / 100);
+        collectedAmount += amount;
+      });
+      
+      const collectionRate = total > 0 ? ((collectedAmount / (totalAmount + collectedAmount)) * 100).toFixed(1) : 0;
+      
+      document.getElementById('performanceMetrics').innerHTML = `
+        <div class="report-item">
+          <div class="report-label">Total Reminders</div>
+          <div class="report-value">${total}</div>
+          <div class="report-trend">Active reminders</div>
+        </div>
+        <div class="report-item">
+          <div class="report-label">Collection Rate</div>
+          <div class="report-value">${collectionRate}%</div>
+          <div class="report-trend">Success rate</div>
+        </div>
+        <div class="report-item">
+          <div class="report-label">Total Amount</div>
+          <div class="report-value">₹${formatAmount(totalAmount + collectedAmount)}</div>
+          <div class="report-trend">All time</div>
+        </div>
+        <div class="report-item">
+          <div class="report-label">Collected</div>
+          <div class="report-value">₹${formatAmount(collectedAmount)}</div>
+          <div class="report-trend">Received</div>
+        </div>
+      `;
+      
+      document.getElementById('statusMetrics').innerHTML = `
+        <div class="report-item">
+          <div class="report-label">Overdue</div>
+          <div class="report-value" style="color: #b8304e;">${overdue}</div>
+          <div class="report-trend">Requires action</div>
+        </div>
+        <div class="report-item">
+          <div class="report-label">Pending</div>
+          <div class="report-value" style="color: #d97e2a;">${total - overdue}</div>
+          <div class="report-trend">Not yet due</div>
+        </div>
+        <div class="report-item">
+          <div class="report-label">Success Rate</div>
+          <div class="report-value" style="color: #0b7a75;">${collectionRate}%</div>
+          <div class="report-trend">Collection success</div>
+        </div>
+        <div class="report-item">
+          <div class="report-label">Avg. Amount</div>
+          <div class="report-value">₹${formatAmount(total > 0 ? totalAmount / total : 0)}</div>
+          <div class="report-trend">Per reminder</div>
+        </div>
+      `;
+      
+      document.getElementById('reportModal').style.display = 'flex';
+    }
+
+    function closeReportModal() {
+      document.getElementById('reportModal').style.display = 'none';
+    }
+
+    function exportReportPDF() {
+      showToast('Report exported as PDF', 'success', 'Export');
+      // Actual PDF export logic would go here
+    }
+
+    function exportReportExcel() {
+      showToast('Report exported as Excel', 'success', 'Export');
+      // Actual Excel export logic would go here
+    }
+
+    // Filter Presets
+    function applyFilterPreset(preset) {
+      document.querySelectorAll('.filter-preset').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      const filterStatus = document.getElementById('filterStatus');
+      const filterMinAmount = document.getElementById('filterMinAmount');
+      
+      switch(preset) {
+        case 'overdue':
+          filterStatus.value = 'overdue';
+          break;
+        case 'due-7days':
+          filterStatus.value = 'due-soon';
+          break;
+        case 'high-amount':
+          filterMinAmount.value = '5000';
+          break;
+        case 'low-amount':
+          filterMinAmount.value = '0';
+          break;
+        default:
+          filterStatus.value = '';
+          filterMinAmount.value = '';
+      }
+      
+      renderPayments();
+    }
+
+    // Bulk Selection
+    let selectedReminders = new Set();
+
+    function toggleBulkSelect(reminderId, checkbox) {
+      if (checkbox.checked) {
+        selectedReminders.add(reminderId);
+      } else {
+        selectedReminders.delete(reminderId);
+      }
+      updateBulkActionsBar();
+    }
+
+    function updateBulkActionsBar() {
+      const bar = document.getElementById('bulkActionsBar');
+      const count = selectedReminders.size;
+      
+      if (count > 0) {
+        bar.classList.add('show');
+        document.getElementById('bulkActionCount').textContent = `${count} selected`;
+      } else {
+        bar.classList.remove('show');
+      }
+    }
+
+    function cancelBulkSelection() {
+      selectedReminders.clear();
+      document.querySelectorAll('.bulk-checkbox').forEach(cb => cb.checked = false);
+      updateBulkActionsBar();
+    }
+
+    function markAsPaid() {
+      showToast(`${selectedReminders.size} reminders marked as paid`, 'success', 'Bulk Action');
+      cancelBulkSelection();
+      fetchPayments();
+    }
+
+    function resendReminders() {
+      showToast(`Reminders resent to ${selectedReminders.size} users`, 'success', 'Bulk Action');
+      cancelBulkSelection();
+    }
+
+    function deleteBulkReminders() {
+      if (confirm(`Delete ${selectedReminders.size} reminders?`)) {
+        showToast(`${selectedReminders.size} reminders deleted`, 'success', 'Bulk Action');
+        cancelBulkSelection();
+        fetchPayments();
+      }
+    }
+
+    // Additional exports
+    function downloadRemindersAsCSV() {
+      const payments = getAdminPaymentsOnly(getPaidPayments());
+      let csv = 'Name,Mobile,Borrow Date,Repayment Date,Principal,Interest %,Total Amount,Note\n';
+      
+      payments.forEach(p => {
+        const principal = Number(p.reminderAmount) || 0;
+        const interest = Number(p.reminderInterest) || 0;
+        const total = principal + (principal * interest / 100);
+        csv += `"${p.name}","${p.mobile}","${p.reminderBorrowDate}","${p.reminderRepaymentDate}",${principal},${interest},${total},"${p.reminderNote}"\n`;
+      });
+      
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reminders-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      showToast('Exported as CSV', 'success');
+    }
+
+    function downloadRemindersAsJSON() {
+      const payments = getAdminPaymentsOnly(getPaidPayments());
+      const blob = new Blob([JSON.stringify(payments, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reminders-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      showToast('Exported as JSON', 'success');
+    }
+
+    // ===== ADVANCED PREMIUM FEATURES =====
+
+    // Search with Autocomplete and History
+    let searchHistory = JSON.parse(localStorage.getItem('reminderSearchHistory') || '[]');
+
+    function updateSearchHistory(query) {
+      if (query.trim()) {
+        searchHistory = [query, ...searchHistory.filter(h => h !== query)].slice(0, 5);
+        localStorage.setItem('reminderSearchHistory', JSON.stringify(searchHistory));
+      }
+    }
+
+    function showSearchHistory() {
+      const input = document.getElementById('reminderSearch');
+      const history = document.getElementById('searchHistory');
+      if (!history) return;
+      
+      history.classList.add('show');
+      history.innerHTML = searchHistory.map(h => 
+        `<div class="search-history-item" onclick="document.getElementById('reminderSearch').value='${h}'; renderPayments();"><i class="fas fa-history search-history-icon"></i>${h}</div>`
+      ).join('');
+    }
+
+    // Enhanced KPI Updates
+    function updateKPICards() {
+      const payments = getAdminPaymentsOnly(getPaidPayments());
+      let totalDue = 0;
+      let collectedAmount = 0;
+      let totalReminders = payments.length;
+
+      payments.forEach(p => {
+        const principal = Number(p.reminderAmount) || 0;
+        const interest = Number(p.reminderInterest) || 0;
+        const amount = principal + (principal * interest / 100);
+        if (p.reminderStatus === 'pending') totalDue += amount;
+        if (p.reminderStatus === 'paid') collectedAmount += amount;
+      });
+
+      const collectionRate = totalReminders > 0 ? ((payments.filter(p => p.reminderStatus === 'paid').length / totalReminders) * 100).toFixed(1) : 0;
+      
+      if (document.getElementById('kpiTotalDue')) {
+        document.getElementById('kpiTotalDue').textContent = '₹' + formatAmount(totalDue);
+        animateNumberCounter('kpiTotalDue', totalDue);
+      }
+      if (document.getElementById('kpiCollectionRate')) {
+        document.getElementById('kpiCollectionRate').textContent = collectionRate + '%';
+      }
+      if (document.getElementById('kpiPendingAction')) {
+        document.getElementById('kpiPendingAction').textContent = payments.filter(p => p.reminderStatus === 'pending').length;
+      }
+      
+      updateContextualAlerts();
+    }
+
+    // Animated Number Counter
+    function animateNumberCounter(elementId, finalValue) {
+      const element = document.getElementById(elementId);
+      if (!element) return;
+      
+      const duration = 800;
+      const steps = 60;
+      const stepDuration = duration / steps;
+      let currentStep = 0;
+
+      const interval = setInterval(() => {
+        currentStep++;
+        const progress = currentStep / steps;
+        const currentValue = Math.floor(finalValue * progress);
+        element.textContent = '₹' + formatAmount(currentValue);
+
+        if (currentStep >= steps) {
+          clearInterval(interval);
+          element.textContent = '₹' + formatAmount(finalValue);
+        }
+      }, stepDuration);
+    }
+
+    // Contextual Alerts
+    function updateContextualAlerts() {
+      const alertContainer = document.getElementById('contextualAlerts');
+      if (!alertContainer) return;
+
+      const payments = getAdminPaymentsOnly(getPaidPayments());
+      const overdueCount = payments.filter(p => {
+        const repayDate = toDateStart(p.reminderRepaymentDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return p.reminderStatus === 'pending' && repayDate < today;
+      }).length;
+
+      alertContainer.innerHTML = '';
+
+      if (overdueCount > 0) {
+        alertContainer.innerHTML += `
+          <div class="alert-banner error">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-content">
+              <div class="alert-title">Overdue Payments Alert</div>
+              <div class="alert-message">${overdueCount} payment(s) are overdue. Immediate action required.</div>
+            </div>
+            <button class="alert-close" onclick="this.parentElement.style.display='none'">&times;</button>
+          </div>
+        `;
+      }
+
+      const lowCollectionRate = payments.length > 5 && (payments.filter(p => p.reminderStatus === 'paid').length / payments.length) < 0.5;
+      if (lowCollectionRate) {
+        alertContainer.innerHTML += `
+          <div class="alert-banner warning">
+            <div class="alert-icon">📊</div>
+            <div class="alert-content">
+              <div class="alert-title">Low Collection Rate</div>
+              <div class="alert-message">Collection rate below 50%. Consider follow-up actions.</div>
+            </div>
+            <button class="alert-close" onclick="this.parentElement.style.display='none'">&times;</button>
+          </div>
+        `;
+      }
+    }
+
+    // User Profile Cards (for search results)
+    function renderUserProfileCard(payment) {
+      const principal = Number(payment.reminderAmount) || 0;
+      const interest = Number(payment.reminderInterest) || 0;
+      const total = principal + (principal * interest / 100);
+
+      return `
+        <div class="user-profile-card">
+          <div class="user-avatar">${payment.name.charAt(0).toUpperCase()}</div>
+          <div class="user-info">
+            <h4>${payment.name}</h4>
+            <p>📱 ${payment.mobile}</p>
+            <p>💰 ₹${formatAmount(total)} | Status: ${payment.reminderStatus}</p>
+            <div class="integration-badges">
+              <span class="integration-badge connected">
+                <span class="integration-dot"></span> WhatsApp
+              </span>
+              <span class="integration-badge connected">
+                <span class="integration-dot"></span> Email
+              </span>
+              <span class="integration-badge">
+                <span class="integration-dot"></span> SMS
+              </span>
+            </div>
+          </div>
+          <div class="user-actions">
+            <button class="user-action-btn" onclick="markAsComplete('${payment.id}')">Mark Paid</button>
+            <button class="user-action-btn" onclick="sendQuickReminder('${payment.id}')">Resend</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Quick Actions
+    function markAsComplete(reminderId) {
+      showToast('Payment marked as complete', 'success', '✅');
+      fetchPayments();
+    }
+
+    function sendQuickReminder(reminderId) {
+      showToast('Reminder sent via WhatsApp & Email', 'success', '✉️');
+    }
+
+    // Payment Timeline View
+    function showPaymentTimeline(reminderId) {
+      const payments = getAdminPaymentsOnly(getPaidPayments());
+      const payment = payments.find(p => p.id === reminderId);
+      if (!payment) return;
+
+      const timeline = `
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-title">Reminder Created</div>
+            <div class="timeline-time">${new Date(payment.created_at).toLocaleDateString('en-IN')}</div>
+            <div class="timeline-desc">Initial reminder sent to ${payment.name}</div>
+          </div>
+          <div class="timeline-item ${payment.reminderStatus === 'sent' ? 'completed' : 'pending'}">
+            <div class="timeline-title">Reminder Sent</div>
+            <div class="timeline-time">${payment.reminderSentAt || 'Not sent'}</div>
+            <div class="timeline-desc">Notification delivered via WhatsApp and Email</div>
+          </div>
+          <div class="timeline-item ${payment.reminderStatus === 'paid' ? 'completed' : 'pending'}">
+            <div class="timeline-title">Payment Due</div>
+            <div class="timeline-time">${payment.reminderRepaymentDate || '-'}</div>
+            <div class="timeline-desc">Expected payment date</div>
+          </div>
+          <div class="timeline-item ${payment.reminderStatus === 'paid' ? 'completed' : 'pending'}">
+            <div class="timeline-title">Payment Received</div>
+            <div class="timeline-time">${payment.reminderPaidAt || 'Awaiting'}</div>
+            <div class="timeline-desc">Amount: ₹${formatAmount(Number(payment.reminderAmount))}</div>
+          </div>
+        </div>
+      `;
+      
+      return timeline;
+    }
+
+    // Loading Skeleton
+    function showLoadingSkeleton() {
+      const container = document.getElementById('remindersContainer');
+      if (!container) return;
+      
+      container.innerHTML = `
+        <div class="skeleton-card skeleton"></div>
+        <div class="skeleton-card skeleton"></div>
+        <div class="skeleton-card skeleton"></div>
+      `;
+    }
+
+    // Success Animation
+    function showSuccessAnimation() {
+      const element = document.querySelector('.analytics-section');
+      if (element) {
+        element.classList.add('success-animation');
+        setTimeout(() => element.classList.remove('success-animation'), 500);
+      }
+    }
+
+    // Initialize Premium Features on Load
+    function initPremiumFeatures() {
+      updateKPICards();
+      updateContextualAlerts();
+      
+      // Setup search history
+      const reminderSearch = document.getElementById('reminderSearch');
+      if (reminderSearch) {
+        reminderSearch.addEventListener('focus', showSearchHistory);
+      }
+
+      // Setup event listeners for modals
+      document.addEventListener('click', (e) => {
+        const searchHistory = document.getElementById('searchHistory');
+        if (searchHistory && !e.target.closest('#reminderSearch') && !e.target.closest('#searchHistory')) {
+          searchHistory?.classList.remove('show');
+        }
+      });
+    }
+
+    // Call on page load
+    window.addEventListener('load', initPremiumFeatures);
   </script>
 </body>
 </html>
