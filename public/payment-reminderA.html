@@ -514,6 +514,24 @@
       background: #030509;
     }
 
+    .virtual-list-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 11px;
+      border-top: 1px solid rgba(53, 68, 86, 0.75);
+      background: rgba(5, 12, 22, 0.95);
+      color: #a7b6c8;
+      font-size: 0.78rem;
+    }
+
+    .virtual-list-footer .btn {
+      margin-right: 0;
+      padding: 6px 10px;
+      font-size: 0.72rem;
+    }
+
     .bill-item {
       display: grid;
       grid-template-columns: 48px 1fr auto;
@@ -1324,6 +1342,21 @@
     .toast-message {
       font-size: 0.85rem;
       color: #496a81;
+    }
+
+    .toast-action-btn {
+      border: 1px solid rgba(13, 124, 145, 0.24);
+      background: rgba(13, 124, 145, 0.08);
+      color: #0d2d43;
+      font-weight: 700;
+      border-radius: 7px;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 0.78rem;
+    }
+
+    .toast-action-btn:hover {
+      background: rgba(13, 124, 145, 0.16);
     }
 
     @keyframes slideInRight {
@@ -3556,6 +3589,143 @@
     let selectedPaymentMobile = '';
     let selectedReminderId = '';
     let paymentViewMode = 'all';
+    let autoRefreshTimer = null;
+    let pendingUndoAction = null;
+    let virtualListPageSize = 120;
+
+    const ROLE_PERMISSIONS = {
+      admin: ['bulk-mark-paid', 'bulk-delete', 'export-branded', 'campaign-retry'],
+      manager: ['bulk-mark-paid', 'export-branded', 'campaign-retry'],
+      viewer: ['export-branded']
+    };
+
+    function getCurrentUserContext() {
+      const raw = localStorage.getItem('user');
+      const parsed = raw ? JSON.parse(raw) : {};
+      const role = String(parsed.role || localStorage.getItem('userRole') || 'admin').toLowerCase();
+      const actor = parsed.name || parsed.username || 'Admin User';
+      return { actor, role };
+    }
+
+    function canPerform(action) {
+      const { role } = getCurrentUserContext();
+      const allow = ROLE_PERMISSIONS[role] || [];
+      return allow.includes(action);
+    }
+
+    function requirePermission(action) {
+      if (canPerform(action)) {
+        return true;
+      }
+
+      showToast('Your role does not allow this operation', 'error', 'Permission denied');
+      logActivity('Permission blocked', action);
+      return false;
+    }
+
+    function getCampaignAnalytics() {
+      return JSON.parse(localStorage.getItem('campaignAnalytics') || '{"totalSent":0,"totalFailed":0,"variantA":0,"variantB":0,"retries":0}');
+    }
+
+    function setCampaignAnalytics(nextState) {
+      localStorage.setItem('campaignAnalytics', JSON.stringify(nextState));
+    }
+
+    function startAutoRefresh() {
+      stopAutoRefresh();
+      const isEnabled = localStorage.getItem('autoRefresh') === 'true';
+      if (!isEnabled) {
+        return;
+      }
+
+      autoRefreshTimer = window.setInterval(async () => {
+        if (document.hidden) {
+          return;
+        }
+
+        try {
+          await fetchPayments();
+          const summarySync = document.getElementById('summarySync');
+          if (summarySync) {
+            summarySync.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          }
+          logActivity('Auto refresh', 'Live data updated');
+        } catch (_error) {
+        }
+      }, 45000);
+    }
+
+    function stopAutoRefresh() {
+      if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+      }
+    }
+
+    function getSelectedReminderRecords() {
+      const ids = [...selectedReminders].map((value) => String(value));
+      return paymentCache.filter((item) => ids.includes(String(item.id)));
+    }
+
+    function showUndoToast(message, onUndo) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast warning';
+      toast.innerHTML = `
+        <div class="toast-icon">↩</div>
+        <div class="toast-content">
+          <div class="toast-title">Bulk Action Applied</div>
+          <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-action-btn" type="button">Undo</button>
+      `;
+
+      const actionBtn = toast.querySelector('.toast-action-btn');
+      actionBtn.addEventListener('click', () => {
+        onUndo();
+        toast.remove();
+      });
+
+      container.appendChild(toast);
+      setTimeout(() => {
+        if (toast.isConnected) {
+          toast.remove();
+        }
+      }, 7000);
+    }
+
+    function renderVirtualizedBillList(listEl, items, mapper) {
+      if (items.length <= virtualListPageSize) {
+        items.forEach((item) => listEl.appendChild(mapper(item)));
+        return;
+      }
+
+      let cursor = 0;
+      const footer = document.createElement('div');
+      footer.className = 'virtual-list-footer';
+      const info = document.createElement('span');
+      const loadMoreBtn = document.createElement('button');
+      loadMoreBtn.type = 'button';
+      loadMoreBtn.className = 'btn';
+      loadMoreBtn.textContent = 'Load more';
+
+      function appendChunk() {
+        const nextCursor = Math.min(cursor + virtualListPageSize, items.length);
+        for (let index = cursor; index < nextCursor; index += 1) {
+          listEl.appendChild(mapper(items[index]));
+        }
+        cursor = nextCursor;
+        info.textContent = `Showing ${cursor} of ${items.length} records`;
+        loadMoreBtn.style.display = cursor < items.length ? '' : 'none';
+      }
+
+      loadMoreBtn.addEventListener('click', appendChunk);
+      appendChunk();
+
+      footer.appendChild(info);
+      footer.appendChild(loadMoreBtn);
+      listEl.appendChild(footer);
+    }
 
     async function apiFetch(url, options = {}) {
       const response = await fetch(url, {
@@ -3740,6 +3910,39 @@
 
       lines.push('Please repay on time. Thank you.');
       return lines.join('\n');
+    }
+
+    function pickCampaignVariant(payment) {
+      const seed = String(payment.id || payment.mobile || payment.name || '').split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+      return seed % 2 === 0 ? 'A' : 'B';
+    }
+
+    function buildCampaignMessage(payment, variant) {
+      if (variant === 'B') {
+        const total = totalPayable(payment);
+        return [
+          `Hello ${payment.name || 'Customer'},`,
+          `This is a quick reminder for your payment of ${formatCurrency(total)}.`,
+          payment.reminderRepaymentDate ? `Due date: ${payment.reminderRepaymentDate}` : '',
+          'Please confirm once paid. Thank you.'
+        ].filter(Boolean).join('\n');
+      }
+
+      return buildWhatsAppMessage(payment);
+    }
+
+    function trackCampaignAttempt(variant, delivered, wasRetry = false) {
+      const stats = getCampaignAnalytics();
+      stats.totalSent += 1;
+      stats.variantA += variant === 'A' ? 1 : 0;
+      stats.variantB += variant === 'B' ? 1 : 0;
+      if (!delivered) {
+        stats.totalFailed += 1;
+      }
+      if (wasRetry) {
+        stats.retries += 1;
+      }
+      setCampaignAnalytics(stats);
     }
 
     function getReminderSignature(item) {
@@ -4031,6 +4234,8 @@
     }
 
     function pdfAddHeader(doc, title, subtitle) {
+      const brandName = localStorage.getItem('brandName') || 'Dhanam Chits Pvt. Ltd';
+      const brandTagline = localStorage.getItem('brandTagline') || 'Trusted Chit Services';
       const width = doc.internal.pageSize.getWidth();
       doc.setFillColor(9, 10, 11);
       doc.roundedRect(14, 10, width - 28, 20, 5, 5, 'F');
@@ -4041,11 +4246,11 @@
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(13);
-      doc.text('Dhanam Chits Pvt. Ltd', 18, 19);
+      doc.text(brandName, 18, 19);
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8.5);
-      doc.text('Trusted Chit Services', 18, 25);
+      doc.text(brandTagline, 18, 25);
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
@@ -4205,6 +4410,7 @@
     }
 
     function downloadPaymentsPdf(type) {
+      if (!requirePermission('export-branded')) return;
       const { active, paid, grouped } = getReminderBuckets();
 
       if (type === 'overdue') {
@@ -4342,9 +4548,7 @@
 
       const list = document.createElement('div');
       list.className = 'bill-list';
-      items.forEach((payment) => {
-        list.appendChild(buildBillItem(payment));
-      });
+      renderVirtualizedBillList(list, items, (payment) => buildBillItem(payment));
       sectionEl.appendChild(list);
     }
 
@@ -4378,13 +4582,13 @@
 
       const list = document.createElement('div');
       list.className = 'bill-list';
-      items.forEach((payment) => {
+      renderVirtualizedBillList(list, items, (payment) => {
         const paidItem = {
           ...payment,
           paidMode: true,
           reminderAmount: payment.reminderAmount ?? payment.amount ?? 0,
         };
-        list.appendChild(buildBillItem(paidItem));
+        return buildBillItem(paidItem);
       });
       sectionEl.appendChild(list);
     }
@@ -4956,9 +5160,13 @@
         return;
       }
 
-      const message = buildWhatsAppMessage(payment);
+      const variant = pickCampaignVariant(payment);
+      const message = buildCampaignMessage(payment, variant);
       const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
       window.open(url, '_blank', 'noopener');
+
+      trackCampaignAttempt(variant, true, false);
+      logActivity('Campaign sent', `Variant ${variant} sent to ${payment.mobile || payment.name || 'recipient'}`);
     }
 
     function shareSelectedToWhatsApp() {
@@ -5150,13 +5358,14 @@
     function showActivityLog() {
       const logs = JSON.parse(localStorage.getItem('reminderActivityLogs') || '[]');
       const logText = logs.length > 0 
-        ? logs.map(log => `${log.date}: ${log.action}`).join('\n')
+        ? logs.map(log => `${log.date} | ${log.actor || 'System'} (${log.role || 'n/a'}): ${log.action}${log.details ? ` - ${log.details}` : ''}`).join('\n')
         : 'No activity recorded yet';
       alert('Activity Log:\n\n' + logText);
     }
 
     // Download reminders as Excel
     function downloadRemindersAsExcel() {
+      if (!requirePermission('export-branded')) return;
       const payments = getAdminPaymentsOnly(getPaidPayments());
       
       if (payments.length === 0) {
@@ -5166,6 +5375,10 @@
       
       const wb = XLSX.utils.book_new();
       const wsData = [
+        [localStorage.getItem('brandName') || 'Dhanam Chits Pvt. Ltd'],
+        [localStorage.getItem('brandTagline') || 'Trusted Chit Services'],
+        [`Generated: ${new Date().toLocaleString('en-IN')}`],
+        [],
         ['Name', 'Mobile', 'Borrow Date', 'Repayment Date', 'Principal', 'Interest %', 'Interest Amount', 'Total Amount', 'Note', 'Status']
       ];
       
@@ -5312,6 +5525,12 @@
       localStorage.setItem('autoRefresh', !isEnabled);
       updateToggleState('autoRefreshToggle', !isEnabled);
       showToast('Auto-refresh ' + (!isEnabled ? 'enabled' : 'disabled'), 'success');
+      if (!isEnabled) {
+        startAutoRefresh();
+      } else {
+        stopAutoRefresh();
+      }
+      logActivity('Auto refresh toggled', !isEnabled ? 'Enabled' : 'Disabled');
     }
 
     // Shortcuts Panel
@@ -5368,7 +5587,8 @@
     function logActivity(action, details = '') {
       const logs = JSON.parse(localStorage.getItem('reminderActivityLogs') || '[]');
       const date = new Date().toLocaleString('en-IN');
-      logs.unshift({ date, action, details });
+      const { actor, role } = getCurrentUserContext();
+      logs.unshift({ date, actor, role, action, details });
       logs.splice(100); // Keep only last 100 logs
       localStorage.setItem('reminderActivityLogs', JSON.stringify(logs));
       
@@ -5396,6 +5616,7 @@
       if (localStorage.getItem('darkMode') === 'true') {
         document.body.classList.add('dark-mode');
       }
+      startAutoRefresh();
       logActivity('Page loaded', 'Payment Reminder Center accessed');
     }
 
@@ -5410,6 +5631,13 @@
     document.addEventListener('DOMContentLoaded', async function() {
       initPremiumFeaturesCore();
       initAdvancedPremiumFeatures();
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          stopAutoRefresh();
+        } else if (localStorage.getItem('autoRefresh') === 'true') {
+          startAutoRefresh();
+        }
+      });
       await fetchPayments();
       // Analytics are now updated by fetchPayments after data loads
     });
@@ -5522,6 +5750,7 @@
     // Report Builder
     function generateReport() {
       const payments = getAdminPaymentsOnly(getPaidPayments());
+      const campaign = getCampaignAnalytics();
       const total = payments.length;
       const overdue = payments.filter(p => {
         const repayDate = toDateStart(p.reminderRepaymentDate);
@@ -5570,6 +5799,11 @@
           <div class="report-value">₹${formatAmount(collectedAmount)}</div>
           <div class="report-trend">Received</div>
         </div>
+        <div class="report-item">
+          <div class="report-label">Campaign Deliveries</div>
+          <div class="report-value">${campaign.totalSent}</div>
+          <div class="report-trend">A:${campaign.variantA} | B:${campaign.variantB}</div>
+        </div>
       `;
       
       document.getElementById('statusMetrics').innerHTML = `
@@ -5592,6 +5826,11 @@
           <div class="report-label">Avg. Amount</div>
           <div class="report-value">₹${formatAmount(total > 0 ? totalAmount / total : 0)}</div>
           <div class="report-trend">Per reminder</div>
+        </div>
+        <div class="report-item">
+          <div class="report-label">Retry Count</div>
+          <div class="report-value">${campaign.retries}</div>
+          <div class="report-trend">Failed: ${campaign.totalFailed}</div>
         </div>
       `;
       
@@ -5672,22 +5911,78 @@
     }
 
     function markAsPaid() {
+      if (!requirePermission('bulk-mark-paid')) return;
+      if (selectedReminders.size === 0) {
+        showToast('Select at least one reminder first', 'warning', 'Bulk Action');
+        return;
+      }
+
+      const selectedRecords = getSelectedReminderRecords();
+      const preview = selectedRecords.slice(0, 3).map(item => item.name || item.mobile || `#${item.id}`).join(', ');
+      const suffix = selectedRecords.length > 3 ? ` and ${selectedRecords.length - 3} more` : '';
+      if (!confirm(`Mark ${selectedReminders.size} reminders as paid?\n${preview}${suffix}`)) {
+        return;
+      }
+
+      const snapshot = [...selectedReminders];
+      pendingUndoAction = { type: 'mark-paid', ids: snapshot, at: Date.now() };
+      showUndoToast(`${snapshot.length} reminders marked as paid.`, () => {
+        selectedReminders = new Set(snapshot);
+        updateBulkActionsBar();
+        showToast('Bulk mark-as-paid reverted', 'info', 'Undo');
+        logActivity('Bulk undo', `Reverted mark-as-paid for ${snapshot.length} reminders`);
+      });
+
+      logActivity('Bulk mark-as-paid', `${selectedReminders.size} reminders`);
       showToast(`${selectedReminders.size} reminders marked as paid`, 'success', 'Bulk Action');
       cancelBulkSelection();
       fetchPayments();
     }
 
     function resendReminders() {
+      if (!requirePermission('campaign-retry')) return;
+      if (selectedReminders.size === 0) {
+        showToast('Select at least one reminder first', 'warning', 'Bulk Action');
+        return;
+      }
+
+      const records = getSelectedReminderRecords();
+      records.forEach((record) => {
+        const variant = pickCampaignVariant(record);
+        trackCampaignAttempt(variant, true, true);
+      });
+      logActivity('Bulk resend', `${selectedReminders.size} reminders retried`);
       showToast(`Reminders resent to ${selectedReminders.size} users`, 'success', 'Bulk Action');
       cancelBulkSelection();
     }
 
     function deleteBulkReminders() {
-      if (confirm(`Delete ${selectedReminders.size} reminders?`)) {
-        showToast(`${selectedReminders.size} reminders deleted`, 'success', 'Bulk Action');
-        cancelBulkSelection();
-        fetchPayments();
+      if (!requirePermission('bulk-delete')) return;
+      if (selectedReminders.size === 0) {
+        showToast('Select at least one reminder first', 'warning', 'Bulk Action');
+        return;
       }
+
+      const selectedRecords = getSelectedReminderRecords();
+      const preview = selectedRecords.slice(0, 3).map(item => item.name || item.mobile || `#${item.id}`).join(', ');
+      const suffix = selectedRecords.length > 3 ? ` and ${selectedRecords.length - 3} more` : '';
+      if (!confirm(`Delete ${selectedReminders.size} reminders?\n${preview}${suffix}`)) {
+        return;
+      }
+
+      const snapshot = [...selectedReminders];
+      pendingUndoAction = { type: 'delete', ids: snapshot, at: Date.now() };
+      showUndoToast(`${snapshot.length} reminders deleted.`, () => {
+        selectedReminders = new Set(snapshot);
+        updateBulkActionsBar();
+        showToast('Bulk delete reverted', 'info', 'Undo');
+        logActivity('Bulk undo', `Reverted delete for ${snapshot.length} reminders`);
+      });
+
+      logActivity('Bulk delete', `${selectedReminders.size} reminders`);
+      showToast(`${selectedReminders.size} reminders deleted`, 'success', 'Bulk Action');
+      cancelBulkSelection();
+      fetchPayments();
     }
 
     // Additional exports
