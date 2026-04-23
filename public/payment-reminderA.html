@@ -172,6 +172,62 @@
       justify-content: flex-end;
     }
 
+    .premium-summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin: 14px 0 18px;
+    }
+
+    .premium-summary-card {
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(13, 124, 145, 0.14);
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: 0 10px 20px rgba(13, 124, 145, 0.08);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 70px;
+    }
+
+    .premium-summary-label {
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #5c7387;
+      margin-bottom: 4px;
+    }
+
+    .premium-summary-value {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #0d2d43;
+      line-height: 1;
+    }
+
+    .premium-summary-meta {
+      font-size: 0.76rem;
+      color: #6a8499;
+      margin-top: 4px;
+    }
+
+    .premium-summary-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(13, 124, 145, 0.16), rgba(11, 122, 117, 0.16));
+      color: #0d7c91;
+      font-size: 1rem;
+      flex: 0 0 auto;
+    }
+
     .layout {
       display: grid;
       grid-template-columns: minmax(290px, 360px) 1fr;
@@ -187,6 +243,12 @@
 
       .content {
         padding: 32px;
+      }
+
+      .premium-summary {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin: 16px 0 20px;
       }
 
       table {
@@ -1998,6 +2060,11 @@
       margin-bottom: 12px;
     }
 
+    .chart-card canvas {
+      width: 100% !important;
+      height: 220px !important;
+    }
+
     .mini-chart {
       height: 200px;
       background: linear-gradient(135deg, #f8fbff, #f0f5fa);
@@ -2454,6 +2521,21 @@
         justify-content: flex-start;
       }
 
+      .premium-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin: 12px 0 14px;
+      }
+
+      .premium-summary-card {
+        padding: 10px 12px;
+        min-height: 62px;
+      }
+
+      .premium-summary-value {
+        font-size: 1.1rem;
+      }
+
       .analytics-section {
         margin-bottom: 16px;
         padding: 0 !important;
@@ -2743,6 +2825,10 @@
       .status {
         font-size: 0.8rem;
         margin: 8px 0 0;
+      }
+
+      .premium-summary {
+        grid-template-columns: 1fr;
       }
     }
 
@@ -3076,6 +3162,52 @@
             <span>Settings</span>
           </span>
         </button>
+      </div>
+    </div>
+
+    <div class="premium-summary" id="premiumSummary">
+      <div class="premium-summary-card">
+        <div>
+          <div class="premium-summary-label">Overdue</div>
+          <div class="premium-summary-value" id="summaryOverdue">0</div>
+          <div class="premium-summary-meta">Needs attention</div>
+        </div>
+        <div class="premium-summary-icon"><i class="fas fa-triangle-exclamation"></i></div>
+      </div>
+      <div class="premium-summary-card">
+        <div>
+          <div class="premium-summary-label">Due Soon</div>
+          <div class="premium-summary-value" id="summaryDueSoon">0</div>
+          <div class="premium-summary-meta">Next 7 days</div>
+        </div>
+        <div class="premium-summary-icon"><i class="fas fa-calendar-days"></i></div>
+      </div>
+      <div class="premium-summary-card">
+        <div>
+          <div class="premium-summary-label">Paid This Month</div>
+          <div class="premium-summary-value" id="summaryPaid">0</div>
+          <div class="premium-summary-meta">Healthy collections</div>
+        </div>
+        <div class="premium-summary-icon"><i class="fas fa-circle-check"></i></div>
+      </div>
+      <div class="premium-summary-card">
+        <div>
+          <div class="premium-summary-label">Last Sync</div>
+          <div class="premium-summary-value" id="summarySync">--:--</div>
+          <div class="premium-summary-meta">Auto updated</div>
+        </div>
+        <div class="premium-summary-icon"><i class="fas fa-wave-square"></i></div>
+      </div>
+    </div>
+
+    <div class="charts-grid" id="premiumCharts">
+      <div class="chart-card">
+        <div class="chart-card-title">📈 Payment Trend</div>
+        <canvas id="paymentTrendChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">🥧 Status Breakdown</div>
+        <canvas id="statusBreakdownChart"></canvas>
       </div>
     </div>
 
@@ -4916,9 +5048,22 @@
       document.getElementById('dueSoonCount').textContent = dueSoonCount;
       document.getElementById('pendingCount').textContent = pendingCount;
       document.getElementById('paidThisMonthCount').textContent = paidThisMonthCount;
+
+      const summaryOverdue = document.getElementById('summaryOverdue');
+      const summaryDueSoon = document.getElementById('summaryDueSoon');
+      const summaryPaid = document.getElementById('summaryPaid');
+      const summarySync = document.getElementById('summarySync');
+
+      if (summaryOverdue) summaryOverdue.textContent = overdueCount;
+      if (summaryDueSoon) summaryDueSoon.textContent = dueSoonCount;
+      if (summaryPaid) summaryPaid.textContent = paidThisMonthCount;
+      if (summarySync) {
+        summarySync.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
       
       // Update KPI cards
       updateKPICards();
+      renderPremiumCharts();
       updateContextualAlerts();
     }
 
@@ -5601,6 +5746,9 @@
     }
 
     // Enhanced KPI Updates
+    let premiumTrendChart = null;
+    let premiumStatusChart = null;
+
     function updateKPICards() {
       const payments = getAdminPaymentsOnly(getPaidPayments());
       let totalDue = 0;
@@ -5629,6 +5777,102 @@
       }
       
       updateContextualAlerts();
+    }
+
+    function renderPremiumCharts() {
+      const payments = getAdminPaymentsOnly(getPaidPayments());
+      const paidPayments = getPaidPayments();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const labels = [];
+      const dueData = [];
+      const paidData = [];
+
+      for (let offset = 6; offset >= 0; offset--) {
+        const day = new Date(today);
+        day.setDate(today.getDate() - offset);
+        labels.push(day.toLocaleDateString('en-IN', { weekday: 'short' }));
+
+        dueData.push(payments.filter(payment => {
+          const repaymentDate = toDateStart(payment.reminderRepaymentDate);
+          return repaymentDate && repaymentDate.toDateString() === day.toDateString();
+        }).length);
+
+        paidData.push(paidPayments.filter(payment => {
+          const paidDate = toDateStart(payment.reminderPaidAt || payment.created_at);
+          return paidDate && paidDate.toDateString() === day.toDateString();
+        }).length);
+      }
+
+      const trendCanvas = document.getElementById('paymentTrendChart');
+      if (trendCanvas && window.Chart) {
+        if (premiumTrendChart) premiumTrendChart.destroy();
+        premiumTrendChart = new Chart(trendCanvas, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Due',
+              data: dueData,
+              borderColor: '#0d7c91',
+              backgroundColor: 'rgba(13, 124, 145, 0.14)',
+              tension: 0.35,
+              fill: true,
+              pointRadius: 3
+            }, {
+              label: 'Paid',
+              data: paidData,
+              borderColor: '#0f9a5f',
+              backgroundColor: 'rgba(15, 154, 95, 0.14)',
+              tension: 0.35,
+              fill: true,
+              pointRadius: 3
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+          }
+        });
+      }
+
+      const statusCanvas = document.getElementById('statusBreakdownChart');
+      if (statusCanvas && window.Chart) {
+        const overdueCount = payments.filter(payment => {
+          const repayDate = toDateStart(payment.reminderRepaymentDate);
+          return payment.reminderStatus === 'pending' && repayDate && repayDate < today;
+        }).length;
+
+        const dueSoonCount = payments.filter(payment => {
+          const repayDate = toDateStart(payment.reminderRepaymentDate);
+          const daysRemaining = repayDate ? Math.ceil((repayDate - today) / (1000 * 3600 * 24)) : 999;
+          return daysRemaining >= 0 && daysRemaining <= 7;
+        }).length;
+
+        const paidCount = paidPayments.length;
+
+        if (premiumStatusChart) premiumStatusChart.destroy();
+        premiumStatusChart = new Chart(statusCanvas, {
+          type: 'doughnut',
+          data: {
+            labels: ['Overdue', 'Due Soon', 'Paid'],
+            datasets: [{
+              data: [overdueCount, dueSoonCount, paidCount],
+              backgroundColor: ['#b8304e', '#d97e2a', '#0f9a5f'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } },
+            cutout: '68%'
+          }
+        });
+      }
     }
 
     // Animated Number Counter
