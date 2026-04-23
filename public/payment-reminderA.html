@@ -7,10 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkR4j8Y7P8R2R7fYk0lA5r9xM4q8K/ux+Q2g==" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
@@ -1891,8 +1891,10 @@
     .calendar-day {
       aspect-ratio: 1;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 4px;
       border-radius: 8px;
       font-size: 0.85rem;
       font-weight: 600;
@@ -1900,6 +1902,8 @@
       transition: all 0.2s ease;
       background: #f8fbff;
       border: 1px solid #e4eef4;
+      padding: 6px;
+      text-align: center;
     }
 
     .calendar-day:hover {
@@ -1907,8 +1911,7 @@
     }
 
     .calendar-day.has-reminder {
-      background: rgba(13, 124, 145, 0.15);
-      color: #0d7c91;
+      background: rgba(13, 124, 145, 0.12);
       border-color: #0d7c91;
     }
 
@@ -1916,6 +1919,48 @@
       background: #0d7c91;
       color: white;
       font-weight: 700;
+    }
+
+    .calendar-day-number {
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .calendar-day-meta {
+      font-size: 0.67rem;
+      line-height: 1;
+      color: #496a81;
+      display: inline-flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .calendar-day.today .calendar-day-meta {
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    .calendar-details {
+      margin-top: 14px;
+      border: 1px solid #e4eef4;
+      border-radius: 10px;
+      padding: 12px;
+      background: #f8fbff;
+    }
+
+    .calendar-details-title {
+      margin: 0 0 8px;
+      font-size: 0.92rem;
+      color: #0d2d43;
+      font-weight: 700;
+    }
+
+    .calendar-details-list {
+      margin: 0;
+      padding-left: 16px;
+      color: #496a81;
+      font-size: 0.82rem;
     }
 
     /* Report Builder */
@@ -2907,6 +2952,36 @@
       }
     }
 
+    /* Final quick-action layout override */
+    .quick-actions {
+      display: grid !important;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+      gap: 10px !important;
+      width: 100% !important;
+      overflow: visible !important;
+    }
+
+    .quick-action-btn {
+      width: 100% !important;
+      min-height: 42px;
+      justify-content: center !important;
+      text-align: center;
+      white-space: normal !important;
+      line-height: 1.2;
+    }
+
+    @media screen and (max-width: 768px) {
+      .quick-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      .quick-actions {
+        grid-template-columns: 1fr !important;
+      }
+    }
+
     /* Tablet Breakpoint */
     @media screen and (min-width: 769px) and (max-width: 1199px) {
       .analytics-section {
@@ -3113,7 +3188,7 @@
   <!-- Notification Panel -->
   <div class="notification-panel" id="notificationPanel">
     <div class="notification-header">
-      <h3>📬 Notifications</h3>
+      <h3 id="notificationTitle">📬 Notifications</h3>
       <button class="notification-close" onclick="closeNotificationPanel()">✕</button>
     </div>
     <div class="notification-list" id="notificationList"></div>
@@ -3399,7 +3474,7 @@
         <div class="manual-badge"><i class="fas fa-edit"></i> Manual Entry Enabled</div>
         
         <!-- Drag & Drop Upload -->
-        <div class="drag-drop-zone" id="dragDropZone" ondrop="handleDragDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+        <div class="drag-drop-zone" id="dragDropZone" onclick="document.getElementById('dragDropInput').click()" ondrop="handleDragDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
           <div class="drag-drop-icon">📁</div>
           <div class="drag-drop-text">Drag Excel file here or click to upload</div>
           <div class="drag-drop-hint">Supports .xlsx, .xls files</div>
@@ -5398,16 +5473,16 @@
       const bulkPending = document.getElementById('bulkSendPending').checked;
       
       if (!bulkAll && !bulkDueSoon && !bulkPending) {
-        alert('Please select at least one recipient group');
+        showToast('Please select at least one recipient group', 'warning', 'Bulk Send');
         return;
       }
-      
-      const toastMsg = `Sending reminders to selected recipients...`;
-      alert(toastMsg);
+
+      showToast('Sending reminders to selected recipients...', 'info', 'Bulk Send');
       closeBulkSendModal();
       
       // Here you would normally make an API call to send bulk reminders
       console.log('Bulk reminders would be sent to:', {bulkAll, bulkDueSoon, bulkPending});
+      logActivity('Bulk send initiated', `All: ${bulkAll}, Due Soon: ${bulkDueSoon}, Pending: ${bulkPending}`);
     }
 
     // Toggle advanced filters
@@ -5418,11 +5493,28 @@
 
     // Show activity log
     function showActivityLog() {
+      const panel = document.getElementById('notificationPanel');
+      const title = document.getElementById('notificationTitle');
+      const list = document.getElementById('notificationList');
       const logs = JSON.parse(localStorage.getItem('reminderActivityLogs') || '[]');
-      const logText = logs.length > 0 
-        ? logs.map(log => `${log.date} | ${log.actor || 'System'} (${log.role || 'n/a'}): ${log.action}${log.details ? ` - ${log.details}` : ''}`).join('\n')
-        : 'No activity recorded yet';
-      alert('Activity Log:\n\n' + logText);
+
+      if (title) {
+        title.textContent = '📜 Activity Log';
+      }
+
+      if (!logs.length) {
+        list.innerHTML = '<div class="notification-item">No activity recorded yet.</div>';
+      } else {
+        list.innerHTML = logs.map(log => `
+          <div class="notification-item">
+            <div style="font-weight: 700; color: #0d2d43;">${log.action || 'Activity'}</div>
+            <div style="font-size: 0.85rem; color: #496a81; margin-top: 4px;">${log.details || 'No details'}</div>
+            <div class="notification-time">${log.date || '-'} | ${log.actor || 'System'} (${log.role || 'n/a'})</div>
+          </div>
+        `).join('');
+      }
+
+      panel.classList.add('show');
     }
 
     // Download reminders as Excel
@@ -5508,6 +5600,10 @@
 
     // Notifications Panel
     function openNotificationPanel() {
+      const title = document.getElementById('notificationTitle');
+      if (title) {
+        title.textContent = '📬 Notifications';
+      }
       document.getElementById('notificationPanel').classList.add('show');
       loadNotifications();
     }
@@ -5778,8 +5874,7 @@
       
       const files = e.dataTransfer.files;
       if (files.length > 0) {
-        document.getElementById('dragDropInput').files = files;
-        handleFileSelect({ target: { files: files } });
+        handleFileSelect({ target: { files: [files[0]] } });
       }
     }
 
@@ -5787,12 +5882,15 @@
       const file = e.target.files[0];
       if (file) {
         showToast(`File selected: ${file.name}`, 'success', 'Upload');
-        triggerReminderExcelUpload();
+        handleReminderExcelUpload({ target: { files: [file] } });
       }
     }
 
     // Calendar View
+    let calendarCursorDate = new Date();
+
     function showCalendarView() {
+      calendarCursorDate = new Date();
       generateCalendar();
       document.getElementById('calendarModal').style.display = 'flex';
     }
@@ -5801,51 +5899,174 @@
       document.getElementById('calendarModal').style.display = 'none';
     }
 
+    function escapeCalendarText(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function buildCalendarEventIndex(year, month) {
+      const dueMap = new Map();
+      const paidMap = new Map();
+
+      // Use all due-date reminders without search filters.
+      const allAdminPayments = (paymentCache || []).filter((item) => {
+        const dueDateRaw = String(item.reminderRepaymentDate || item.repaymentDate || item.dueDate || '').trim();
+        if (!dueDateRaw) {
+          return false;
+        }
+
+        const status = normalizeText(item.status);
+        const reminderStatus = normalizeText(item.reminderStatus);
+        const reminderPaidAt = String(item.reminderPaidAt || item.paidAt || '').trim();
+        return !(status === 'paid' || status === 'completed' || status === 'paid-reminder' || reminderStatus === 'paid' || reminderPaidAt);
+      });
+
+      // Build paid list directly from cache and include common paid date aliases.
+      const paidRecords = (paymentCache || []).filter((item) => {
+        const status = normalizeText(item.status);
+        const reminderStatus = normalizeText(item.reminderStatus);
+        const reminderPaidAt = String(item.reminderPaidAt || item.paidAt || '').trim();
+        return status === 'approved'
+          || status === 'paid'
+          || status === 'completed'
+          || status === 'paid-reminder'
+          || reminderStatus === 'paid'
+          || Boolean(reminderPaidAt);
+      });
+
+      allAdminPayments.forEach((payment) => {
+        const dueDate = toDateStart(payment.reminderRepaymentDate || payment.repaymentDate || payment.dueDate);
+        if (!dueDate || dueDate.getFullYear() !== year || dueDate.getMonth() !== month) {
+          return;
+        }
+
+        const day = dueDate.getDate();
+        if (!dueMap.has(day)) {
+          dueMap.set(day, []);
+        }
+        dueMap.get(day).push(payment);
+      });
+
+      paidRecords.forEach((payment) => {
+        const paidDate = toDateStart(payment.reminderPaidAt || payment.paidAt || payment.created_at || payment.updated_at);
+        if (!paidDate || paidDate.getFullYear() !== year || paidDate.getMonth() !== month) {
+          return;
+        }
+
+        const day = paidDate.getDate();
+        if (!paidMap.has(day)) {
+          paidMap.set(day, []);
+        }
+        paidMap.get(day).push(payment);
+      });
+
+      return { dueMap, paidMap };
+    }
+
+    function showCalendarDayDetails(year, month, day) {
+      const { dueMap, paidMap } = buildCalendarEventIndex(year, month);
+      const dueEntries = dueMap.get(day) || [];
+      const paidEntries = paidMap.get(day) || [];
+      const details = document.getElementById('calendarDayDetails');
+      if (!details) {
+        return;
+      }
+
+      const titleDate = new Date(year, month, day).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+
+      const lines = [];
+      dueEntries.forEach((entry) => {
+        const person = escapeCalendarText(entry.name || entry.mobile || 'Unknown user');
+        const amount = formatCurrency(totalPayable(entry));
+        lines.push(`<li>Due: ${person} (${amount})</li>`);
+      });
+      paidEntries.forEach((entry) => {
+        const person = escapeCalendarText(entry.name || entry.mobile || 'Unknown user');
+        const amount = formatCurrency(Number(entry.amount || entry.reminderAmount || 0));
+        lines.push(`<li>Paid: ${person} (${amount})</li>`);
+      });
+
+      details.innerHTML = `
+        <h4 class="calendar-details-title">${titleDate}</h4>
+        ${lines.length ? `<ul class="calendar-details-list">${lines.join('')}</ul>` : '<div style="color:#496a81;font-size:0.82rem;">No payment activity for this date.</div>'}
+      `;
+    }
+
+    function changeCalendarMonth(delta) {
+      calendarCursorDate.setMonth(calendarCursorDate.getMonth() + delta);
+      generateCalendar();
+    }
+
     function generateCalendar() {
       const today = new Date();
-      const year = today.getFullYear();
-      const month = today.getMonth();
-      
+      const year = calendarCursorDate.getFullYear();
+      const month = calendarCursorDate.getMonth();
+
       const firstDay = new Date(year, month, 1);
       const lastDay = new Date(year, month + 1, 0);
       const daysInMonth = lastDay.getDate();
       const startingDayOfWeek = firstDay.getDay();
-      
+      const { dueMap, paidMap } = buildCalendarEventIndex(year, month);
+
       let calendarHTML = `
         <div class="calendar-container">
           <div class="calendar-header">
             <h3 style="margin: 0; color: #0d2d43;">${firstDay.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</h3>
             <div class="calendar-nav">
-              <button class="calendar-btn" onclick="generateCalendar()">Today</button>
+              <button class="calendar-btn" onclick="changeCalendarMonth(-1)">Prev</button>
+              <button class="calendar-btn" onclick="calendarCursorDate = new Date(); generateCalendar();">Today</button>
+              <button class="calendar-btn" onclick="changeCalendarMonth(1)">Next</button>
             </div>
           </div>
           <div class="calendar-grid">
       `;
-      
-      // Day headers
+
       const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       days.forEach(day => {
         calendarHTML += `<div style="text-align: center; font-weight: 700; color: #496a81; padding: 8px; font-size: 0.8rem;">${day}</div>`;
       });
-      
-      // Empty cells before month starts
+
       for (let i = 0; i < startingDayOfWeek; i++) {
         calendarHTML += `<div></div>`;
       }
-      
-      // Days of month
+
       for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
         const isToday = date.toDateString() === today.toDateString();
-        const dayClass = isToday ? 'calendar-day today' : 'calendar-day';
-        calendarHTML += `<div class="${dayClass}">${day}</div>`;
+        const dueCount = (dueMap.get(day) || []).length;
+        const paidCount = (paidMap.get(day) || []).length;
+        const hasActivity = dueCount > 0 || paidCount > 0;
+        const dayClass = `${isToday ? 'calendar-day today' : 'calendar-day'}${hasActivity ? ' has-reminder' : ''}`;
+        const metaParts = [];
+        if (dueCount > 0) metaParts.push(`Due ${dueCount}`);
+        if (paidCount > 0) metaParts.push(`Paid ${paidCount}`);
+        const meta = metaParts.length ? `<div class="calendar-day-meta">${metaParts.join(' | ')}</div>` : '';
+
+        calendarHTML += `
+          <button type="button" class="${dayClass}" onclick="showCalendarDayDetails(${year}, ${month}, ${day})" title="${dueCount} due, ${paidCount} paid">
+            <span class="calendar-day-number">${day}</span>
+            ${meta}
+          </button>
+        `;
       }
-      
+
       calendarHTML += `
+          </div>
+          <div class="calendar-details" id="calendarDayDetails">
+            <h4 class="calendar-details-title">Select a date</h4>
+            <div style="color:#496a81;font-size:0.82rem;">Click a day to view user payment activity.</div>
           </div>
         </div>
       `;
-      
+
       document.getElementById('calendarContent').innerHTML = calendarHTML;
     }
 
@@ -5944,13 +6165,17 @@
     }
 
     function exportReportPDF() {
-      showToast('Report exported as PDF', 'success', 'Export');
-      // Actual PDF export logic would go here
+      closeReportModal();
+      downloadPaymentsPdf('all');
+      logActivity('Report export', 'PDF export requested from report modal');
+      showToast('Report PDF download started', 'success', 'Export');
     }
 
     function exportReportExcel() {
-      showToast('Report exported as Excel', 'success', 'Export');
-      // Actual Excel export logic would go here
+      closeReportModal();
+      downloadRemindersAsExcel();
+      logActivity('Report export', 'Excel export requested from report modal');
+      showToast('Report Excel download started', 'success', 'Export');
     }
 
     // Filter Presets
