@@ -4215,56 +4215,69 @@
     }
 
     function buildCashfreePaymentLink(payment) {
-      const amount = totalPayable(payment);
-      const mobile = String(payment.mobile || 'guest').replace(/\D/g, '').slice(-10) || 'guest';
-      const timestamp = Date.now();
-      const random = Math.random().toString(16).slice(2, 6);
-      const orderId = `CHIT_${timestamp}_${mobile}_${random}`;
-      const paymentPageUrl = window.location.origin + '/chitpayment.html?order_id=' + encodeURIComponent(orderId);
-      return `💳 Pay now: ${paymentPageUrl}`;
+      try {
+        const amount = totalPayable(payment);
+        const mobile = String(payment.mobile || 'guest').replace(/\D/g, '').slice(-10) || 'guest';
+        const timestamp = Date.now();
+        const random = Math.random().toString(16).slice(2, 6);
+        const orderId = `CHIT_${timestamp}_${mobile}_${random}`;
+        const paymentPageUrl = window.location.origin + '/chitpayment.html?order_id=' + encodeURIComponent(orderId);
+        return `💳 Pay now: ${paymentPageUrl}`;
+      } catch (e) {
+        console.log('Payment link generation failed:', e.message);
+        return '';
+      }
     }
 
     function buildWhatsAppMessage(payment) {
-      const name = payment.name || 'Customer';
-      const lines = [
-        `Dear ${name},`,
-        'Payment reminder details:',
-      ];
+      try {
+        const name = payment.name || 'Customer';
+        const lines = [
+          `Dear ${name},`,
+          'Payment reminder details:',
+        ];
 
-      if (payment.reminderBorrowDate) {
-        lines.push(`Borrow Date: ${payment.reminderBorrowDate}`);
-      }
-      if (payment.reminderRepaymentDate) {
-        lines.push(`Repayment Date: ${payment.reminderRepaymentDate}`);
-        const daysInfo = getDaysRemainingValue(payment.reminderRepaymentDate);
-        if (daysInfo) {
-          lines.push(`Days Remaining: ${daysInfo.display}`);
+        if (payment.reminderBorrowDate) {
+          lines.push(`Borrow Date: ${payment.reminderBorrowDate}`);
         }
-      }
-      if (payment.reminderAmount !== null && payment.reminderAmount !== undefined && String(payment.reminderAmount) !== '') {
-        const principal = parseFloat(payment.reminderAmount);
-        lines.push(`Principal Amount: ${formatAmount(principal)}`);
-        
-        if (payment.reminderInterest !== null && payment.reminderInterest !== undefined && String(payment.reminderInterest) !== '') {
-          const interestRate = parseFloat(payment.reminderInterest);
-          const interestAmount = (principal * interestRate) / 100;
-          const totalAmount = principal + interestAmount;
+        if (payment.reminderRepaymentDate) {
+          lines.push(`Repayment Date: ${payment.reminderRepaymentDate}`);
+          const daysInfo = getDaysRemainingValue(payment.reminderRepaymentDate);
+          if (daysInfo) {
+            lines.push(`Days Remaining: ${daysInfo.display}`);
+          }
+        }
+        if (payment.reminderAmount !== null && payment.reminderAmount !== undefined && String(payment.reminderAmount) !== '') {
+          const principal = parseFloat(payment.reminderAmount);
+          lines.push(`Principal Amount: ${formatAmount(principal)}`);
           
-          lines.push(`Interest Rate: ${payment.reminderInterest}%`);
-          lines.push(`Interest Amount: ${formatAmount(interestAmount)}`);
-          lines.push(`Total Payable: ${formatAmount(totalAmount)}`);
+          if (payment.reminderInterest !== null && payment.reminderInterest !== undefined && String(payment.reminderInterest) !== '') {
+            const interestRate = parseFloat(payment.reminderInterest);
+            const interestAmount = (principal * interestRate) / 100;
+            const totalAmount = principal + interestAmount;
+            
+            lines.push(`Interest Rate: ${payment.reminderInterest}%`);
+            lines.push(`Interest Amount: ${formatAmount(interestAmount)}`);
+            lines.push(`Total Payable: ${formatAmount(totalAmount)}`);
+          }
         }
-      }
-      const cleanNote = stripPlanTag(payment.reminderNote || '');
-      if (cleanNote) {
-        lines.push(`Note: ${cleanNote}`);
-      }
+        const cleanNote = stripPlanTag(payment.reminderNote || '');
+        if (cleanNote) {
+          lines.push(`Note: ${cleanNote}`);
+        }
 
-      lines.push('');
-      lines.push(buildCashfreePaymentLink(payment));
-      lines.push('');
-      lines.push('Please repay on time. Thank you.');
-      return lines.join('\n');
+        lines.push('');
+        const paymentLink = buildCashfreePaymentLink(payment);
+        if (paymentLink) {
+          lines.push(paymentLink);
+          lines.push('');
+        }
+        lines.push('Please repay on time. Thank you.');
+        return lines.join('\n');
+      } catch (e) {
+        console.error('Error building WhatsApp message:', e);
+        return `Dear ${payment.name || 'Customer'}, Please pay Rs. ${totalPayable(payment)} by ${payment.reminderRepaymentDate || 'the due date'}. Thank you.`;
+      }
     }
 
     function pickCampaignVariant(payment) {
@@ -5690,39 +5703,63 @@
     }
 
     function shareToWhatsApp(payment) {
-      const waNumber = getWhatsAppNumber(payment.mobile);
-      if (!waNumber) {
-        alert('No valid mobile number for this user.');
-        return;
+      try {
+        const waNumber = getWhatsAppNumber(payment.mobile);
+        if (!waNumber) {
+          alert('No valid mobile number for this user.');
+          return;
+        }
+
+        const variant = pickCampaignVariant(payment);
+        const message = buildCampaignMessage(payment, variant);
+        if (!message || message.trim().length === 0) {
+          alert('Failed to build message. Please check payment details.');
+          return;
+        }
+
+        const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+        window.open(url, '_blank', 'noopener');
+
+        try {
+          trackCampaignAttempt(variant, true, false);
+        } catch (e) {
+          console.log('Campaign tracking failed:', e.message);
+        }
+
+        try {
+          logActivity('Campaign sent', `Variant ${variant} sent to ${payment.mobile || payment.name || 'recipient'}`);
+        } catch (e) {
+          console.log('Activity logging failed:', e.message);
+        }
+      } catch (error) {
+        console.error('WhatsApp share error:', error);
+        alert(`Error: ${error.message || 'Failed to send WhatsApp message'}`);
       }
-
-      const variant = pickCampaignVariant(payment);
-      const message = buildCampaignMessage(payment, variant);
-      const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
-      window.open(url, '_blank', 'noopener');
-
-      trackCampaignAttempt(variant, true, false);
-      logActivity('Campaign sent', `Variant ${variant} sent to ${payment.mobile || payment.name || 'recipient'}`);
     }
 
     function shareSelectedToWhatsApp() {
-      const payload = getFormPayload();
-      if (!payload.name || !payload.mobile) {
-        alert('Please enter both user name and mobile number.');
-        return;
+      try {
+        const payload = getFormPayload();
+        if (!payload.name || !payload.mobile) {
+          alert('Please enter both user name and mobile number.');
+          return;
+        }
+
+        const payment = {
+          name: payload.name,
+          mobile: payload.mobile,
+          reminderBorrowDate: payload.borrowDate,
+          reminderRepaymentDate: payload.repaymentDate,
+          reminderAmount: payload.reminderAmount,
+          reminderInterest: payload.reminderInterest,
+          reminderNote: payload.reminderNote,
+        };
+
+        shareToWhatsApp(payment);
+      } catch (error) {
+        console.error('Error preparing WhatsApp share:', error);
+        alert(`Error: ${error.message || 'Failed to prepare message'}`);
       }
-
-      const payment = {
-        name: payload.name,
-        mobile: payload.mobile,
-        reminderBorrowDate: payload.borrowDate,
-        reminderRepaymentDate: payload.repaymentDate,
-        reminderAmount: payload.reminderAmount,
-        reminderInterest: payload.reminderInterest,
-        reminderNote: payload.reminderNote,
-      };
-
-      shareToWhatsApp(payment);
     }
 
     function toggleSidebar() {
