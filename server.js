@@ -578,13 +578,86 @@ const sanitizeLenderPayload = (payload = {}) => {
     };
 };
 
-const buildLenderReminderMessage = (lender, template = 'standard') => {
+const normalizeLenderTemplateType = (value) => {
+    const normalized = String(value || 'standard').trim().toLowerCase();
+    return ['standard', 'urgent', 'appointment', 'order', 'verification'].includes(normalized)
+        ? normalized
+        : 'standard';
+};
+
+const normalizeLenderTemplateVariables = (variables) => {
+    if (!variables || typeof variables !== 'object' || Array.isArray(variables)) {
+        return {};
+    }
+
+    return Object.entries(variables).reduce((acc, [key, value]) => {
+        const normalizedKey = String(key || '').trim();
+        const normalizedValue = String(value || '').trim();
+        if (!normalizedKey || !normalizedValue) {
+            return acc;
+        }
+        if (!/^\d+$/.test(normalizedKey)) {
+            return acc;
+        }
+        acc[normalizedKey] = normalizedValue;
+        return acc;
+    }, {});
+};
+
+const getTwilioContentSidForTemplate = (templateType) => {
+    const normalized = normalizeLenderTemplateType(templateType);
+    const map = {
+        standard: process.env.TWILIO_CONTENT_SID_STANDARD,
+        urgent: process.env.TWILIO_CONTENT_SID_URGENT,
+        appointment: process.env.TWILIO_CONTENT_SID_APPOINTMENT,
+        order: process.env.TWILIO_CONTENT_SID_ORDER,
+        verification: process.env.TWILIO_CONTENT_SID_VERIFICATION,
+    };
+    return String(map[normalized] || process.env.TWILIO_CONTENT_SID_DEFAULT || '').trim();
+};
+
+const buildLenderReminderMessage = (lender, template = 'standard', templateVariables = {}) => {
+    const templateType = normalizeLenderTemplateType(template);
+    const vars = normalizeLenderTemplateVariables(templateVariables);
     const principal = Number(lender?.principal || 0);
     const interestRate = Number(lender?.interestRate || 0);
     const interestAmount = Math.round((((principal * interestRate) / 100) + Number.EPSILON) * 100) / 100;
     const totalAmount = Math.round(((principal + interestAmount) + Number.EPSILON) * 100) / 100;
 
-    if (template === 'urgent') {
+    if (templateType === 'appointment') {
+        const appointmentDate = vars['1'] || lender?.dueDate || 'Not set';
+        const appointmentTime = vars['2'] || 'Not set';
+        return [
+            `Dear ${lender?.name || 'Customer'},`,
+            '',
+            `Your appointment is coming up on ${appointmentDate} at ${appointmentTime}.`,
+            'If you need to change it, please reply back and let us know.'
+        ].join('\n');
+    }
+
+    if (templateType === 'order') {
+        const orderId = vars['1'] || lender?.id || '-';
+        const orderStatus = vars['2'] || 'Processing';
+        return [
+            `Dear ${lender?.name || 'Customer'},`,
+            '',
+            `Order update for ${orderId}: ${orderStatus}.`,
+            `Outstanding amount: Rs. ${totalAmount}.`,
+            'Thank you.'
+        ].join('\n');
+    }
+
+    if (templateType === 'verification') {
+        const code = vars['1'] || '000000';
+        return [
+            `Dear ${lender?.name || 'Customer'},`,
+            '',
+            `Your verification code is ${code}.`,
+            'Do not share this code with anyone.'
+        ].join('\n');
+    }
+
+    if (templateType === 'urgent') {
         return [
             `Dear ${lender?.name || 'Lender'},`,
             '',
@@ -696,7 +769,7 @@ const sendLenderWhatsAppViaMeta = async ({ normalizedMobile, message, waLink }) 
     }
 };
 
-const sendLenderWhatsAppViaTwilio = async ({ normalizedMobile, message, waLink }) => {
+const sendLenderWhatsAppViaTwilio = async ({ normalizedMobile, message, waLink, templateType = 'standard', templateVariables = {} }) => {
     const sid = String(process.env.TWILIO_ACCOUNT_SID || '').trim();
     const token = String(process.env.TWILIO_AUTH_TOKEN || '').trim();
     const from = String(process.env.TWILIO_WHATSAPP_FROM || '').trim();
@@ -707,7 +780,14 @@ const sendLenderWhatsAppViaTwilio = async ({ normalizedMobile, message, waLink }
     const payload = new URLSearchParams();
     payload.append('To', `whatsapp:+${normalizedMobile}`);
     payload.append('From', `whatsapp:${from.startsWith('+') ? from : `+${from}`}`);
-    payload.append('Body', String(message || ''));
+    const contentSid = getTwilioContentSidForTemplate(templateType);
+    const normalizedVariables = normalizeLenderTemplateVariables(templateVariables);
+    if (contentSid) {
+        payload.append('ContentSid', contentSid);
+        payload.append('ContentVariables', JSON.stringify(normalizedVariables));
+    } else {
+        payload.append('Body', String(message || ''));
+    }
 
     try {
         const response = await axios.post(
@@ -719,14 +799,20 @@ const sendLenderWhatsAppViaTwilio = async ({ normalizedMobile, message, waLink }
                 timeout: 15000,
             }
         );
-        return { ok: true, provider: 'twilio', messageId: response?.data?.sid || null, shareUrl: waLink };
+        return {
+            ok: true,
+            provider: 'twilio',
+            messageId: response?.data?.sid || null,
+            shareUrl: waLink,
+            contentSid: contentSid || null,
+        };
     } catch (error) {
         const errorText = error?.response?.data?.message || error.message || 'Twilio send failed';
         return { ok: false, error: errorText, shareUrl: waLink };
     }
 };
 
-const sendLenderWhatsAppReminder = async ({ mobile, message }) => {
+const sendLenderWhatsAppReminder = async ({ mobile, message, templateType = 'standard', templateVariables = {} }) => {
     const normalizedMobile = withCountryCode(mobile);
     if (!normalizedMobile || normalizedMobile.length < 12) {
         return { ok: false, error: 'Invalid mobile number' };
@@ -740,7 +826,7 @@ const sendLenderWhatsAppReminder = async ({ mobile, message }) => {
     for (const provider of providerOrder) {
         const delivery = provider === 'meta'
             ? await sendLenderWhatsAppViaMeta({ normalizedMobile, message, waLink })
-            : await sendLenderWhatsAppViaTwilio({ normalizedMobile, message, waLink });
+            : await sendLenderWhatsAppViaTwilio({ normalizedMobile, message, waLink, templateType, templateVariables });
 
         if (delivery.ok) {
             return delivery;
@@ -836,13 +922,19 @@ const processLenderReminderJobs = async () => {
         const nowIso = new Date().toISOString();
         job.attempts = Number(job.attempts || 0) + 1;
         job.lastAttemptAt = nowIso;
-        const delivery = await sendLenderWhatsAppReminder({ mobile: job.mobile, message: job.message });
+        const delivery = await sendLenderWhatsAppReminder({
+            mobile: job.mobile,
+            message: job.message,
+            templateType: job.templateType || job.template || 'standard',
+            templateVariables: job.templateVariables || {},
+        });
 
         if (delivery.ok) {
             job.status = 'sent';
             job.lastError = null;
             job.provider = delivery.provider || null;
             job.providerMessageId = delivery.messageId || null;
+            job.contentSid = delivery.contentSid || null;
             job.shareUrl = delivery.shareUrl || null;
             job.updatedAt = nowIso;
             pushLenderAudit(state, {
@@ -2321,7 +2413,8 @@ app.post('/api/lenders/:id/reminders/schedule', requireAdminRole, async (req, re
     const role = getRoleFromRequest(req) || 'admin';
     const scheduleDate = String(req.body?.scheduleDate || '').trim();
     const scheduleTime = String(req.body?.scheduleTime || '').trim();
-    const template = String(req.body?.template || 'standard').trim().toLowerCase();
+    const templateType = normalizeLenderTemplateType(req.body?.templateType || req.body?.template || 'standard');
+    const templateVariables = normalizeLenderTemplateVariables(req.body?.templateVariables);
     const scheduledFor = parseScheduleDateTime(scheduleDate, scheduleTime);
 
     if (!scheduledFor) {
@@ -2329,14 +2422,16 @@ app.post('/api/lenders/:id/reminders/schedule', requireAdminRole, async (req, re
     }
 
     const isFuture = new Date(scheduledFor).getTime() > Date.now();
-    const message = buildLenderReminderMessage(lender, template === 'urgent' ? 'urgent' : 'standard');
+    const message = buildLenderReminderMessage(lender, templateType, templateVariables);
     const job = {
         id: crypto.randomUUID(),
         lenderId: lender.id,
         name: lender.name,
         mobile: lender.mobile,
         message,
-        template: template === 'urgent' ? 'urgent' : 'standard',
+        template: templateType,
+        templateType,
+        templateVariables,
         status: isFuture ? 'scheduled' : 'queued',
         type: isFuture ? 'scheduled' : 'immediate',
         attempts: 0,
@@ -2358,7 +2453,7 @@ app.post('/api/lenders/:id/reminders/schedule', requireAdminRole, async (req, re
         lenderId: lender.id,
         targetMobile: lender.mobile,
         jobId: job.id,
-        meta: { template: job.template, scheduledFor },
+        meta: { template: job.template, templateVariables: job.templateVariables, scheduledFor },
     });
     writeLenderState(state);
 

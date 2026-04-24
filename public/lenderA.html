@@ -450,6 +450,35 @@
       background: #fff;
     }
 
+    .schedule-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .schedule-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .schedule-field label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #2d4b63;
+    }
+
+    .schedule-field input,
+    .schedule-field select {
+      border: 1px solid #c8d9e6;
+      border-radius: 8px;
+      padding: 9px 10px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      background: #fff;
+    }
+
     .mini-btn {
       border: 1px solid #cfe4f2;
       background: #eff8ff;
@@ -487,7 +516,8 @@
 
       .grid,
       .toolbar,
-      .stats-grid {
+      .stats-grid,
+      .schedule-grid {
         grid-template-columns: 1fr;
       }
 
@@ -725,11 +755,55 @@
     </div>
   </div>
 
+  <div id="lenderScheduleModal" class="modal-overlay" onclick="backdropClose(event, 'lenderScheduleModal')">
+    <div class="modal-card" style="width:min(760px,96vw);">
+      <div class="modal-head">
+        <span>📨 Schedule Reminder - <span id="scheduleTargetName">Lender</span></span>
+        <button class="modal-close" onclick="closeModal('lenderScheduleModal')">Close</button>
+      </div>
+      <div class="modal-content">
+        <div class="schedule-grid">
+          <div class="schedule-field">
+            <label for="scheduleDateInput">Schedule Date</label>
+            <input type="date" id="scheduleDateInput">
+          </div>
+          <div class="schedule-field">
+            <label for="scheduleTimeInput">Schedule Time</label>
+            <input type="time" id="scheduleTimeInput" value="09:00">
+          </div>
+          <div class="schedule-field" style="grid-column:1/-1;">
+            <label for="scheduleTemplateType">Content Template Type</label>
+            <select id="scheduleTemplateType" onchange="onScheduleTemplateChange()">
+              <option value="standard">Standard Reminder</option>
+              <option value="urgent">Urgent Reminder</option>
+              <option value="appointment">Appointment Reminders</option>
+              <option value="order">Order Notifications</option>
+              <option value="verification">Verification Codes</option>
+            </select>
+          </div>
+          <div class="schedule-field" id="scheduleVar1Wrap" style="display:none;">
+            <label for="scheduleVar1Input" id="scheduleVar1Label">Variable 1</label>
+            <input type="text" id="scheduleVar1Input" placeholder="Value for {{1}}">
+          </div>
+          <div class="schedule-field" id="scheduleVar2Wrap" style="display:none;">
+            <label for="scheduleVar2Input" id="scheduleVar2Label">Variable 2</label>
+            <input type="text" id="scheduleVar2Input" placeholder="Value for {{2}}">
+          </div>
+        </div>
+        <div class="actions" style="margin-top:4px;">
+          <button class="btn btn-primary" onclick="submitScheduleReminder()"><i class="fas fa-paper-plane"></i> Schedule Reminder</button>
+          <button class="btn btn-soft" onclick="closeModal('lenderScheduleModal')"><i class="fas fa-xmark"></i> Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     let lenders = [];
     let editingId = '';
     let lenderAuditRows = [];
     let lenderJobRows = [];
+    let scheduleTargetLenderId = '';
 
     function getActorContext() {
       const raw = localStorage.getItem('user');
@@ -971,24 +1045,127 @@
     }
 
     async function scheduleLenderReminder(id) {
+      openScheduleReminderModal(id);
+    }
+
+    function openScheduleReminderModal(id) {
       const item = lenders.find((entry) => entry.id === id);
       if (!item) return;
 
-      const defaultDate = item.dueDate || new Date().toISOString().slice(0, 10);
-      const scheduleDate = prompt('Schedule date (YYYY-MM-DD):', defaultDate);
-      if (scheduleDate === null) return;
-      const scheduleTime = prompt('Schedule time (HH:MM, 24h):', '09:00');
-      if (scheduleTime === null) return;
+      scheduleTargetLenderId = item.id;
+      document.getElementById('scheduleTargetName').textContent = item.name || 'Lender';
+      document.getElementById('scheduleDateInput').value = item.dueDate || new Date().toISOString().slice(0, 10);
+      document.getElementById('scheduleTimeInput').value = '09:00';
+      document.getElementById('scheduleTemplateType').value = 'standard';
+      document.getElementById('scheduleVar1Input').value = '';
+      document.getElementById('scheduleVar2Input').value = '';
+      onScheduleTemplateChange();
+      openModal('lenderScheduleModal');
+    }
+
+    function onScheduleTemplateChange() {
+      const type = String(document.getElementById('scheduleTemplateType')?.value || 'standard').toLowerCase();
+      const var1Wrap = document.getElementById('scheduleVar1Wrap');
+      const var2Wrap = document.getElementById('scheduleVar2Wrap');
+      const var1Label = document.getElementById('scheduleVar1Label');
+      const var2Label = document.getElementById('scheduleVar2Label');
+      const var1Input = document.getElementById('scheduleVar1Input');
+      const var2Input = document.getElementById('scheduleVar2Input');
+
+      if (!var1Wrap || !var2Wrap || !var1Label || !var2Label || !var1Input || !var2Input) {
+        return;
+      }
+
+      if (type === 'appointment') {
+        var1Wrap.style.display = 'flex';
+        var2Wrap.style.display = 'flex';
+        var1Label.textContent = 'Add "date" for {{1}}';
+        var2Label.textContent = 'Add "time" for {{2}}';
+        var1Input.placeholder = '12/1';
+        var2Input.placeholder = '3pm';
+        return;
+      }
+
+      if (type === 'order') {
+        var1Wrap.style.display = 'flex';
+        var2Wrap.style.display = 'flex';
+        var1Label.textContent = 'Add "order id" for {{1}}';
+        var2Label.textContent = 'Add "status" for {{2}}';
+        var1Input.placeholder = 'ORD-1001';
+        var2Input.placeholder = 'Shipped';
+        return;
+      }
+
+      if (type === 'verification') {
+        var1Wrap.style.display = 'flex';
+        var2Wrap.style.display = 'none';
+        var1Label.textContent = 'Add "code" for {{1}}';
+        var1Input.placeholder = '123456';
+        var2Input.value = '';
+        return;
+      }
+
+      var1Wrap.style.display = 'none';
+      var2Wrap.style.display = 'none';
+      var1Input.value = '';
+      var2Input.value = '';
+    }
+
+    function getScheduleTemplateVariables(templateType) {
+      const value1 = String(document.getElementById('scheduleVar1Input')?.value || '').trim();
+      const value2 = String(document.getElementById('scheduleVar2Input')?.value || '').trim();
+      const vars = {};
+
+      if (templateType === 'appointment' || templateType === 'order') {
+        if (value1) vars['1'] = value1;
+        if (value2) vars['2'] = value2;
+      } else if (templateType === 'verification') {
+        if (value1) vars['1'] = value1;
+      }
+
+      return vars;
+    }
+
+    async function submitScheduleReminder() {
+      const id = scheduleTargetLenderId;
+      if (!id) return;
+
+      const scheduleDate = String(document.getElementById('scheduleDateInput')?.value || '').trim();
+      const scheduleTime = String(document.getElementById('scheduleTimeInput')?.value || '09:00').trim();
+      const templateType = String(document.getElementById('scheduleTemplateType')?.value || 'standard').trim().toLowerCase();
+      const templateVariables = getScheduleTemplateVariables(templateType);
+
+      if (!scheduleDate) {
+        alert('Please select a schedule date.');
+        return;
+      }
+
+      if ((templateType === 'appointment' || templateType === 'order') && (!templateVariables['1'] || !templateVariables['2'])) {
+        alert('Please fill values for {{1}} and {{2}}.');
+        return;
+      }
+
+      if (templateType === 'verification' && !templateVariables['1']) {
+        alert('Please fill value for {{1}}.');
+        return;
+      }
 
       try {
         const response = await apiFetch(`/api/lenders/${id}/reminders/schedule`, {
           method: 'POST',
-          body: JSON.stringify({ scheduleDate, scheduleTime, template: 'standard' })
+          body: JSON.stringify({
+            scheduleDate,
+            scheduleTime,
+            templateType,
+            templateVariables
+          })
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok) {
           throw new Error(result.message || 'Failed to schedule reminder');
         }
+        closeModal('lenderScheduleModal');
+        scheduleTargetLenderId = '';
         document.getElementById('formStatus').textContent = result.message || 'Reminder scheduled.';
       } catch (error) {
         alert(error.message || 'Failed to schedule reminder.');

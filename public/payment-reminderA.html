@@ -3527,6 +3527,26 @@
             <label for="totalAmount">🎯 Total Amount (Principal + Interest)</label>
             <input type="number" id="totalAmount" min="0" step="1" placeholder="Enter total amount" oninput="calculateAmounts('total')">
           </div>
+          <div class="field">
+            <label for="repaymentMode">🧾 Repayment Option</label>
+            <select id="repaymentMode" onchange="onRepaymentModeChange()">
+              <option value="full">Full Payment</option>
+              <option value="emi">EMI</option>
+              <option value="extend">Extend (Interest Only)</option>
+            </select>
+          </div>
+          <div class="field" id="emiMonthsField" style="display:none;">
+            <label for="emiMonths">📆 EMI Months</label>
+            <input type="number" id="emiMonths" min="1" step="1" placeholder="e.g. 6" oninput="calculateAmounts('emi')">
+          </div>
+          <div class="field" id="monthlyEmiField" style="display:none;">
+            <label for="monthlyEmi">💳 Monthly EMI</label>
+            <input type="text" id="monthlyEmi" readonly placeholder="Auto-calculated">
+          </div>
+          <div class="field" id="monthsRemainingField" style="display:none;">
+            <label for="monthsRemaining">🔢 Months Remaining</label>
+            <input type="text" id="monthsRemaining" readonly placeholder="Auto-updated each EMI payment">
+          </div>
           <div class="field full">
             <label for="reminderNote">📝 Note / Message</label>
             <textarea id="reminderNote" maxlength="500" placeholder="Optional note for user"></textarea>
@@ -4010,6 +4030,7 @@
         interestRateInput.value = '';
         interestAmountInput.value = '';
         totalInput.value = '';
+        updateRepaymentPlanPreview();
         return;
       }
 
@@ -4022,6 +4043,7 @@
         totalAmount = normalizeMoney(principal + interestAmount, { snapNearInteger: true }) || principal;
         totalInput.value = String(totalAmount);
         interestAmountInput.value = formatAmount(interestAmount);
+        updateRepaymentPlanPreview();
         return;
       }
 
@@ -4030,6 +4052,7 @@
         totalAmount = normalizeMoney(principal + interestAmount, { snapNearInteger: true }) || principal;
         totalInput.value = String(totalAmount);
         interestAmountInput.value = formatAmount(interestAmount);
+        updateRepaymentPlanPreview();
         return;
       }
 
@@ -4047,6 +4070,102 @@
       interestRate = principal > 0 ? (interestAmount / principal) * 100 : 0;
       interestRateInput.value = Number.isFinite(interestRate) ? String(Number(interestRate.toFixed(2))) : '';
       interestAmountInput.value = formatAmount(interestAmount);
+      updateRepaymentPlanPreview();
+    }
+
+    function getRepaymentModeValue() {
+      return String(document.getElementById('repaymentMode')?.value || 'full').toLowerCase();
+    }
+
+    function onRepaymentModeChange() {
+      updateRepaymentPlanPreview();
+    }
+
+    function updateRepaymentPlanPreview() {
+      const mode = getRepaymentModeValue();
+      const emiMonthsField = document.getElementById('emiMonthsField');
+      const monthlyEmiField = document.getElementById('monthlyEmiField');
+      const monthsRemainingField = document.getElementById('monthsRemainingField');
+      const emiMonthsInput = document.getElementById('emiMonths');
+      const monthlyEmiInput = document.getElementById('monthlyEmi');
+      const monthsRemainingInput = document.getElementById('monthsRemaining');
+
+      if (!emiMonthsField || !monthlyEmiField || !monthsRemainingField || !emiMonthsInput || !monthlyEmiInput || !monthsRemainingInput) {
+        return;
+      }
+
+      if (mode === 'emi') {
+        emiMonthsField.style.display = '';
+        monthlyEmiField.style.display = '';
+        monthsRemainingField.style.display = '';
+
+        const months = Number(emiMonthsInput.value);
+        const total = normalizeMoney(document.getElementById('totalAmount')?.value, { snapNearInteger: true }) || 0;
+        if (Number.isFinite(months) && months > 0 && total > 0) {
+          const monthly = normalizeMoney(total / months, { snapNearInteger: true }) || 0;
+          monthlyEmiInput.value = formatAmount(monthly);
+          monthsRemainingInput.value = `${months} month(s) remaining`;
+        } else {
+          monthlyEmiInput.value = '';
+          monthsRemainingInput.value = '';
+        }
+        return;
+      }
+
+      emiMonthsField.style.display = 'none';
+      monthlyEmiField.style.display = 'none';
+      monthsRemainingField.style.display = 'none';
+      if (mode !== 'emi') {
+        emiMonthsInput.value = '';
+        monthlyEmiInput.value = '';
+        monthsRemainingInput.value = '';
+      }
+    }
+
+    function addMonthsToIsoDate(dateValue, monthsToAdd) {
+      const base = new Date(dateValue || '');
+      if (Number.isNaN(base.getTime())) {
+        return '';
+      }
+      const d = new Date(base);
+      d.setMonth(d.getMonth() + monthsToAdd);
+      return d.toISOString().slice(0, 10);
+    }
+
+    function parsePlanTag(note) {
+      const raw = String(note || '');
+      const match = raw.match(/\[PLAN\]\s*mode=(\w+)(?:;\s*months=(\d+))?(?:;\s*monthly=([\d.]+))?(?:;\s*interestOnly=([\d.]+))?(?:;\s*rolledPrincipal=([\d.]+))?/i);
+      if (!match) {
+        return null;
+      }
+
+      return {
+        mode: String(match[1] || '').toLowerCase(),
+        months: match[2] ? Number(match[2]) : null,
+        monthly: match[3] ? Number(match[3]) : null,
+        interestOnly: match[4] ? Number(match[4]) : null,
+        rolledPrincipal: match[5] ? Number(match[5]) : null,
+      };
+    }
+
+    function stripPlanTag(note) {
+      return String(note || '').replace(/\s*\[PLAN\][^\n\r]*/gi, '').trim();
+    }
+
+    function buildPlanTaggedNote(baseNote, plan) {
+      const cleaned = stripPlanTag(baseNote);
+      const mode = String(plan?.mode || 'full').toLowerCase();
+      if (mode === 'full') {
+        return cleaned;
+      }
+      const parts = [`mode=${mode}`];
+      if (Number.isFinite(plan.months) && plan.months > 0) parts.push(`months=${plan.months}`);
+      if (Number.isFinite(plan.monthly) && plan.monthly > 0) parts.push(`monthly=${Number(plan.monthly.toFixed(2))}`);
+      if (Number.isFinite(plan.interestOnly) && plan.interestOnly > 0) parts.push(`interestOnly=${Number(plan.interestOnly.toFixed(2))}`);
+      if (Number.isFinite(plan.rolledPrincipal) && plan.rolledPrincipal > 0) parts.push(`rolledPrincipal=${Number(plan.rolledPrincipal.toFixed(2))}`);
+
+      const tag = `[PLAN] ${parts.join('; ')}`;
+      return cleaned ? `${cleaned}\n${tag}` : tag;
     }
 
     function calculateDaysRemaining() {
@@ -4126,8 +4245,9 @@
           lines.push(`Total Payable: ${formatAmount(totalAmount)}`);
         }
       }
-      if (payment.reminderNote) {
-        lines.push(`Note: ${payment.reminderNote}`);
+      const cleanNote = stripPlanTag(payment.reminderNote || '');
+      if (cleanNote) {
+        lines.push(`Note: ${cleanNote}`);
       }
 
       lines.push('Please repay on time. Thank you.');
@@ -4330,6 +4450,10 @@
     }
 
     function totalPayable(payment) {
+      const plan = parsePlanTag(payment?.reminderNote || '');
+      if (plan?.mode === 'emi' && Number.isFinite(plan.monthly) && plan.monthly > 0) {
+        return plan.monthly;
+      }
       const principal = parseFloat(payment.reminderAmount) || 0;
       const interestRate = parseFloat(payment.reminderInterest) || 0;
       const interestAmount = (principal * interestRate) / 100;
@@ -4551,7 +4675,7 @@
       const interestRate = Number(payment.reminderInterest || 0);
       const interestAmount = isPaid ? 0 : ((principal * interestRate) / 100);
       const total = isPaid ? Number(payment.amount || payment.reminderAmount || 0) : totalPayable(payment);
-      const note = String(payment.reminderNote || '').trim() || 'No note';
+      const note = stripPlanTag(String(payment.reminderNote || '').trim()) || 'No note';
       const noteText = doc.splitTextToSize(`Note: ${note}`, cardW - 18);
       const cardH = isPaid ? 46 : 52;
 
@@ -4706,6 +4830,14 @@
       const amounts = getPaymentAmounts(payment);
       const status = normalizeText(payment.status);
       const isPaidReminder = status === 'paid-reminder' || normalizeText(payment.reminderStatus) === 'paid';
+      const plan = parsePlanTag(payment.reminderNote || '');
+      const showExtendAction = !isPaidEntry && !isPaidReminder && plan?.mode === 'extend';
+      const extraMeta = plan?.mode === 'emi'
+        ? `<span>Months Remaining ${Number(plan.months || 0) || '-'}</span><span>Monthly ${formatCurrency(plan.monthly || 0)}</span>`
+        : plan?.mode === 'extend'
+          ? `<span>Mode Extend</span><span>Interest-only this month</span>`
+          : '';
+      const cleanNote = stripPlanTag(payment.reminderNote || '');
 
       item.innerHTML = `
         <div class="bill-icon">₹</div>
@@ -4715,14 +4847,17 @@
             <span>${repaymentText}</span>
             <span>${dueLabel}</span>
             <span>${payment.mobile || ''}</span>
+            ${extraMeta}
             ${isPaidEntry ? `<span>Principal ${formatCurrency(amounts.principal)}</span><span>Interest ${formatCurrency(amounts.interestAmount)}</span>` : ''}
           </div>
+          ${cleanNote ? `<div class="bill-note">${cleanNote}</div>` : ''}
         </div>
         <div class="bill-amount">${formatCurrency(isPaidEntry ? amounts.totalAmount : totalPayable(payment))}</div>
         <div class="bill-actions">
           <button type="button" class="btn btn-edit">Manage</button>
           <button type="button" class="btn btn-share">WhatsApp</button>
           ${isPaidEntry || isPaidReminder ? '<button type="button" class="btn btn-reset btn-unpaid">Unpaid</button>' : '<button type="button" class="btn btn-save btn-paid">Paid</button>'}
+          ${showExtendAction ? '<button type="button" class="btn btn-reset btn-extend">Extend</button>' : ''}
           <button type="button" class="btn btn-clear">Clear</button>
         </div>
       `;
@@ -4731,6 +4866,7 @@
       const shareBtn = item.querySelector('.btn-share');
       const paidBtn = item.querySelector('.btn-paid');
       const unpaidBtn = item.querySelector('.btn-unpaid');
+      const extendBtn = item.querySelector('.btn-extend');
       const clearBtn = item.querySelector('.btn-clear');
       editBtn.onclick = (event) => {
         event.preventDefault();
@@ -4754,6 +4890,13 @@
           event.preventDefault();
           event.stopPropagation();
           await markReminderUnpaid(payment);
+        };
+      }
+      if (extendBtn) {
+        extendBtn.onclick = async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          await extendReminder(payment);
         };
       }
       clearBtn.onclick = (event) => {
@@ -4961,6 +5104,23 @@
 
       const normalizedPrincipal = Number.isFinite(principal) ? String(principal) : principalRaw;
       const normalizedTotal = Number.isFinite(total) ? String(total) : totalRaw;
+      const repaymentMode = getRepaymentModeValue();
+      const emiMonths = Number(document.getElementById('emiMonths').value || 0);
+      const monthlyEmi = repaymentMode === 'emi' && emiMonths > 0 && Number.isFinite(total)
+        ? normalizeMoney(total / emiMonths, { snapNearInteger: true })
+        : null;
+      const interestOnly = repaymentMode === 'extend' && Number.isFinite(principal) && Number.isFinite(Number(computedInterest))
+        ? normalizeMoney((principal * Number(computedInterest)) / 100, { snapNearInteger: true })
+        : null;
+      const planNote = buildPlanTaggedNote(document.getElementById('reminderNote').value.trim(), {
+        mode: repaymentMode,
+        months: repaymentMode === 'emi' && emiMonths > 0 ? emiMonths : null,
+        monthly: repaymentMode === 'emi' ? monthlyEmi : null,
+        interestOnly: repaymentMode === 'extend' ? interestOnly : null,
+        rolledPrincipal: repaymentMode === 'extend' && Number.isFinite(principal)
+          ? normalizeMoney(principal + (interestOnly || 0), { snapNearInteger: true })
+          : null,
+      });
 
       document.getElementById('reminderAmount').value = normalizedPrincipal;
       document.getElementById('totalAmount').value = normalizedTotal;
@@ -4973,7 +5133,7 @@
         reminderAmount: normalizedPrincipal,
         reminderInterest: computedInterest,
         totalAmount: normalizedTotal,
-        reminderNote: document.getElementById('reminderNote').value.trim(),
+        reminderNote: planNote,
       };
     }
 
@@ -5110,6 +5270,12 @@
         document.getElementById('reminderNote').value = parsed.reminderNote;
       }
 
+      const parsedPlan = parsePlanTag(parsed.reminderNote || '');
+      document.getElementById('repaymentMode').value = parsedPlan?.mode || 'full';
+      document.getElementById('emiMonths').value = parsedPlan?.months || '';
+      document.getElementById('monthlyEmi').value = parsedPlan?.monthly ? formatAmount(parsedPlan.monthly) : '';
+      document.getElementById('reminderNote').value = stripPlanTag(document.getElementById('reminderNote').value);
+
       const nameText = document.getElementById('selectedUser').value.trim();
       const mobileText = document.getElementById('manualMobile').value.trim();
       document.getElementById('selectedUserChip').querySelector('.value').textContent =
@@ -5117,6 +5283,7 @@
 
       calculateAmounts('interest');
       calculateDaysRemaining();
+      updateRepaymentPlanPreview();
     }
 
     function triggerReminderExcelUpload() {
@@ -5276,9 +5443,15 @@
           document.getElementById('interestAmount').value = '';
         }
       }
-      document.getElementById('reminderNote').value = payment.reminderNote || '';
+      const plan = parsePlanTag(payment.reminderNote || '');
+      document.getElementById('repaymentMode').value = plan?.mode || 'full';
+      document.getElementById('emiMonths').value = plan?.months || '';
+      document.getElementById('monthlyEmi').value = plan?.monthly ? formatAmount(plan.monthly) : '';
+      document.getElementById('monthsRemaining').value = plan?.mode === 'emi' && plan?.months ? `${plan.months} month(s) remaining` : '';
+      document.getElementById('reminderNote').value = stripPlanTag(payment.reminderNote || '');
       calculateAmounts();
       calculateDaysRemaining();
+      updateRepaymentPlanPreview();
 
       const formCard = document.getElementById('reminderFormCard');
       if (formCard) {
@@ -5301,6 +5474,11 @@
       document.getElementById('interestAmount').value = '';
       document.getElementById('totalAmount').value = '';
       document.getElementById('daysRemaining').value = '';
+      document.getElementById('repaymentMode').value = 'full';
+      document.getElementById('emiMonths').value = '';
+      document.getElementById('monthlyEmi').value = '';
+      document.getElementById('monthsRemaining').value = '';
+      updateRepaymentPlanPreview();
     }
 
     async function saveReminderFromForm() {
@@ -5336,6 +5514,49 @@
     }
 
     async function markReminderPaid(payment) {
+      const plan = parsePlanTag(payment.reminderNote || '');
+      if (plan?.mode === 'emi' && Number.isFinite(plan.months) && plan.months > 0) {
+        const monthsBefore = Number(plan.months);
+        const monthsAfter = monthsBefore - 1;
+        const monthlyAmount = Number(plan.monthly || totalPayable(payment) || 0);
+
+        if (!confirm(`Record EMI payment of ${formatCurrency(monthlyAmount)}?\n\nMonths remaining: ${monthsBefore} -> ${Math.max(0, monthsAfter)}`)) {
+          return;
+        }
+
+        if (monthsAfter > 0) {
+          const nextRepaymentDate = addMonthsToIsoDate(payment.reminderRepaymentDate || '', 1);
+          if (!nextRepaymentDate) {
+            alert('Current repayment date is invalid. Please set a valid date before updating EMI.');
+            return;
+          }
+
+          const nextNote = buildPlanTaggedNote(stripPlanTag(payment.reminderNote || ''), {
+            mode: 'emi',
+            months: monthsAfter,
+            monthly: monthlyAmount,
+          });
+
+          const payload = {
+            reminderId: payment.reminderId || payment.id || '',
+            name: payment.name || '',
+            mobile: payment.mobile || '',
+            borrowDate: payment.reminderBorrowDate || '',
+            repaymentDate: nextRepaymentDate,
+            reminderAmount: payment.reminderAmount ?? '',
+            reminderInterest: payment.reminderInterest ?? '',
+            totalAmount: payment.totalAmount ?? payment.amount ?? '',
+            reminderNote: nextNote,
+            reminderStatus: 'manual',
+            paidAt: '',
+          };
+
+          await saveReminder(payment.paymentId || payment._id || payment.id || payment.mobile, payload);
+          document.getElementById('statusLine').textContent = `EMI payment recorded. Months remaining: ${monthsAfter}. Next due date: ${nextRepaymentDate}.`;
+          return;
+        }
+      }
+
       if (!confirm('Mark this reminder as paid?')) {
         return;
       }
@@ -5375,6 +5596,49 @@
       };
 
       await saveReminder(payment.paymentId || payment._id || payment.id || payment.mobile, payload);
+    }
+
+    async function extendReminder(payment) {
+      const currentAmounts = getPaymentAmounts(payment);
+      const currentRepaymentDate = payment.reminderRepaymentDate || '';
+      const nextRepaymentDate = addMonthsToIsoDate(currentRepaymentDate, 1);
+      if (!nextRepaymentDate) {
+        alert('Repayment date is invalid. Set a valid date before using Extend.');
+        return;
+      }
+
+      const interestOnly = normalizeMoney(currentAmounts.interestAmount, { snapNearInteger: true }) || 0;
+      const rolledPrincipal = normalizeMoney(currentAmounts.principal + interestOnly, { snapNearInteger: true }) || 0;
+
+      if (!confirm(`Extend this reminder?\n\nCustomer pays interest now: ${formatCurrency(interestOnly)}\nNext month due (principal + interest): ${formatCurrency(rolledPrincipal)} on ${nextRepaymentDate}`)) {
+        return;
+      }
+
+      const currentPlan = parsePlanTag(payment.reminderNote || '') || { mode: 'extend' };
+      const nextNote = buildPlanTaggedNote(stripPlanTag(payment.reminderNote || ''), {
+        mode: 'extend',
+        months: currentPlan.months,
+        monthly: currentPlan.monthly,
+        interestOnly,
+        rolledPrincipal,
+      });
+
+      const payload = {
+        reminderId: payment.reminderId || payment.id || '',
+        name: payment.name || '',
+        mobile: payment.mobile || '',
+        borrowDate: payment.reminderBorrowDate || '',
+        repaymentDate: nextRepaymentDate,
+        reminderAmount: rolledPrincipal,
+        reminderInterest: 0,
+        totalAmount: rolledPrincipal,
+        reminderNote: nextNote,
+        reminderStatus: 'manual',
+        paidAt: '',
+      };
+
+      await saveReminder(payment.paymentId || payment._id || payment.id || payment.mobile, payload);
+      document.getElementById('statusLine').textContent = `Extended. Interest ${formatCurrency(interestOnly)} received and next due moved to ${nextRepaymentDate}.`;
     }
 
     async function saveReminder(paymentId, payload) {
@@ -6126,6 +6390,7 @@
     document.addEventListener('DOMContentLoaded', async function() {
       initPremiumFeaturesCore();
       initAdvancedPremiumFeatures();
+      updateRepaymentPlanPreview();
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
           stopAutoRefresh();

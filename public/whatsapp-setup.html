@@ -75,6 +75,7 @@ WHATSAPP_PROVIDER_ORDER=meta</div></div>
         <h2>Twilio WhatsApp</h2>
         <div class="step"><span class="badge">Step 1</span><br>Open the Twilio Console, then find your Account Info and Messaging / WhatsApp sender setup.</div>
         <div class="step"><span class="badge">Step 2</span><br>Copy <strong>TWILIO_ACCOUNT_SID</strong>, <strong>TWILIO_AUTH_TOKEN</strong>, and <strong>TWILIO_WHATSAPP_FROM</strong>.</div>
+        <div class="step"><span class="badge">Step 2b</span><br>For template-type delivery, set matching Content SIDs in env: <strong>TWILIO_CONTENT_SID_APPOINTMENT</strong>, <strong>TWILIO_CONTENT_SID_ORDER</strong>, <strong>TWILIO_CONTENT_SID_VERIFICATION</strong> (and optional standard/urgent/default).</div>
         <div class="step"><span class="badge">Step 3</span><div class="codebox">WHATSAPP_PROVIDER=twilio
 WHATSAPP_PROVIDER_ORDER=twilio</div></div>
       </article>

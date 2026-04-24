@@ -24,6 +24,12 @@ Add the following secrets in the Vercel project settings:
 - `TWILIO_ACCOUNT_SID`
 - `TWILIO_AUTH_TOKEN`
 - `TWILIO_WHATSAPP_FROM`
+- `TWILIO_CONTENT_SID_STANDARD` (optional)
+- `TWILIO_CONTENT_SID_URGENT` (optional)
+- `TWILIO_CONTENT_SID_APPOINTMENT` (optional)
+- `TWILIO_CONTENT_SID_ORDER` (optional)
+- `TWILIO_CONTENT_SID_VERIFICATION` (optional)
+- `TWILIO_CONTENT_SID_DEFAULT` (optional)
 
 ## Railway / Node server
 
@@ -45,6 +51,12 @@ Set the same variables in the Railway service variables or `.env` file:
 - `TWILIO_ACCOUNT_SID`
 - `TWILIO_AUTH_TOKEN`
 - `TWILIO_WHATSAPP_FROM`
+- `TWILIO_CONTENT_SID_STANDARD` (optional)
+- `TWILIO_CONTENT_SID_URGENT` (optional)
+- `TWILIO_CONTENT_SID_APPOINTMENT` (optional)
+- `TWILIO_CONTENT_SID_ORDER` (optional)
+- `TWILIO_CONTENT_SID_VERIFICATION` (optional)
+- `TWILIO_CONTENT_SID_DEFAULT` (optional)
 
 ## Exact provider values
 
