@@ -895,6 +895,7 @@ const borrowDocsDir = path.join(storageBaseDir, "uploads", "borrow-docs");
 const borrowDocsIndexPath = path.join(storageBaseDir, "uploads", "borrow-docs-index.json");
 const paymentScreenshotsDir = path.join(storageBaseDir, "uploads", "payment-screenshots");
 const paymentScreenshotsIndexPath = path.join(storageBaseDir, "uploads", "payment-screenshots-index.json");
+const reminderPipelineStatePath = path.join(storageBaseDir, "uploads", "reminder-pipeline-state.json");
 const paymentScreenshotBucket = String(process.env.PAYMENT_SCREENSHOT_BUCKET || "payment-screenshots").trim();
 const auctionChatFallbackPath = path.join(storageBaseDir, "uploads", "auction-chat-fallback.json");
 try {
@@ -993,6 +994,259 @@ function writePaymentScreenshotsIndex(indexData) {
   } catch (error) {
     console.error("Failed to save payment screenshot index:", error);
   }
+}
+
+function createReminderPipelineState() {
+  return {
+    jobs: [],
+    notifications: [],
+    audits: [],
+    lastWorkerRunAt: null,
+  };
+}
+
+function readReminderPipelineState() {
+  try {
+    if (!fs.existsSync(reminderPipelineStatePath)) {
+      return createReminderPipelineState();
+    }
+
+    const raw = fs.readFileSync(reminderPipelineStatePath, "utf8");
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") {
+      return createReminderPipelineState();
+    }
+
+    return {
+      jobs: Array.isArray(parsed.jobs) ? parsed.jobs : [],
+      notifications: Array.isArray(parsed.notifications) ? parsed.notifications : [],
+      audits: Array.isArray(parsed.audits) ? parsed.audits : [],
+      lastWorkerRunAt: parsed.lastWorkerRunAt || null,
+    };
+  } catch (_error) {
+    return createReminderPipelineState();
+  }
+}
+
+function writeReminderPipelineState(state) {
+  try {
+    fs.writeFileSync(reminderPipelineStatePath, JSON.stringify(state, null, 2), "utf8");
+  } catch (error) {
+    console.error("Failed to save reminder pipeline state:", error);
+  }
+}
+
+function appendReminderAudit(state, {
+  actor = "System",
+  role = "system",
+  actionType = "pipeline",
+  action = "Reminder event",
+  details = "",
+  status = "success",
+  targetMobile = null,
+  targetReminderId = null,
+  jobId = null,
+  meta = null,
+}) {
+  state.audits.unshift({
+    id: crypto.randomUUID(),
+    actor: String(actor || "System"),
+    role: String(role || "system"),
+    actionType: String(actionType || "pipeline"),
+    action: String(action || "Reminder event"),
+    details: String(details || ""),
+    status: String(status || "success"),
+    targetMobile: targetMobile ? String(targetMobile) : null,
+    targetReminderId: targetReminderId ? String(targetReminderId) : null,
+    jobId: jobId ? String(jobId) : null,
+    createdAt: new Date().toISOString(),
+    meta: meta && typeof meta === "object" ? meta : null,
+  });
+  state.audits = state.audits.slice(0, 1000);
+}
+
+function appendReminderNotification(state, {
+  title,
+  message,
+  severity = "info",
+  type = "system",
+  action = null,
+  jobId = null,
+  targetMobile = null,
+  targetReminderId = null,
+}) {
+  state.notifications.unshift({
+    id: crypto.randomUUID(),
+    type: String(type || "system"),
+    title: String(title || "Reminder update"),
+    message: String(message || ""),
+    severity: String(severity || "info"),
+    action: action && typeof action === "object" ? action : null,
+    jobId: jobId ? String(jobId) : null,
+    targetMobile: targetMobile ? String(targetMobile) : null,
+    targetReminderId: targetReminderId ? String(targetReminderId) : null,
+    status: "open",
+    createdAt: new Date().toISOString(),
+  });
+  state.notifications = state.notifications.slice(0, 500);
+}
+
+function reminderDateDiffDays(repaymentDate) {
+  if (!repaymentDate) {
+    return null;
+  }
+
+  const target = new Date(repaymentDate);
+  if (Number.isNaN(target.getTime())) {
+    return null;
+  }
+
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  target.setHours(0, 0, 0, 0);
+  const diffMs = target.getTime() - now.getTime();
+  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+}
+
+function buildReminderDeliveryMessage(reminder) {
+  const lines = [];
+  lines.push(`Hello ${reminder.name || "Customer"}, this is a payment reminder.`);
+  if (reminder.reminderRepaymentDate) {
+    lines.push(`Repayment date: ${reminder.reminderRepaymentDate}`);
+  }
+  if (reminder.reminderAmount !== null && reminder.reminderAmount !== undefined) {
+    lines.push(`Principal: ${reminder.reminderAmount}`);
+  }
+  if (reminder.reminderInterest !== null && reminder.reminderInterest !== undefined) {
+    lines.push(`Interest: ${reminder.reminderInterest}%`);
+  }
+  if (reminder.reminderNote) {
+    lines.push(`Note: ${reminder.reminderNote}`);
+  }
+  lines.push("Please complete your payment on time.");
+  return lines.join("\n");
+}
+
+function simulateReminderDelivery(job) {
+  const mobile = normalizeMobile(job.mobile);
+  const message = String(job.message || "").trim();
+  if (!mobile || mobile.length !== 10) {
+    return { ok: false, error: "Invalid mobile number" };
+  }
+  if (!message) {
+    return { ok: false, error: "Reminder message is empty" };
+  }
+
+  const hashSeed = `${mobile}:${job.id}:${job.attempts + 1}`;
+  const score = hashSeed.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  const shouldFail = score % 11 === 0;
+  if (shouldFail) {
+    return { ok: false, error: "Gateway timeout while delivering reminder" };
+  }
+
+  return { ok: true };
+}
+
+function processReminderJob(state, job) {
+  const nowIso = new Date().toISOString();
+  job.attempts = Number(job.attempts || 0) + 1;
+  job.lastAttemptAt = nowIso;
+  const delivery = simulateReminderDelivery(job);
+
+  if (delivery.ok) {
+    job.status = "sent";
+    job.lastError = null;
+    job.updatedAt = nowIso;
+    appendReminderAudit(state, {
+      actor: "Scheduler",
+      role: "system",
+      actionType: "send",
+      action: "Reminder delivered",
+      details: `Delivered reminder to ${job.mobile}`,
+      status: "success",
+      targetMobile: job.mobile,
+      targetReminderId: job.reminderId,
+      jobId: job.id,
+    });
+    return;
+  }
+
+  const maxAttempts = Number(job.maxAttempts || 3);
+  job.lastError = delivery.error;
+  if (job.attempts < maxAttempts) {
+    const nextRetryAt = Date.now() + 5 * 60 * 1000;
+    job.status = "retry_pending";
+    job.scheduledFor = new Date(nextRetryAt).toISOString();
+  } else {
+    job.status = "failed";
+  }
+
+  job.updatedAt = nowIso;
+  appendReminderAudit(state, {
+    actor: "Scheduler",
+    role: "system",
+    actionType: "send",
+    action: "Reminder delivery failed",
+    details: `${delivery.error} for ${job.mobile}`,
+    status: "failed",
+    targetMobile: job.mobile,
+    targetReminderId: job.reminderId,
+    jobId: job.id,
+  });
+
+  appendReminderNotification(state, {
+    type: "delivery",
+    severity: "error",
+    title: "Reminder delivery failed",
+    message: `Could not deliver reminder to ${job.name || job.mobile}. ${delivery.error}`,
+    jobId: job.id,
+    targetMobile: job.mobile,
+    targetReminderId: job.reminderId,
+    action: {
+      type: "retry-now",
+      label: "Retry now",
+      jobId: job.id,
+    },
+  });
+}
+
+function processDueReminderJobs() {
+  const state = readReminderPipelineState();
+  const now = Date.now();
+  const dueJobs = state.jobs.filter((job) => {
+    const status = String(job.status || "").toLowerCase();
+    if (!["queued", "scheduled", "retry_pending"].includes(status)) {
+      return false;
+    }
+
+    if (!job.scheduledFor) {
+      return true;
+    }
+
+    const dueAt = new Date(job.scheduledFor).getTime();
+    return Number.isFinite(dueAt) && dueAt <= now;
+  });
+
+  dueJobs.forEach((job) => processReminderJob(state, job));
+  state.lastWorkerRunAt = new Date().toISOString();
+  writeReminderPipelineState(state);
+  return state;
+}
+
+let reminderPipelineWorker = null;
+
+function startReminderPipelineWorker() {
+  if (reminderPipelineWorker || process.env.VERCEL === "1") {
+    return;
+  }
+
+  reminderPipelineWorker = setInterval(() => {
+    try {
+      processDueReminderJobs();
+    } catch (error) {
+      console.error("Reminder pipeline worker error", error);
+    }
+  }, 15000);
 }
 
 async function upsertPaymentReminderRow({ paymentId = null, mobile, name = null, reminderData }) {
@@ -2719,6 +2973,345 @@ app.get("/api/payment-reminders", requireAdmin, async (_req, res) => {
   return res.json(reminders);
 });
 
+app.get("/api/payment-reminder/pipeline/overview", requireAdmin, async (_req, res) => {
+  const state = processDueReminderJobs();
+  const jobs = state.jobs || [];
+  const notifications = state.notifications || [];
+
+  const counts = {
+    queued: jobs.filter((job) => String(job.status || "") === "queued").length,
+    scheduled: jobs.filter((job) => String(job.status || "") === "scheduled").length,
+    retryPending: jobs.filter((job) => String(job.status || "") === "retry_pending").length,
+    sent: jobs.filter((job) => String(job.status || "") === "sent").length,
+    failed: jobs.filter((job) => String(job.status || "") === "failed").length,
+  };
+
+  return res.json({
+    counts,
+    notificationsOpen: notifications.filter((item) => item.status === "open").length,
+    lastWorkerRunAt: state.lastWorkerRunAt || null,
+    recentJobs: jobs.slice(0, 50),
+  });
+});
+
+app.get("/api/payment-reminder/pipeline/notifications", requireAdmin, (_req, res) => {
+  const state = processDueReminderJobs();
+  const onlyOpen = String(_req.query?.status || "open").toLowerCase() === "open";
+  const data = onlyOpen
+    ? state.notifications.filter((item) => String(item.status || "") === "open")
+    : state.notifications;
+
+  return res.json(data.slice(0, 100));
+});
+
+app.post("/api/payment-reminder/pipeline/notifications/:id/resolve", requireAdmin, (req, res) => {
+  const notificationId = String(req.params?.id || "").trim();
+  if (!notificationId) {
+    return res.status(400).json({ message: "Notification id is required" });
+  }
+
+  const state = readReminderPipelineState();
+  const notification = state.notifications.find((item) => String(item.id) === notificationId);
+  if (!notification) {
+    return res.status(404).json({ message: "Notification not found" });
+  }
+
+  notification.status = "resolved";
+  notification.resolvedAt = new Date().toISOString();
+  notification.resolvedBy = req.session?.user?.fullname || req.session?.user?.mobile || "Admin";
+
+  appendReminderAudit(state, {
+    actor: req.session?.user?.fullname || req.session?.user?.mobile || "Admin",
+    role: req.session?.user?.role || "admin",
+    actionType: "notification",
+    action: "Notification resolved",
+    details: notification.title || "Notification closed",
+    status: "success",
+    targetMobile: notification.targetMobile,
+    targetReminderId: notification.targetReminderId,
+    jobId: notification.jobId,
+  });
+
+  writeReminderPipelineState(state);
+  return res.json({ message: "Notification resolved" });
+});
+
+app.post("/api/payment-reminder/pipeline/retry/:jobId", requireAdmin, (req, res) => {
+  const jobId = String(req.params?.jobId || "").trim();
+  if (!jobId) {
+    return res.status(400).json({ message: "Job id is required" });
+  }
+
+  const state = readReminderPipelineState();
+  const job = state.jobs.find((item) => String(item.id) === jobId);
+  if (!job) {
+    return res.status(404).json({ message: "Job not found" });
+  }
+
+  job.status = "queued";
+  job.scheduledFor = new Date().toISOString();
+  job.updatedAt = new Date().toISOString();
+
+  appendReminderAudit(state, {
+    actor: req.session?.user?.fullname || req.session?.user?.mobile || "Admin",
+    role: req.session?.user?.role || "admin",
+    actionType: "retry",
+    action: "Retry queued",
+    details: `Manual retry queued for ${job.mobile}`,
+    status: "success",
+    targetMobile: job.mobile,
+    targetReminderId: job.reminderId,
+    jobId: job.id,
+  });
+
+  writeReminderPipelineState(state);
+  processDueReminderJobs();
+  return res.json({ message: "Retry queued" });
+});
+
+app.post("/api/payment-reminder/pipeline/bulk-send", requireAdmin, async (req, res) => {
+  const groups = req.body?.groups && typeof req.body.groups === "object"
+    ? req.body.groups
+    : {};
+  const includeAll = Boolean(groups.all);
+  const includeDueSoon = Boolean(groups.dueSoon);
+  const includePending = Boolean(groups.pending);
+
+  if (!includeAll && !includeDueSoon && !includePending) {
+    return res.status(400).json({ message: "Select at least one recipient group" });
+  }
+
+  let scheduledFor = new Date().toISOString();
+  const rawScheduleDate = String(req.body?.scheduleDate || "").trim();
+  const rawScheduleTime = String(req.body?.scheduleTime || "").trim();
+  if (rawScheduleDate) {
+    const composed = rawScheduleTime
+      ? `${rawScheduleDate}T${rawScheduleTime}:00`
+      : `${rawScheduleDate}T09:00:00`;
+    const parsed = new Date(composed);
+    if (Number.isNaN(parsed.getTime())) {
+      return res.status(400).json({ message: "Invalid schedule date/time" });
+    }
+    scheduledFor = parsed.toISOString();
+  }
+
+  const now = new Date();
+  const scheduleIsFuture = new Date(scheduledFor).getTime() > now.getTime();
+
+  const { data, error } = await supabase
+    .from(paymentRemindersTable)
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("bulk reminder list error", error);
+    return res.status(500).json({ message: "Failed to load reminders" });
+  }
+
+  const reminders = (data || []).map(normalizeReminderRow).filter(Boolean);
+  const selected = reminders.filter((item) => {
+    if (String(item.reminderStatus || "").toLowerCase() === "paid") {
+      return false;
+    }
+
+    const days = reminderDateDiffDays(item.reminderRepaymentDate);
+    const isOverdue = days !== null && days < 0;
+    const isDueSoon = days !== null && days >= 0 && days <= 7;
+
+    if (includeAll && isOverdue) {
+      return true;
+    }
+    if (includeDueSoon && isDueSoon) {
+      return true;
+    }
+    if (includePending) {
+      return true;
+    }
+    return false;
+  });
+
+  if (!selected.length) {
+    return res.status(404).json({ message: "No reminders match selected groups" });
+  }
+
+  const state = readReminderPipelineState();
+  const actor = req.session?.user?.fullname || req.session?.user?.mobile || "Admin";
+  const role = req.session?.user?.role || "admin";
+
+  const jobs = selected.map((item) => ({
+    id: crypto.randomUUID(),
+    reminderId: item.reminderId || item.id || null,
+    paymentId: item.id || null,
+    mobile: normalizeMobile(item.mobile || ""),
+    name: item.name || "Customer",
+    message: buildReminderDeliveryMessage(item),
+    status: scheduleIsFuture ? "scheduled" : "queued",
+    type: scheduleIsFuture ? "scheduled" : "immediate",
+    attempts: 0,
+    maxAttempts: 3,
+    scheduledFor,
+    lastAttemptAt: null,
+    lastError: null,
+    actor,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }));
+
+  state.jobs.unshift(...jobs);
+  state.jobs = state.jobs.slice(0, 5000);
+
+  appendReminderAudit(state, {
+    actor,
+    role,
+    actionType: scheduleIsFuture ? "schedule" : "bulk-send",
+    action: scheduleIsFuture ? "Bulk reminders scheduled" : "Bulk reminders queued",
+    details: `${jobs.length} reminders prepared (${scheduleIsFuture ? "scheduled" : "queued"})`,
+    status: "success",
+    meta: {
+      groups: { all: includeAll, dueSoon: includeDueSoon, pending: includePending },
+      scheduledFor,
+      jobCount: jobs.length,
+    },
+  });
+
+  appendReminderNotification(state, {
+    type: scheduleIsFuture ? "schedule" : "queue",
+    severity: "info",
+    title: scheduleIsFuture ? "Reminders scheduled" : "Bulk reminders queued",
+    message: `${jobs.length} reminder jobs ${scheduleIsFuture ? "scheduled" : "queued for delivery"}.`,
+  });
+
+  const overdueCount = selected.filter((item) => {
+    const days = reminderDateDiffDays(item.reminderRepaymentDate);
+    return days !== null && days < 0;
+  }).length;
+
+  if (overdueCount > 0) {
+    appendReminderNotification(state, {
+      type: "overdue",
+      severity: "warning",
+      title: "Overdue escalation",
+      message: `${overdueCount} overdue reminders are in pipeline and need close tracking.`,
+    });
+  }
+
+  writeReminderPipelineState(state);
+  if (!scheduleIsFuture) {
+    processDueReminderJobs();
+  }
+
+  return res.json({
+    message: scheduleIsFuture ? "Reminders scheduled successfully" : "Bulk reminders queued successfully",
+    queued: jobs.length,
+    scheduledFor,
+    mode: scheduleIsFuture ? "scheduled" : "immediate",
+  });
+});
+
+app.get("/api/payment-reminder/pipeline/audit", requireAdmin, (req, res) => {
+  const state = readReminderPipelineState();
+  const actor = String(req.query?.actor || "").trim().toLowerCase();
+  const actionType = String(req.query?.actionType || "").trim().toLowerCase();
+  const status = String(req.query?.status || "").trim().toLowerCase();
+  const from = String(req.query?.from || "").trim();
+  const to = String(req.query?.to || "").trim();
+
+  const fromTime = from ? new Date(from).getTime() : null;
+  const toTime = to ? new Date(to).getTime() : null;
+
+  const filtered = state.audits.filter((entry) => {
+    const entryActor = String(entry.actor || "").toLowerCase();
+    const entryActionType = String(entry.actionType || "").toLowerCase();
+    const entryStatus = String(entry.status || "").toLowerCase();
+    const entryTime = new Date(entry.createdAt || 0).getTime();
+
+    if (actor && !entryActor.includes(actor)) {
+      return false;
+    }
+    if (actionType && entryActionType !== actionType) {
+      return false;
+    }
+    if (status && entryStatus !== status) {
+      return false;
+    }
+    if (Number.isFinite(fromTime) && entryTime < fromTime) {
+      return false;
+    }
+    if (Number.isFinite(toTime) && entryTime > toTime) {
+      return false;
+    }
+
+    return true;
+  });
+
+  return res.json({
+    total: filtered.length,
+    data: filtered.slice(0, 1000),
+  });
+});
+
+app.get("/api/payment-reminder/pipeline/audit/export", requireAdmin, (req, res) => {
+  const state = readReminderPipelineState();
+  const actor = String(req.query?.actor || "").trim().toLowerCase();
+  const actionType = String(req.query?.actionType || "").trim().toLowerCase();
+  const status = String(req.query?.status || "").trim().toLowerCase();
+  const from = String(req.query?.from || "").trim();
+  const to = String(req.query?.to || "").trim();
+
+  const fromTime = from ? new Date(from).getTime() : null;
+  const toTime = to ? new Date(to).getTime() : null;
+
+  const filtered = state.audits.filter((entry) => {
+    const entryActor = String(entry.actor || "").toLowerCase();
+    const entryActionType = String(entry.actionType || "").toLowerCase();
+    const entryStatus = String(entry.status || "").toLowerCase();
+    const entryTime = new Date(entry.createdAt || 0).getTime();
+
+    if (actor && !entryActor.includes(actor)) {
+      return false;
+    }
+    if (actionType && entryActionType !== actionType) {
+      return false;
+    }
+    if (status && entryStatus !== status) {
+      return false;
+    }
+    if (Number.isFinite(fromTime) && entryTime < fromTime) {
+      return false;
+    }
+    if (Number.isFinite(toTime) && entryTime > toTime) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const header = ["Timestamp", "Actor", "Role", "Action Type", "Action", "Details", "Status", "Target Mobile", "Reminder Id", "Job Id"];
+  const rows = filtered.map((entry) => [
+    entry.createdAt || "",
+    entry.actor || "",
+    entry.role || "",
+    entry.actionType || "",
+    entry.action || "",
+    entry.details || "",
+    entry.status || "",
+    entry.targetMobile || "",
+    entry.targetReminderId || "",
+    entry.jobId || "",
+  ]);
+
+  const toCsvValue = (value) => {
+    const text = String(value ?? "");
+    return `"${text.replace(/"/g, '""')}"`;
+  };
+
+  const csv = [header, ...rows].map((row) => row.map(toCsvValue).join(",")).join("\n");
+  const fileName = `reminder-audit-${new Date().toISOString().slice(0, 10)}.csv`;
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+  return res.send(csv);
+});
+
 app.get("/api/payments/:mobile", requireAuthenticatedUser, requireOwnerOrAdminForMobileParam("mobile"), async (req, res) => {
   const { mobile } = req.params;
 
@@ -3672,6 +4265,7 @@ app.get("/health", (_req, res) => {
 });
 
 if (process.env.VERCEL !== "1") {
+  startReminderPipelineWorker();
   app.listen(PORT, () => {
     console.log(`Supabase backend running on http://localhost:${PORT}`);
   });

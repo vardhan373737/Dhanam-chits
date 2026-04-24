@@ -3286,10 +3286,10 @@
     <a href="adminbank.html"><i class="fas fa-university"></i> <span class="menu-text">Admin-Bank</span></a>
     <a href="bankdetailA.html"><i class="fas fa-university"></i> <span class="menu-text">Bank Details</span></a>
     <a href="borrowA.html"><i class="fas fa-hand-holding-usd"></i> <span class="menu-text">Borrows</span></a>
-    <a href="ChitidA.html"><i class="fas fa-university"></i> <span class="menu-text">chit-ids Approve</span></a>
+    <a href="ChitIdA.html"><i class="fas fa-university"></i> <span class="menu-text">chit-ids Approve</span></a>
     <a href="paymentA.html"><i class="fas fa-credit-card"></i> <span class="menu-text">Payments</span></a>
     <a href="payment-reminderA.html"><i class="fas fa-bell"></i> <span class="menu-text">Payment Reminder</span></a>
-    <a href="contactA.html"><i class="fas fa-envelope"></i> <span class="menu-text">Contact Details</span></a>
+    <a href="ContactA.html"><i class="fas fa-envelope"></i> <span class="menu-text">Contact Details</span></a>
     <a href="/Login.html" class="logout-btn" onclick="return logout(event)"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
   </div>
 
@@ -3443,8 +3443,8 @@
         <button class="quick-action-btn" onclick="toggleScheduleReminder()" title="Schedule automatic reminders">
           <i class="fas fa-clock"></i> Schedule
         </button>
-        <button class="quick-action-btn" onclick="showActivityLog()" title="View reminder history">
-          <i class="fas fa-history"></i> Activity Log
+        <button class="quick-action-btn" onclick="openAuditModal()" title="View pipeline audit trail">
+          <i class="fas fa-history"></i> Audit Trail
         </button>
         <button class="quick-action-btn" onclick="downloadRemindersAsExcel()" title="Export to Excel">
           <i class="fas fa-table"></i> Export Excel
@@ -3702,6 +3702,47 @@
     </div>
   </div>
 
+  <div id="auditModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 16px; padding: 24px; max-width: 980px; width: 92%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h2 style="margin: 0; color: #0d2d43;">Pipeline Audit Trail</h2>
+        <button onclick="closeAuditModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+      </div>
+      <div class="grid" style="margin-bottom: 12px;">
+        <div class="field">
+          <label for="auditActor">Actor</label>
+          <input type="text" id="auditActor" placeholder="Admin, Scheduler...">
+        </div>
+        <div class="field">
+          <label for="auditActionType">Action Type</label>
+          <select id="auditActionType" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccdde8;">
+            <option value="">All action types</option>
+            <option value="send">Send</option>
+            <option value="schedule">Schedule</option>
+            <option value="bulk-send">Bulk send</option>
+            <option value="retry">Retry</option>
+            <option value="notification">Notification</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="auditFrom">From date</label>
+          <input type="date" id="auditFrom">
+        </div>
+        <div class="field">
+          <label for="auditTo">To date</label>
+          <input type="date" id="auditTo">
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <button onclick="applyAuditFilters()" style="padding: 10px 14px; background: #0d7c91; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Apply Filters</button>
+        <button onclick="clearAuditFilters()" style="padding: 10px 14px; background: #f0f5fa; color: #0d2d43; border: 1px solid #d9e6ef; border-radius: 8px; cursor: pointer; font-weight: 600;">Clear</button>
+        <button onclick="exportAuditCsv()" style="padding: 10px 14px; background: #0b7a75; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Export CSV</button>
+      </div>
+      <div id="auditSummary" style="font-size: 0.88rem; color: #496a81; margin-bottom: 10px;">Loading audit events...</div>
+      <div id="auditResults" style="max-height: 420px; overflow-y: auto; border: 1px solid #e4eef4; border-radius: 10px;"></div>
+    </div>
+  </div>
+
   <!-- Bulk Actions Bar -->
   <div class="bulk-actions-bar" id="bulkActionsBar">
     <span class="bulk-action-count" id="bulkActionCount">0 selected</span>
@@ -3722,6 +3763,14 @@
     let autoRefreshTimer = null;
     let pendingUndoAction = null;
     let virtualListPageSize = 120;
+    let selectedScheduleTime = '';
+    let reminderAuditFilters = {
+      actor: '',
+      actionType: '',
+      status: '',
+      from: '',
+      to: ''
+    };
 
     const ROLE_PERMISSIONS = {
       admin: ['bulk-mark-paid', 'bulk-delete', 'export-branded', 'campaign-retry'],
@@ -3889,6 +3938,15 @@
       return String(value || '').toLowerCase().trim();
     }
 
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     function formatAmount(value) {
       const parsed = Number(value);
       if (!Number.isFinite(parsed)) {
@@ -3944,6 +4002,14 @@
         return;
       }
 
+      if (source === 'principal' && Number.isFinite(interestRate) && interestRate > 0) {
+        const interestAmount = (principal * interestRate) / 100;
+        totalAmount = principal + interestAmount;
+        totalInput.value = String(Number(totalAmount.toFixed(2)));
+        interestAmountInput.value = formatAmount(interestAmount);
+        return;
+      }
+
       if (!Number.isFinite(totalAmount) || totalAmount < 0) {
         totalAmount = principal;
         totalInput.value = String(Number(principal.toFixed(2)));
@@ -3954,11 +4020,7 @@
         totalInput.value = String(Number(totalAmount.toFixed(2)));
       }
 
-      let interestAmount = totalAmount - principal;
-      if (!Number.isFinite(interestAmount) || interestAmount < 0) {
-        interestAmount = 0;
-      }
-
+      const interestAmount = Math.max(0, totalAmount - principal);
       interestRate = principal > 0 ? (interestAmount / principal) * 100 : 0;
       interestRateInput.value = Number.isFinite(interestRate) ? String(Number(interestRate.toFixed(2))) : '';
       interestAmountInput.value = formatAmount(interestAmount);
@@ -4096,8 +4158,23 @@
 
     function getPaymentAmounts(payment) {
       const principal = Number(payment.reminderAmount ?? payment.amount ?? 0) || 0;
-      const interestRate = Number(payment.reminderInterest ?? 0) || 0;
-      const interestAmount = (principal * interestRate) / 100;
+      let interestRate = Number(payment.reminderInterest ?? 0) || 0;
+      let interestAmount = (principal * interestRate) / 100;
+
+      const storedTotal = Number(payment.totalAmount ?? payment.paidAmount ?? payment.amount ?? 0) || 0;
+      if ((!Number.isFinite(interestRate) || interestRate <= 0) && principal > 0 && storedTotal > principal) {
+        interestAmount = storedTotal - principal;
+        interestRate = (interestAmount / principal) * 100;
+      }
+
+      if (!Number.isFinite(interestAmount) || interestAmount < 0) {
+        interestAmount = 0;
+      }
+
+      if (!Number.isFinite(interestRate) || interestRate < 0) {
+        interestRate = 0;
+      }
+
       const totalAmount = principal + interestAmount;
 
       return { principal, interestRate, interestAmount, totalAmount };
@@ -4781,7 +4858,7 @@
         paidDate: item.created_at || null,
         paidMode: true,
         reminderAmount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : (item.reminderAmount || 0),
-        reminderInterest: 0,
+        reminderInterest: item.reminderInterest ?? item.interest ?? item.interestRate ?? item.reminderRate ?? '',
       }));
       renderPaidSection(paidSection, 'Paid', paidItems);
 
@@ -4852,6 +4929,11 @@
       if (Number.isFinite(principal) && principal > 0 && Number.isFinite(total) && total >= principal) {
         const rate = ((total - principal) / principal) * 100;
         computedInterest = Number.isFinite(rate) ? String(Number(rate.toFixed(2))) : interestRaw;
+      } else if (Number.isFinite(principal) && principal > 0 && Number.isFinite(Number(interestRaw))) {
+        const rate = Number(interestRaw);
+        const interestAmount = (principal * rate) / 100;
+        document.getElementById('interestAmount').value = formatAmount(interestAmount);
+        document.getElementById('totalAmount').value = String(Number((principal + interestAmount).toFixed(2)));
       }
 
       return {
@@ -5144,15 +5226,26 @@
       document.getElementById('repaymentDate').value = payment.reminderRepaymentDate || '';
       const principal = payment.reminderAmount ?? '';
       const storedRate = payment.reminderInterest ?? '';
+      const storedTotal = Number(payment.totalAmount ?? payment.amount ?? 0);
       document.getElementById('reminderAmount').value = principal;
       document.getElementById('reminderInterest').value = storedRate;
-      if (principal !== '' && storedRate !== '' && Number.isFinite(Number(principal)) && Number.isFinite(Number(storedRate))) {
+      if (principal !== '' && Number.isFinite(Number(principal))) {
         const p = Number(principal);
-        const r = Number(storedRate);
-        const total = p + ((p * r) / 100);
-        document.getElementById('totalAmount').value = String(Number(total.toFixed(2)));
-      } else {
-        document.getElementById('totalAmount').value = '';
+        if (storedRate !== '' && Number.isFinite(Number(storedRate))) {
+          const r = Number(storedRate);
+          const total = p + ((p * r) / 100);
+          document.getElementById('totalAmount').value = String(Number(total.toFixed(2)));
+          document.getElementById('interestAmount').value = formatAmount(total - p);
+        } else if (Number.isFinite(storedTotal) && storedTotal >= p) {
+          const interestAmount = storedTotal - p;
+          const rate = p > 0 ? (interestAmount / p) * 100 : 0;
+          document.getElementById('reminderInterest').value = Number.isFinite(rate) ? String(Number(rate.toFixed(2))) : '';
+          document.getElementById('totalAmount').value = String(Number(storedTotal.toFixed(2)));
+          document.getElementById('interestAmount').value = formatAmount(interestAmount);
+        } else {
+          document.getElementById('totalAmount').value = '';
+          document.getElementById('interestAmount').value = '';
+        }
       }
       document.getElementById('reminderNote').value = payment.reminderNote || '';
       calculateAmounts();
@@ -5602,7 +5695,7 @@
     function openNotificationPanel() {
       const title = document.getElementById('notificationTitle');
       if (title) {
-        title.textContent = '📬 Notifications';
+        title.textContent = 'Pipeline Notifications';
       }
       document.getElementById('notificationPanel').classList.add('show');
       loadNotifications();
@@ -5612,22 +5705,197 @@
       document.getElementById('notificationPanel').classList.remove('show');
     }
 
-    function loadNotifications() {
-      const list = document.getElementById('notificationList');
-      const notifications = [
-        { id: 1, title: 'Payment Received', desc: 'Payment from Rajesh Kumar received', time: '5 min ago' },
-        { id: 2, title: 'Reminder Sent', desc: 'Bulk reminders sent to 12 users', time: '1 hour ago' },
-        { id: 3, title: 'New Overdue', desc: '3 new overdue payments detected', time: '2 hours ago' },
-        { id: 4, title: 'System Update', desc: 'Dashboard updated with new features', time: '1 day ago' }
-      ];
+    function formatNotificationTime(value) {
+      const date = new Date(value || '');
+      if (Number.isNaN(date.getTime())) {
+        return '-';
+      }
+      return date.toLocaleString('en-IN');
+    }
 
-      list.innerHTML = notifications.map(notif => `
-        <div class="notification-item" onclick="showToast('${notif.desc}', 'info', '${notif.title}')">
-          <div style="font-weight: 600; color: #0d2d43;">${notif.title}</div>
-          <div style="font-size: 0.85rem; color: #496a81; margin-top: 4px;">${notif.desc}</div>
-          <div class="notification-time">${notif.time}</div>
-        </div>
-      `).join('');
+    function getNotificationActionButton(notification) {
+      const action = notification?.action || {};
+      if (action.type === 'retry-now' && action.jobId) {
+        return `<button class="toast-action-btn" onclick="event.stopPropagation(); retryPipelineJob('${String(action.jobId).replace(/'/g, "\\'")}')">${action.label || 'Retry now'}</button>`;
+      }
+
+      if (notification?.type === 'overdue') {
+        return `<button class="toast-action-btn" onclick="event.stopPropagation(); openAuditModal()">Review</button>`;
+      }
+
+      return `<button class="toast-action-btn" onclick="event.stopPropagation(); resolvePipelineNotification('${String(notification.id).replace(/'/g, "\\'")}')">Resolve</button>`;
+    }
+
+    async function resolvePipelineNotification(id) {
+      try {
+        const response = await fetch(`/api/payment-reminder/pipeline/notifications/${encodeURIComponent(id)}/resolve`, {
+          method: 'POST'
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.message || 'Failed to resolve notification');
+        }
+
+        showToast(payload.message || 'Notification resolved', 'success', 'Notifications');
+        await Promise.all([loadNotifications(), refreshPipelineOverview()]);
+      } catch (error) {
+        showToast(error.message || 'Failed to resolve notification', 'error', 'Notifications');
+      }
+    }
+
+    async function retryPipelineJob(jobId) {
+      try {
+        const response = await fetch(`/api/payment-reminder/pipeline/retry/${encodeURIComponent(jobId)}`, {
+          method: 'POST'
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.message || 'Failed to queue retry');
+        }
+
+        showToast(payload.message || 'Retry queued', 'success', 'Retry');
+        await Promise.all([loadNotifications(), refreshPipelineOverview()]);
+      } catch (error) {
+        showToast(error.message || 'Failed to queue retry', 'error', 'Retry');
+      }
+    }
+
+    async function loadNotifications() {
+      const list = document.getElementById('notificationList');
+      if (!list) return;
+
+      list.innerHTML = '<div class="notification-item">Loading notifications...</div>';
+
+      try {
+        const response = await fetch('/api/payment-reminder/pipeline/notifications?status=open');
+        const notifications = await response.json().catch(() => []);
+        if (!response.ok) {
+          throw new Error('Failed to load notifications');
+        }
+
+        const items = Array.isArray(notifications) ? notifications : [];
+        updateNotificationBadge(items.length);
+
+        if (!items.length) {
+          list.innerHTML = '<div class="notification-item">No open pipeline notifications.</div>';
+          return;
+        }
+
+        list.innerHTML = items.map((notif) => `
+          <div class="notification-item">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
+              <div>
+                <div style="font-weight: 700; color: #0d2d43;">${notif.title || 'Notification'}</div>
+                <div style="font-size: 0.85rem; color: #496a81; margin-top: 4px;">${notif.message || '-'}</div>
+              </div>
+              <span class="badge ${notif.severity === 'error' ? 'badge-danger' : notif.severity === 'warning' ? 'badge-warning' : 'badge-primary'}">${String(notif.severity || 'info').toUpperCase()}</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px;">
+              <div class="notification-time">${formatNotificationTime(notif.createdAt)}</div>
+              ${getNotificationActionButton(notif)}
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        list.innerHTML = `<div class="notification-item">${error.message || 'Unable to load notifications.'}</div>`;
+      }
+    }
+
+    function openAuditModal() {
+      const modal = document.getElementById('auditModal');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      loadReminderAudit();
+    }
+
+    function closeAuditModal() {
+      const modal = document.getElementById('auditModal');
+      if (!modal) return;
+      modal.style.display = 'none';
+    }
+
+    function clearAuditFilters() {
+      const actor = document.getElementById('auditActor');
+      const actionType = document.getElementById('auditActionType');
+      const from = document.getElementById('auditFrom');
+      const to = document.getElementById('auditTo');
+
+      if (actor) actor.value = '';
+      if (actionType) actionType.value = '';
+      if (from) from.value = '';
+      if (to) to.value = '';
+
+      reminderAuditFilters = { actor: '', actionType: '', status: '', from: '', to: '' };
+      loadReminderAudit();
+    }
+
+    function applyAuditFilters() {
+      const actor = document.getElementById('auditActor');
+      const actionType = document.getElementById('auditActionType');
+      const from = document.getElementById('auditFrom');
+      const to = document.getElementById('auditTo');
+
+      reminderAuditFilters.actor = String(actor?.value || '').trim();
+      reminderAuditFilters.actionType = String(actionType?.value || '').trim();
+      reminderAuditFilters.from = String(from?.value || '').trim();
+      reminderAuditFilters.to = String(to?.value || '').trim();
+
+      loadReminderAudit();
+    }
+
+    function buildAuditQueryParams() {
+      const params = new URLSearchParams();
+      if (reminderAuditFilters.actor) params.set('actor', reminderAuditFilters.actor);
+      if (reminderAuditFilters.actionType) params.set('actionType', reminderAuditFilters.actionType);
+      if (reminderAuditFilters.status) params.set('status', reminderAuditFilters.status);
+      if (reminderAuditFilters.from) params.set('from', reminderAuditFilters.from);
+      if (reminderAuditFilters.to) params.set('to', reminderAuditFilters.to);
+      return params;
+    }
+
+    async function loadReminderAudit() {
+      const summary = document.getElementById('auditSummary');
+      const results = document.getElementById('auditResults');
+      if (!summary || !results) return;
+
+      summary.textContent = 'Loading audit events...';
+      results.innerHTML = '<div class="notification-item">Loading audit events...</div>';
+
+      try {
+        const params = buildAuditQueryParams();
+        const endpoint = `/api/payment-reminder/pipeline/audit${params.toString() ? `?${params.toString()}` : ''}`;
+        const response = await fetch(endpoint);
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(payload.message || 'Failed to load audit events');
+        }
+
+        const rows = Array.isArray(payload.data) ? payload.data : [];
+        summary.textContent = `${payload.total || rows.length} event(s) found`;
+
+        if (!rows.length) {
+          results.innerHTML = '<div class="notification-item">No audit events match the selected filters.</div>';
+          return;
+        }
+
+        results.innerHTML = rows.map((entry) => `
+          <div class="notification-item">
+            <div style="font-weight: 700; color: #0d2d43;">${entry.action || 'Audit event'}</div>
+            <div style="font-size: 0.85rem; color: #496a81; margin-top: 4px;">${entry.details || '-'}</div>
+            <div class="notification-time">${entry.createdAt || '-'} | ${entry.actor || 'System'} (${entry.role || 'n/a'}) | ${entry.actionType || '-'}</div>
+          </div>
+        `).join('');
+      } catch (error) {
+        summary.textContent = 'Failed to load audit events';
+        results.innerHTML = `<div class="notification-item">${error.message || 'Unable to load audit events.'}</div>`;
+      }
+    }
+
+    function exportAuditCsv() {
+      const params = buildAuditQueryParams();
+      const endpoint = `/api/payment-reminder/pipeline/audit/export${params.toString() ? `?${params.toString()}` : ''}`;
+      window.open(endpoint, '_blank', 'noopener,noreferrer');
     }
 
     // Settings Modal
