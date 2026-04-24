@@ -393,18 +393,521 @@ const Payment = mongoose.model('Payment', paymentSchema);
 
 const uploadsDir = path.join(__dirname, 'uploads');
 const reminderPipelineStatePath = path.join(uploadsDir, 'reminder-pipeline-state.json');
+const lenderStatePath = path.join(uploadsDir, 'lenders-state.json');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
 const normalizeMobile = (value) => String(value || '').replace(/\D/g, '').slice(-10);
 
-const toNumberOrNull = (value) => {
+const toNumberOrNull = (value, { snapNearInteger = false } = {}) => {
     if (value === '' || value === null || value === undefined) {
         return null;
     }
     const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
+    if (!Number.isFinite(parsed)) {
+        return null;
+    }
+
+    const rounded = Math.round((parsed + Number.EPSILON) * 100) / 100;
+    if (!snapNearInteger) {
+        return rounded;
+    }
+
+    const nearestInteger = Math.round(rounded);
+    return Math.abs(rounded - nearestInteger) <= 0.01 ? nearestInteger : rounded;
+};
+
+const getRoleFromRequest = (req) => String(
+    req.headers['x-user-role']
+    || req.headers['x-actor-role']
+    || req.body?.actorRole
+    || ''
+).trim().toLowerCase();
+
+const getActorNameFromRequest = (req) => String(
+    req.headers['x-user-name']
+    || req.headers['x-actor-name']
+    || req.body?.actor
+    || 'Admin User'
+).trim() || 'Admin User';
+
+const requireAdminRole = (req, res, next) => {
+    const role = getRoleFromRequest(req);
+    if (role !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+    }
+    return next();
+};
+
+const defaultLenderState = () => ({
+    lenders: [],
+    audits: [],
+    jobs: [],
+    notifications: [],
+    lastAutoSchedulerRunAt: null,
+    lastWorkerRunAt: null,
+});
+
+const readLenderState = () => {
+    try {
+        if (!fs.existsSync(lenderStatePath)) {
+            return defaultLenderState();
+        }
+        const parsed = JSON.parse(fs.readFileSync(lenderStatePath, 'utf8'));
+        return {
+            lenders: Array.isArray(parsed?.lenders) ? parsed.lenders : [],
+            audits: Array.isArray(parsed?.audits) ? parsed.audits : [],
+            jobs: Array.isArray(parsed?.jobs) ? parsed.jobs : [],
+            notifications: Array.isArray(parsed?.notifications) ? parsed.notifications : [],
+            lastAutoSchedulerRunAt: parsed?.lastAutoSchedulerRunAt || null,
+            lastWorkerRunAt: parsed?.lastWorkerRunAt || null,
+        };
+    } catch (_error) {
+        return defaultLenderState();
+    }
+};
+
+const writeLenderState = (state) => {
+    try {
+        fs.writeFileSync(lenderStatePath, JSON.stringify(state, null, 2), 'utf8');
+    } catch (error) {
+        console.error('Failed to write lender state:', error);
+    }
+};
+
+const pushLenderAudit = (state, {
+    actor = 'System',
+    role = 'system',
+    actionType = 'lender',
+    action = 'Lender event',
+    details = '',
+    status = 'success',
+    lenderId = null,
+    targetMobile = null,
+    jobId = null,
+    meta = null,
+}) => {
+    state.audits.unshift({
+        id: crypto.randomUUID(),
+        actor,
+        role,
+        actionType,
+        action,
+        details,
+        status,
+        lenderId,
+        targetMobile,
+        jobId,
+        createdAt: new Date().toISOString(),
+        meta: meta && typeof meta === 'object' ? meta : null,
+    });
+    state.audits = state.audits.slice(0, 1500);
+};
+
+const pushLenderNotification = (state, {
+    type = 'lender',
+    title = 'Lender update',
+    message = '',
+    severity = 'info',
+    action = null,
+    lenderId = null,
+    targetMobile = null,
+    jobId = null,
+}) => {
+    state.notifications.unshift({
+        id: crypto.randomUUID(),
+        type,
+        title,
+        message,
+        severity,
+        action: action && typeof action === 'object' ? action : null,
+        lenderId,
+        targetMobile,
+        jobId,
+        status: 'open',
+        createdAt: new Date().toISOString(),
+    });
+    state.notifications = state.notifications.slice(0, 600);
+};
+
+const sanitizeLenderPayload = (payload = {}) => {
+    const principal = toNumberOrNull(payload.principal, { snapNearInteger: true });
+    const interestRate = toNumberOrNull(payload.interestRate) ?? 0;
+    const dueDate = String(payload.dueDate || '').trim();
+    const lendDate = String(payload.lendDate || '').trim();
+
+    if (!String(payload.name || '').trim()) {
+        return { error: 'Lender name is required' };
+    }
+    const mobile = normalizeMobile(payload.mobile || '');
+    if (!mobile || mobile.length !== 10) {
+        return { error: 'Valid 10-digit mobile is required' };
+    }
+    if (!Number.isFinite(principal) || principal <= 0) {
+        return { error: 'Principal must be greater than 0' };
+    }
+    if (!Number.isFinite(interestRate) || interestRate < 0) {
+        return { error: 'Interest rate must be 0 or higher' };
+    }
+    if (lendDate && Number.isNaN(Date.parse(lendDate))) {
+        return { error: 'Invalid lend date' };
+    }
+    if (dueDate && Number.isNaN(Date.parse(dueDate))) {
+        return { error: 'Invalid due date' };
+    }
+    if (lendDate && dueDate && dueDate < lendDate) {
+        return { error: 'Due date cannot be before lend date' };
+    }
+
+    const repaymentCycle = String(payload.repaymentCycle || 'monthly').trim().toLowerCase() || 'monthly';
+    const status = String(payload.status || 'active').trim().toLowerCase() === 'closed' ? 'closed' : 'active';
+
+    return {
+        data: {
+            name: String(payload.name || '').trim(),
+            mobile,
+            principal,
+            interestRate,
+            lendDate: lendDate || '',
+            dueDate: dueDate || '',
+            repaymentCycle,
+            status,
+            notes: String(payload.notes || '').trim().slice(0, 500),
+        }
+    };
+};
+
+const buildLenderReminderMessage = (lender, template = 'standard') => {
+    const principal = Number(lender?.principal || 0);
+    const interestRate = Number(lender?.interestRate || 0);
+    const interestAmount = Math.round((((principal * interestRate) / 100) + Number.EPSILON) * 100) / 100;
+    const totalAmount = Math.round(((principal + interestAmount) + Number.EPSILON) * 100) / 100;
+
+    if (template === 'urgent') {
+        return [
+            `Dear ${lender?.name || 'Lender'},`,
+            '',
+            'Urgent reminder: payment is pending.',
+            `Principal: Rs. ${principal}`,
+            `Interest: ${interestRate}% (Rs. ${interestAmount})`,
+            `Total payable: Rs. ${totalAmount}`,
+            `Due date: ${lender?.dueDate || 'Not set'}`,
+            '',
+            'Please settle immediately.'
+        ].join('\n');
+    }
+
+    return [
+        `Dear ${lender?.name || 'Lender'},`,
+        '',
+        'This is your scheduled payment reminder.',
+        `Principal: Rs. ${principal}`,
+        `Interest: ${interestRate}% (Rs. ${interestAmount})`,
+        `Total payable: Rs. ${totalAmount}`,
+        `Due date: ${lender?.dueDate || 'Not set'}`,
+        '',
+        'Thank you.'
+    ].join('\n');
+};
+
+const parseScheduleDateTime = (scheduleDate, scheduleTime) => {
+    const rawDate = String(scheduleDate || '').trim();
+    const rawTime = String(scheduleTime || '').trim();
+    if (!rawDate) {
+        return new Date().toISOString();
+    }
+    const composed = rawTime ? `${rawDate}T${rawTime}:00` : `${rawDate}T09:00:00`;
+    const parsed = new Date(composed);
+    if (Number.isNaN(parsed.getTime())) {
+        return null;
+    }
+    return parsed.toISOString();
+};
+
+const lenderDaysUntilDue = (dueDate) => {
+    if (!dueDate) {
+        return null;
+    }
+    const date = new Date(dueDate);
+    if (Number.isNaN(date.getTime())) {
+        return null;
+    }
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
+    return Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+};
+
+const withCountryCode = (mobile) => {
+    const digits = normalizeMobile(mobile);
+    if (!digits) {
+        return '';
+    }
+    return digits.length === 10 ? `91${digits}` : digits;
+};
+
+const getWhatsAppProviderOrder = () => {
+    const rawOrder = String(process.env.WHATSAPP_PROVIDER_ORDER || process.env.WHATSAPP_PROVIDER_SEQUENCE || '').trim().toLowerCase();
+    const parsedOrder = rawOrder
+        ? rawOrder.split(/[,\s|]+/).map((item) => item.trim()).filter((item) => ['meta', 'twilio'].includes(item))
+        : [];
+    if (parsedOrder.length) {
+        return [...new Set(parsedOrder)];
+    }
+
+    const provider = String(process.env.WHATSAPP_PROVIDER || '').trim().toLowerCase();
+    if (provider === 'meta' || provider === 'twilio') {
+        return [provider];
+    }
+
+    return ['meta', 'twilio'];
+};
+
+const sendLenderWhatsAppViaMeta = async ({ normalizedMobile, message, waLink }) => {
+    const phoneNumberId = String(process.env.WHATSAPP_META_PHONE_NUMBER_ID || '').trim();
+    const accessToken = String(process.env.WHATSAPP_META_ACCESS_TOKEN || '').trim();
+    if (!phoneNumberId || !accessToken) {
+        return { ok: false, error: 'Meta WhatsApp credentials missing', shareUrl: waLink };
+    }
+
+    try {
+        const response = await axios.post(
+            `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`,
+            {
+                messaging_product: 'whatsapp',
+                to: normalizedMobile,
+                type: 'text',
+                text: { body: String(message || '') },
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                timeout: 15000,
+            }
+        );
+        const messageId = response?.data?.messages?.[0]?.id || null;
+        return { ok: true, provider: 'meta', messageId, shareUrl: waLink };
+    } catch (error) {
+        const errorText = error?.response?.data?.error?.message || error.message || 'Meta send failed';
+        return { ok: false, error: errorText, shareUrl: waLink };
+    }
+};
+
+const sendLenderWhatsAppViaTwilio = async ({ normalizedMobile, message, waLink }) => {
+    const sid = String(process.env.TWILIO_ACCOUNT_SID || '').trim();
+    const token = String(process.env.TWILIO_AUTH_TOKEN || '').trim();
+    const from = String(process.env.TWILIO_WHATSAPP_FROM || '').trim();
+    if (!sid || !token || !from) {
+        return { ok: false, error: 'Twilio WhatsApp credentials missing', shareUrl: waLink };
+    }
+
+    const payload = new URLSearchParams();
+    payload.append('To', `whatsapp:+${normalizedMobile}`);
+    payload.append('From', `whatsapp:${from.startsWith('+') ? from : `+${from}`}`);
+    payload.append('Body', String(message || ''));
+
+    try {
+        const response = await axios.post(
+            `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
+            payload.toString(),
+            {
+                auth: { username: sid, password: token },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                timeout: 15000,
+            }
+        );
+        return { ok: true, provider: 'twilio', messageId: response?.data?.sid || null, shareUrl: waLink };
+    } catch (error) {
+        const errorText = error?.response?.data?.message || error.message || 'Twilio send failed';
+        return { ok: false, error: errorText, shareUrl: waLink };
+    }
+};
+
+const sendLenderWhatsAppReminder = async ({ mobile, message }) => {
+    const normalizedMobile = withCountryCode(mobile);
+    if (!normalizedMobile || normalizedMobile.length < 12) {
+        return { ok: false, error: 'Invalid mobile number' };
+    }
+
+    const waLink = `https://wa.me/${normalizedMobile}?text=${encodeURIComponent(String(message || ''))}`;
+
+    const providerOrder = getWhatsAppProviderOrder();
+    const attempts = [];
+
+    for (const provider of providerOrder) {
+        const delivery = provider === 'meta'
+            ? await sendLenderWhatsAppViaMeta({ normalizedMobile, message, waLink })
+            : await sendLenderWhatsAppViaTwilio({ normalizedMobile, message, waLink });
+
+        if (delivery.ok) {
+            return delivery;
+        }
+
+        attempts.push(`${provider}: ${delivery.error || 'failed'}`);
+    }
+
+    return {
+        ok: false,
+        error: attempts.length
+            ? `WhatsApp delivery failed (${attempts.join(' | ')})`
+            : 'WhatsApp provider not configured. Set WHATSAPP_PROVIDER=meta|twilio or WHATSAPP_PROVIDER_ORDER=meta,twilio',
+        shareUrl: waLink,
+    };
+};
+
+const runDailyLenderAutoScheduler = (state) => {
+    const todayKey = new Date().toISOString().slice(0, 10);
+    if (String(state.lastAutoSchedulerRunAt || '') === todayKey) {
+        return 0;
+    }
+
+    let created = 0;
+    state.lenders.forEach((lender) => {
+        if (String(lender.status || '').toLowerCase() === 'closed') {
+            return;
+        }
+        const days = lenderDaysUntilDue(lender.dueDate);
+        if (days !== 2) {
+            return;
+        }
+
+        const autoRuleKey = `${lender.id}:${lender.dueDate}:d-2`;
+        const alreadyQueued = state.jobs.some((job) => {
+            const sameRule = String(job?.meta?.autoRuleKey || '') === autoRuleKey;
+            const status = String(job.status || '').toLowerCase();
+            return sameRule && ['queued', 'scheduled', 'retry_pending', 'sent'].includes(status);
+        });
+        if (alreadyQueued) {
+            return;
+        }
+
+        state.jobs.unshift({
+            id: crypto.randomUUID(),
+            lenderId: lender.id,
+            name: lender.name,
+            mobile: lender.mobile,
+            message: buildLenderReminderMessage(lender, 'standard'),
+            template: 'standard',
+            status: 'queued',
+            type: 'auto-due-minus-2',
+            attempts: 0,
+            maxAttempts: 3,
+            scheduledFor: new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            actor: 'Auto Scheduler',
+            meta: { autoRuleKey, daysBeforeDue: 2, dueDate: lender.dueDate },
+        });
+        created += 1;
+    });
+
+    state.lastAutoSchedulerRunAt = todayKey;
+    if (created > 0) {
+        pushLenderAudit(state, {
+            actor: 'Auto Scheduler',
+            role: 'system',
+            actionType: 'auto-schedule',
+            action: 'Daily auto scheduler queued reminders',
+            details: `${created} reminders queued for lenders due in 2 days`,
+            status: 'success',
+            meta: { daysBeforeDue: 2, count: created },
+        });
+    }
+    return created;
+};
+
+const processLenderReminderJobs = async () => {
+    const state = readLenderState();
+    runDailyLenderAutoScheduler(state);
+    const now = Date.now();
+    const dueJobs = state.jobs.filter((job) => {
+        const status = String(job.status || '').toLowerCase();
+        if (!['queued', 'scheduled', 'retry_pending'].includes(status)) {
+            return false;
+        }
+        const dueAt = new Date(job.scheduledFor || 0).getTime();
+        return Number.isFinite(dueAt) && dueAt <= now;
+    });
+
+    for (const job of dueJobs) {
+        const nowIso = new Date().toISOString();
+        job.attempts = Number(job.attempts || 0) + 1;
+        job.lastAttemptAt = nowIso;
+        const delivery = await sendLenderWhatsAppReminder({ mobile: job.mobile, message: job.message });
+
+        if (delivery.ok) {
+            job.status = 'sent';
+            job.lastError = null;
+            job.provider = delivery.provider || null;
+            job.providerMessageId = delivery.messageId || null;
+            job.shareUrl = delivery.shareUrl || null;
+            job.updatedAt = nowIso;
+            pushLenderAudit(state, {
+                actor: 'Scheduler',
+                role: 'system',
+                actionType: 'schedule',
+                action: 'Scheduled lender reminder sent',
+                details: `Reminder sent via ${delivery.provider || 'provider'} for ${job.mobile}`,
+                status: 'success',
+                lenderId: job.lenderId,
+                targetMobile: job.mobile,
+                jobId: job.id,
+                meta: { provider: delivery.provider || null, providerMessageId: delivery.messageId || null },
+            });
+            continue;
+        }
+
+        job.lastError = delivery.error || 'Provider delivery failed';
+        job.shareUrl = delivery.shareUrl || null;
+        if (job.attempts < Number(job.maxAttempts || 3)) {
+            job.status = 'retry_pending';
+            job.scheduledFor = new Date(Date.now() + (5 * 60 * 1000)).toISOString();
+        } else {
+            job.status = 'failed';
+        }
+        job.updatedAt = nowIso;
+
+        pushLenderAudit(state, {
+            actor: 'Scheduler',
+            role: 'system',
+            actionType: 'schedule',
+            action: 'Scheduled lender reminder failed',
+            details: `${job.lastError} for ${job.mobile}`,
+            status: 'failed',
+            lenderId: job.lenderId,
+            targetMobile: job.mobile,
+            jobId: job.id,
+        });
+        pushLenderNotification(state, {
+            type: 'delivery',
+            severity: 'error',
+            title: 'Lender reminder failed',
+            message: `Could not process lender reminder for ${job.name || job.mobile}`,
+            action: { type: 'retry', jobId: job.id, label: 'Retry now' },
+            lenderId: job.lenderId,
+            targetMobile: job.mobile,
+            jobId: job.id,
+        });
+    }
+
+    state.lastWorkerRunAt = new Date().toISOString();
+    writeLenderState(state);
+    return state;
+};
+
+let lenderReminderWorker = null;
+const startLenderReminderWorker = () => {
+    if (lenderReminderWorker) {
+        return;
+    }
+    lenderReminderWorker = setInterval(() => {
+        processLenderReminderJobs().catch((error) => {
+            console.error('Lender reminder worker error:', error);
+        });
+    }, 20000);
 };
 
 const defaultReminderPipelineState = () => ({
@@ -1275,7 +1778,7 @@ app.put('/api/payments/:id/reminder', async (req, res) => {
         const reminderNote = String(req.body?.reminderNote || '').trim();
         const reminderBorrowDate = String(req.body?.borrowDate || '').trim() || null;
         const reminderRepaymentDate = String(req.body?.repaymentDate || '').trim() || null;
-        const reminderAmount = toNumberOrNull(req.body?.reminderAmount);
+        const reminderAmount = toNumberOrNull(req.body?.reminderAmount, { snapNearInteger: true });
         const reminderInterest = toNumberOrNull(req.body?.reminderInterest);
         const reminderStatus = String(req.body?.reminderStatus || 'manual').trim().toLowerCase() === 'paid' ? 'paid' : 'manual';
         const reminderPaidAt = reminderStatus === 'paid'
@@ -1678,6 +2181,226 @@ app.get('/api/payment-reminder/pipeline/audit/export', async (req, res) => {
     return res.send(csv);
 });
 
+app.get('/api/lenders', requireAdminRole, async (_req, res) => {
+    const state = readLenderState();
+    const items = [...state.lenders].sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+    const pendingJobs = state.jobs.filter((job) => ['queued', 'scheduled', 'retry_pending'].includes(String(job.status || '').toLowerCase())).length;
+    return res.json({
+        data: items,
+        live: {
+            total: items.length,
+            queuedJobs: pendingJobs,
+            workerLastRunAt: state.lastWorkerRunAt || null,
+        }
+    });
+});
+
+app.get('/api/lenders/audit', requireAdminRole, async (req, res) => {
+    const state = readLenderState();
+    const actionType = String(req.query?.actionType || '').trim().toLowerCase();
+    const status = String(req.query?.status || '').trim().toLowerCase();
+    const actor = String(req.query?.actor || '').trim().toLowerCase();
+    const filtered = state.audits.filter((entry) => {
+        if (actionType && String(entry.actionType || '').toLowerCase() !== actionType) return false;
+        if (status && String(entry.status || '').toLowerCase() !== status) return false;
+        if (actor && !String(entry.actor || '').toLowerCase().includes(actor)) return false;
+        return true;
+    });
+    return res.json({ total: filtered.length, data: filtered.slice(0, 1000) });
+});
+
+app.get('/api/lenders/reminders/jobs', requireAdminRole, async (req, res) => {
+    const state = readLenderState();
+    const status = String(req.query?.status || '').trim().toLowerCase();
+    const jobs = status
+        ? state.jobs.filter((job) => String(job.status || '').toLowerCase() === status)
+        : state.jobs;
+    return res.json({ total: jobs.length, data: jobs.slice(0, 1000) });
+});
+
+app.post('/api/lenders', requireAdminRole, async (req, res) => {
+    const parsed = sanitizeLenderPayload(req.body || {});
+    if (parsed.error) {
+        return res.status(400).json({ message: parsed.error });
+    }
+
+    const state = readLenderState();
+    const actor = getActorNameFromRequest(req);
+    const role = getRoleFromRequest(req) || 'admin';
+    const nowIso = new Date().toISOString();
+    const lender = {
+        id: crypto.randomUUID(),
+        ...parsed.data,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+    };
+
+    state.lenders.unshift(lender);
+    pushLenderAudit(state, {
+        actor,
+        role,
+        actionType: 'create',
+        action: 'Lender created',
+        details: `Created lender ${lender.name}`,
+        status: 'success',
+        lenderId: lender.id,
+        targetMobile: lender.mobile,
+    });
+    writeLenderState(state);
+    return res.status(201).json({ message: 'Lender created', lender });
+});
+
+app.put('/api/lenders/:id', requireAdminRole, async (req, res) => {
+    const parsed = sanitizeLenderPayload(req.body || {});
+    if (parsed.error) {
+        return res.status(400).json({ message: parsed.error });
+    }
+
+    const state = readLenderState();
+    const idx = state.lenders.findIndex((item) => String(item.id) === String(req.params.id));
+    if (idx < 0) {
+        return res.status(404).json({ message: 'Lender not found' });
+    }
+
+    const actor = getActorNameFromRequest(req);
+    const role = getRoleFromRequest(req) || 'admin';
+    const updated = {
+        ...state.lenders[idx],
+        ...parsed.data,
+        updatedAt: new Date().toISOString(),
+    };
+    state.lenders[idx] = updated;
+    pushLenderAudit(state, {
+        actor,
+        role,
+        actionType: 'update',
+        action: 'Lender updated',
+        details: `Updated lender ${updated.name}`,
+        status: 'success',
+        lenderId: updated.id,
+        targetMobile: updated.mobile,
+    });
+    writeLenderState(state);
+    return res.json({ message: 'Lender updated', lender: updated });
+});
+
+app.delete('/api/lenders/:id', requireAdminRole, async (req, res) => {
+    const state = readLenderState();
+    const idx = state.lenders.findIndex((item) => String(item.id) === String(req.params.id));
+    if (idx < 0) {
+        return res.status(404).json({ message: 'Lender not found' });
+    }
+
+    const actor = getActorNameFromRequest(req);
+    const role = getRoleFromRequest(req) || 'admin';
+    const removed = state.lenders[idx];
+    state.lenders.splice(idx, 1);
+    state.jobs = state.jobs.filter((job) => String(job.lenderId) !== String(removed.id));
+    pushLenderAudit(state, {
+        actor,
+        role,
+        actionType: 'delete',
+        action: 'Lender deleted',
+        details: `Deleted lender ${removed.name}`,
+        status: 'success',
+        lenderId: removed.id,
+        targetMobile: removed.mobile,
+    });
+    writeLenderState(state);
+    return res.json({ message: 'Lender deleted' });
+});
+
+app.post('/api/lenders/:id/reminders/schedule', requireAdminRole, async (req, res) => {
+    const state = readLenderState();
+    const lender = state.lenders.find((item) => String(item.id) === String(req.params.id));
+    if (!lender) {
+        return res.status(404).json({ message: 'Lender not found' });
+    }
+
+    const actor = getActorNameFromRequest(req);
+    const role = getRoleFromRequest(req) || 'admin';
+    const scheduleDate = String(req.body?.scheduleDate || '').trim();
+    const scheduleTime = String(req.body?.scheduleTime || '').trim();
+    const template = String(req.body?.template || 'standard').trim().toLowerCase();
+    const scheduledFor = parseScheduleDateTime(scheduleDate, scheduleTime);
+
+    if (!scheduledFor) {
+        return res.status(400).json({ message: 'Invalid schedule date/time' });
+    }
+
+    const isFuture = new Date(scheduledFor).getTime() > Date.now();
+    const message = buildLenderReminderMessage(lender, template === 'urgent' ? 'urgent' : 'standard');
+    const job = {
+        id: crypto.randomUUID(),
+        lenderId: lender.id,
+        name: lender.name,
+        mobile: lender.mobile,
+        message,
+        template: template === 'urgent' ? 'urgent' : 'standard',
+        status: isFuture ? 'scheduled' : 'queued',
+        type: isFuture ? 'scheduled' : 'immediate',
+        attempts: 0,
+        maxAttempts: 3,
+        scheduledFor,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        actor,
+    };
+
+    state.jobs.unshift(job);
+    pushLenderAudit(state, {
+        actor,
+        role,
+        actionType: isFuture ? 'schedule' : 'queue',
+        action: isFuture ? 'Lender reminder scheduled' : 'Lender reminder queued',
+        details: `${lender.name} reminder ${isFuture ? 'scheduled' : 'queued'} for ${scheduledFor}`,
+        status: 'success',
+        lenderId: lender.id,
+        targetMobile: lender.mobile,
+        jobId: job.id,
+        meta: { template: job.template, scheduledFor },
+    });
+    writeLenderState(state);
+
+    if (!isFuture) {
+        await processLenderReminderJobs();
+    }
+
+    return res.json({
+        message: isFuture ? 'Lender reminder scheduled' : 'Lender reminder queued',
+        job,
+    });
+});
+
+app.post('/api/lenders/reminders/:jobId/retry', requireAdminRole, async (req, res) => {
+    const state = readLenderState();
+    const job = state.jobs.find((item) => String(item.id) === String(req.params.jobId));
+    if (!job) {
+        return res.status(404).json({ message: 'Reminder job not found' });
+    }
+
+    const actor = getActorNameFromRequest(req);
+    const role = getRoleFromRequest(req) || 'admin';
+    job.status = 'queued';
+    job.lastError = null;
+    job.scheduledFor = new Date().toISOString();
+    job.updatedAt = new Date().toISOString();
+    pushLenderAudit(state, {
+        actor,
+        role,
+        actionType: 'retry',
+        action: 'Lender reminder retry queued',
+        details: `Retry requested for job ${job.id}`,
+        status: 'success',
+        lenderId: job.lenderId,
+        targetMobile: job.mobile,
+        jobId: job.id,
+    });
+    writeLenderState(state);
+    await processLenderReminderJobs();
+    return res.json({ message: 'Retry queued', job });
+});
+
 // Define a Chit ID schema
 const chitIdSchema = new mongoose.Schema({
     chitId: String,
@@ -1816,6 +2539,7 @@ app.delete('/api/chit-ids/:id', async (req, res) => {
 
 // Start the server
 startReminderPipelineWorker();
+startLenderReminderWorker();
 app.listen(PORT, () => {
     console.log(`🚀Server is running on http://localhost:${PORT}`);
 });

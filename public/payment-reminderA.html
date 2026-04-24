@@ -3289,6 +3289,8 @@
     <a href="ChitIdA.html"><i class="fas fa-university"></i> <span class="menu-text">chit-ids Approve</span></a>
     <a href="paymentA.html"><i class="fas fa-credit-card"></i> <span class="menu-text">Payments</span></a>
     <a href="payment-reminderA.html"><i class="fas fa-bell"></i> <span class="menu-text">Payment Reminder</span></a>
+    <a href="lenderA.html"><i class="fas fa-landmark"></i> <span class="menu-text">Lender Center</span></a>
+    <a href="whatsapp-setup.html"><i class="fab fa-whatsapp"></i> <span class="menu-text">WhatsApp Setup</span></a>
     <a href="ContactA.html"><i class="fas fa-envelope"></i> <span class="menu-text">Contact Details</span></a>
     <a href="/Login.html" class="logout-btn" onclick="return logout(event)"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
   </div>
@@ -3511,7 +3513,7 @@
           </div>
           <div class="field">
             <label for="reminderAmount">💵 Amount (Principal)</label>
-            <input type="number" id="reminderAmount" min="0" step="0.01" placeholder="e.g. 1500" oninput="calculateAmounts('principal')">
+            <input type="number" id="reminderAmount" min="0" step="1" placeholder="e.g. 1500" oninput="calculateAmounts('principal')">
           </div>
           <div class="field">
             <label for="reminderInterest">📊 Interest (%)</label>
@@ -3523,7 +3525,7 @@
           </div>
           <div class="field">
             <label for="totalAmount">🎯 Total Amount (Principal + Interest)</label>
-            <input type="number" id="totalAmount" min="0" step="0.01" placeholder="Enter total amount" oninput="calculateAmounts('total')">
+            <input type="number" id="totalAmount" min="0" step="1" placeholder="Enter total amount" oninput="calculateAmounts('total')">
           </div>
           <div class="field full">
             <label for="reminderNote">📝 Note / Message</label>
@@ -3973,14 +3975,35 @@
       return digits;
     }
 
+    function normalizeMoney(value, options = {}) {
+      const { snapNearInteger = false } = options;
+      const numericValue = Number(value);
+
+      if (!Number.isFinite(numericValue)) {
+        return null;
+      }
+
+      const rounded = Math.round((numericValue + Number.EPSILON) * 100) / 100;
+      if (!snapNearInteger) {
+        return rounded;
+      }
+
+      const nearestInteger = Math.round(rounded);
+      if (Math.abs(rounded - nearestInteger) <= 0.01) {
+        return nearestInteger;
+      }
+
+      return rounded;
+    }
+
     function calculateAmounts(source = 'sync') {
       const principalInput = document.getElementById('reminderAmount');
       const totalInput = document.getElementById('totalAmount');
       const interestRateInput = document.getElementById('reminderInterest');
       const interestAmountInput = document.getElementById('interestAmount');
 
-      const principal = Number(principalInput.value);
-      let totalAmount = Number(totalInput.value);
+      const principal = normalizeMoney(principalInput.value, { snapNearInteger: true });
+      let totalAmount = normalizeMoney(totalInput.value, { snapNearInteger: true });
       let interestRate = Number(interestRateInput.value);
 
       if (!Number.isFinite(principal) || principal < 0) {
@@ -3995,32 +4018,32 @@
           interestRate = 0;
           interestRateInput.value = '0';
         }
-        const interestAmount = (principal * interestRate) / 100;
-        totalAmount = principal + interestAmount;
-        totalInput.value = String(Number(totalAmount.toFixed(2)));
+        const interestAmount = normalizeMoney((principal * interestRate) / 100) || 0;
+        totalAmount = normalizeMoney(principal + interestAmount, { snapNearInteger: true }) || principal;
+        totalInput.value = String(totalAmount);
         interestAmountInput.value = formatAmount(interestAmount);
         return;
       }
 
       if (source === 'principal' && Number.isFinite(interestRate) && interestRate > 0) {
-        const interestAmount = (principal * interestRate) / 100;
-        totalAmount = principal + interestAmount;
-        totalInput.value = String(Number(totalAmount.toFixed(2)));
+        const interestAmount = normalizeMoney((principal * interestRate) / 100) || 0;
+        totalAmount = normalizeMoney(principal + interestAmount, { snapNearInteger: true }) || principal;
+        totalInput.value = String(totalAmount);
         interestAmountInput.value = formatAmount(interestAmount);
         return;
       }
 
       if (!Number.isFinite(totalAmount) || totalAmount < 0) {
         totalAmount = principal;
-        totalInput.value = String(Number(principal.toFixed(2)));
+        totalInput.value = String(principal);
       }
 
       if (principal > 0 && totalAmount < principal) {
         totalAmount = principal;
-        totalInput.value = String(Number(totalAmount.toFixed(2)));
+        totalInput.value = String(totalAmount);
       }
 
-      const interestAmount = Math.max(0, totalAmount - principal);
+      const interestAmount = normalizeMoney(Math.max(0, totalAmount - principal)) || 0;
       interestRate = principal > 0 ? (interestAmount / principal) * 100 : 0;
       interestRateInput.value = Number.isFinite(interestRate) ? String(Number(interestRate.toFixed(2))) : '';
       interestAmountInput.value = formatAmount(interestAmount);
@@ -4922,8 +4945,8 @@
       const totalRaw = document.getElementById('totalAmount').value;
       const interestRaw = document.getElementById('reminderInterest').value;
 
-      const principal = Number(principalRaw);
-      const total = Number(totalRaw);
+      const principal = normalizeMoney(principalRaw, { snapNearInteger: true });
+      const total = normalizeMoney(totalRaw, { snapNearInteger: true });
       let computedInterest = interestRaw;
 
       if (Number.isFinite(principal) && principal > 0 && Number.isFinite(total) && total >= principal) {
@@ -4931,19 +4954,25 @@
         computedInterest = Number.isFinite(rate) ? String(Number(rate.toFixed(2))) : interestRaw;
       } else if (Number.isFinite(principal) && principal > 0 && Number.isFinite(Number(interestRaw))) {
         const rate = Number(interestRaw);
-        const interestAmount = (principal * rate) / 100;
+        const interestAmount = normalizeMoney((principal * rate) / 100) || 0;
         document.getElementById('interestAmount').value = formatAmount(interestAmount);
-        document.getElementById('totalAmount').value = String(Number((principal + interestAmount).toFixed(2)));
+        document.getElementById('totalAmount').value = String(normalizeMoney(principal + interestAmount, { snapNearInteger: true }));
       }
+
+      const normalizedPrincipal = Number.isFinite(principal) ? String(principal) : principalRaw;
+      const normalizedTotal = Number.isFinite(total) ? String(total) : totalRaw;
+
+      document.getElementById('reminderAmount').value = normalizedPrincipal;
+      document.getElementById('totalAmount').value = normalizedTotal;
 
       return {
         name: document.getElementById('selectedUser').value.trim(),
         mobile: document.getElementById('manualMobile').value.trim(),
         borrowDate: document.getElementById('borrowDate').value,
         repaymentDate: document.getElementById('repaymentDate').value,
-        reminderAmount: principalRaw,
+        reminderAmount: normalizedPrincipal,
         reminderInterest: computedInterest,
-        totalAmount: totalRaw,
+        totalAmount: normalizedTotal,
         reminderNote: document.getElementById('reminderNote').value.trim(),
       };
     }

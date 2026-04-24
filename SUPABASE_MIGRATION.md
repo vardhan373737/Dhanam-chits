@@ -17,6 +17,13 @@ Create `.env` from `.env.supabase.example` and set:
 - `SUPABASE_PORT`
 - `SMTP_USER` (for statement emails)
 - `SMTP_PASS` (for statement emails)
+- `WHATSAPP_PROVIDER` (`meta`, `twilio`, or `auto`)
+- `WHATSAPP_PROVIDER_ORDER` (for example `meta,twilio` to use Meta first and Twilio as fallback)
+- `WHATSAPP_META_PHONE_NUMBER_ID`
+- `WHATSAPP_META_ACCESS_TOKEN`
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_WHATSAPP_FROM`
 
 ## 3) Install dependencies
 

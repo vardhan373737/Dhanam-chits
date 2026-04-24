@@ -1,5 +1,9 @@
 {
   "version": 2,
+  "env": {
+    "WHATSAPP_PROVIDER": "auto",
+    "WHATSAPP_PROVIDER_ORDER": "meta,twilio"
+  },
   "builds": [
     {
       "src": "server-supabase.js",

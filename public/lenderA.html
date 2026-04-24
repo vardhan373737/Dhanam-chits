@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lender Command Center</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="admin-sidebar.css">
+  <style>
+    :root {
+      --bg-1: #fff8ee;
+      --bg-2: #ffe8cb;
+      --bg-3: #d7f3ff;
+      --ink: #0f2942;
+      --muted: #4f6c82;
+      --glass: rgba(255, 255, 255, 0.75);
+      --border: rgba(20, 73, 112, 0.16);
+      --brand: #d97706;
+      --brand-2: #0284c7;
+      --success: #0f766e;
+      --danger: #dc2626;
+      --warn: #ea580c;
+      --shadow: 0 16px 38px rgba(20, 38, 58, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 14%, rgba(255, 210, 138, 0.5), transparent 38%),
+        radial-gradient(circle at 92% 12%, rgba(125, 223, 255, 0.46), transparent 36%),
+        linear-gradient(140deg, var(--bg-1), var(--bg-2) 46%, var(--bg-3));
+      min-height: 100vh;
+    }
+
+    .content {
+      margin-left: 260px;
+      padding: 24px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: linear-gradient(120deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.78));
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -70px;
+      top: -70px;
+      width: 210px;
+      height: 210px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(217, 119, 6, 0.18), transparent 68%);
+      pointer-events: none;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2.7vw, 2.05rem);
+      letter-spacing: 0.02em;
+    }
+
+    .hero p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      max-width: 760px;
+      line-height: 1.45;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .stat-card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--glass);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      backdrop-filter: blur(8px);
+    }
+
+    .stat-label {
+      font-size: 0.74rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .stat-value {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .panel-grid {
+      display: grid;
+      grid-template-columns: minmax(320px, 1fr) minmax(420px, 1.5fr);
+      gap: 14px;
+    }
+
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: linear-gradient(150deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.82));
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .hero,
+    .stat-card,
+    .panel {
+      animation: rise-in 0.55s ease both;
+    }
+
+    .stat-card:nth-child(2) { animation-delay: 0.06s; }
+    .stat-card:nth-child(3) { animation-delay: 0.12s; }
+    .stat-card:nth-child(4) { animation-delay: 0.18s; }
+    .stat-card:nth-child(5) { animation-delay: 0.24s; }
+
+    @keyframes rise-in {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 1.06rem;
+      letter-spacing: 0.02em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 0.83rem;
+      font-weight: 700;
+      color: #2d4b63;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      border: 1px solid #c8d9e6;
+      border-radius: 10px;
+      padding: 10px 11px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: #2c8fc4;
+      box-shadow: 0 0 0 3px rgba(44, 143, 196, 0.15);
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 78px;
+    }
+
+    .calc-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(2, 132, 199, 0.12);
+      border: 1px solid rgba(2, 132, 199, 0.25);
+      color: #0b4e78;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      padding: 6px 10px;
+      margin: 2px 6px 0 0;
+      font-weight: 700;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, filter 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.04);
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: linear-gradient(120deg, #d97706, #ea580c);
+    }
+
+    .btn-soft {
+      color: #0b4e78;
+      background: #ddf1fc;
+      border: 1px solid #bfe5f8;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .toolbar input,
+    .toolbar select {
+      border: 1px solid #c8d9e6;
+      border-radius: 10px;
+      padding: 10px;
+      font-family: inherit;
+      font-size: 0.92rem;
+      background: #fff;
+    }
+
+    .table-wrap {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: auto;
+      max-height: 520px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      min-width: 930px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #e9f1f6;
+      text-align: left;
+      vertical-align: top;
+      font-size: 0.88rem;
+    }
+
+    th {
+      background: linear-gradient(115deg, #0b5f8e, #0a7c9f);
+      color: #f0fbff;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-size: 0.73rem;
+    }
+
+    tr:hover td {
+      background: #f6fcff;
+    }
+
+    .chip {
+      display: inline-flex;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 4px 8px;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+    }
+
+    .chip.active {
+      color: #065f46;
+      background: #d1fae5;
+      border-color: #8debcf;
+    }
+
+    .chip.closed {
+      color: #334155;
+      background: #e9eff5;
+      border-color: #d7e2ea;
+    }
+
+    .chip.overdue {
+      color: #7f1d1d;
+      background: #fee2e2;
+      border-color: #fbb5b5;
+    }
+
+    .chip.risk-low {
+      color: #0f766e;
+      background: #ccfbf1;
+      border-color: #99f6e4;
+    }
+
+    .chip.risk-med {
+      color: #9a3412;
+      background: #ffedd5;
+      border-color: #fed7aa;
+    }
+
+    .chip.risk-high {
+      color: #991b1b;
+      background: #fee2e2;
+      border-color: #fecaca;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .row-btn {
+      border: 1px solid #cfe4f2;
+      background: #eff8ff;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 0.76rem;
+      cursor: pointer;
+      color: #0d4f78;
+      font-weight: 700;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 18px;
+      font-size: 0.92rem;
+    }
+
+    .status-line {
+      margin-top: 8px;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 27, 46, 0.55);
+      z-index: 1200;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+    }
+
+    .modal-card {
+      width: min(980px, 96vw);
+      max-height: 90vh;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid rgba(178, 206, 226, 0.8);
+      background: #fff;
+      box-shadow: 0 26px 60px rgba(6, 24, 42, 0.3);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      background: linear-gradient(120deg, #0b5f8e, #0a7c9f);
+      color: #f4fbff;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      border: 1px solid rgba(240, 251, 255, 0.6);
+      background: transparent;
+      color: #f4fbff;
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .modal-content {
+      padding: 12px;
+      overflow: auto;
+    }
+
+    .modal-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .modal-tools input,
+    .modal-tools select {
+      border: 1px solid #c8d9e6;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      background: #fff;
+    }
+
+    .mini-btn {
+      border: 1px solid #cfe4f2;
+      background: #eff8ff;
+      color: #0d4f78;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 0.76rem;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    @media (max-width: 1080px) {
+      .content {
+        margin-left: 78px;
+      }
+
+      .panel-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .content {
+        margin-left: 0;
+        padding: 12px;
+      }
+
+      .grid,
+      .toolbar,
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .menu-toggle {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+  <div class="sidebar">
+    <h2>Admin Panel</h2>
+    <a href="admin.html"><i class="fas fa-tachometer-alt"></i> <span class="menu-text">Dashboard</span></a>
+    <a href="users.html"><i class="fas fa-users"></i> <span class="menu-text">Users</span></a>
+    <a href="adminbank.html"><i class="fas fa-university"></i> <span class="menu-text">Admin-Bank</span></a>
+    <a href="bankdetailA.html"><i class="fas fa-university"></i> <span class="menu-text">Bank Details</span></a>
+    <a href="borrowA.html"><i class="fas fa-hand-holding-usd"></i> <span class="menu-text">Borrows</span></a>
+    <a href="ChitIdA.html"><i class="fas fa-university"></i> <span class="menu-text">Chit-ids Approve</span></a>
+    <a href="paymentA.html"><i class="fas fa-credit-card"></i> <span class="menu-text">Payments</span></a>
+    <a href="payment-reminderA.html"><i class="fas fa-bell"></i> <span class="menu-text">Payment Reminder</span></a>
+    <a href="lenderA.html"><i class="fas fa-landmark"></i> <span class="menu-text">Lender Center</span></a>
+    <a href="whatsapp-setup.html"><i class="fab fa-whatsapp"></i> <span class="menu-text">WhatsApp Setup</span></a>
+    <a href="ContactA.html"><i class="fas fa-envelope"></i> <span class="menu-text">Contact Details</span></a>
+    <a href="/Login.html" class="logout-btn" onclick="return logout(event)"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
+  </div>
+
+  <div class="content">
+    <section class="hero">
+      <h1>🏛️ Lender Command Center</h1>
+      <p>Premium lender workspace with live maturity insights, smart due-date buckets, one-tap WhatsApp reminders, and CSV portfolio export.</p>
+    </section>
+
+    <section class="stats-grid" id="statsGrid">
+      <article class="stat-card"><div class="stat-label">Total Lenders</div><div class="stat-value" id="statLenders">0</div></article>
+      <article class="stat-card"><div class="stat-label">Active Loans</div><div class="stat-value" id="statActive">0</div></article>
+      <article class="stat-card"><div class="stat-label">Portfolio Value</div><div class="stat-value" id="statPortfolio">Rs. 0</div></article>
+      <article class="stat-card"><div class="stat-label">Overdue Cases</div><div class="stat-value" id="statOverdue">0</div></article>
+      <article class="stat-card"><div class="stat-label">Due In 7 Days</div><div class="stat-value" id="statDueSoon">0</div></article>
+    </section>
+
+    <section class="panel-grid">
+      <article class="panel">
+        <h2>➕ Add / Edit Lender</h2>
+        <div class="grid">
+          <div class="field">
+            <label for="lenderName">Lender Name</label>
+            <input type="text" id="lenderName" placeholder="Enter lender name">
+          </div>
+          <div class="field">
+            <label for="lenderMobile">Mobile Number</label>
+            <input type="text" id="lenderMobile" maxlength="10" placeholder="10-digit mobile">
+          </div>
+          <div class="field">
+            <label for="loanAmount">Principal Amount (Rs.)</label>
+            <input type="number" id="loanAmount" min="0" step="1" placeholder="60000" oninput="refreshCalcPreview()">
+          </div>
+          <div class="field">
+            <label for="interestRate">Interest (%)</label>
+            <input type="number" id="interestRate" min="0" step="0.01" placeholder="2" oninput="refreshCalcPreview()">
+          </div>
+          <div class="field">
+            <label for="lendDate">Lend Date</label>
+            <input type="date" id="lendDate" oninput="refreshCalcPreview()">
+          </div>
+          <div class="field">
+            <label for="dueDate">Due Date</label>
+            <input type="date" id="dueDate" oninput="refreshCalcPreview()">
+          </div>
+          <div class="field">
+            <label for="repaymentCycle">Repayment Cycle</label>
+            <select id="repaymentCycle">
+              <option value="monthly">Monthly</option>
+              <option value="biweekly">Biweekly</option>
+              <option value="weekly">Weekly</option>
+              <option value="bullet">Bullet Payment</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="lenderStatus">Status</label>
+            <select id="lenderStatus">
+              <option value="active">Active</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label for="lenderNotes">Notes</label>
+            <textarea id="lenderNotes" maxlength="400" placeholder="Optional notes about this lender agreement..."></textarea>
+          </div>
+        </div>
+
+        <div>
+          <span class="calc-pill" id="pillInterest">Interest: Rs. 0</span>
+          <span class="calc-pill" id="pillTotal">Total Payable: Rs. 0</span>
+          <span class="calc-pill" id="pillDays">Days Left: -</span>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" onclick="saveLender()"><i class="fas fa-save"></i> Save Lender</button>
+          <button class="btn btn-soft" onclick="resetLenderForm()"><i class="fas fa-rotate-left"></i> Reset</button>
+        </div>
+        <div class="status-line" id="formStatus">Fill lender details and click Save.</div>
+      </article>
+
+      <article class="panel">
+        <h2>📋 Lender Portfolio</h2>
+        <div class="toolbar">
+          <input type="text" id="searchInput" placeholder="Search lender/mobile/notes..." oninput="renderLenderRows()">
+          <select id="statusFilter" onchange="renderLenderRows()">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="closed">Closed</option>
+            <option value="overdue">Overdue</option>
+          </select>
+          <select id="bucketFilter" onchange="renderLenderRows()">
+            <option value="all">All Due Buckets</option>
+            <option value="7">Due in 7 days</option>
+            <option value="30">Due in 30 days</option>
+            <option value="overdue">Overdue only</option>
+          </select>
+          <select id="sortFilter" onchange="renderLenderRows()">
+            <option value="updated">Recently Updated</option>
+            <option value="due">Due Date (Nearest)</option>
+            <option value="amount">Amount (High to Low)</option>
+            <option value="name">Name (A-Z)</option>
+          </select>
+        </div>
+
+        <div class="toolbar-actions">
+          <button class="btn btn-soft" onclick="exportLenderCsv()"><i class="fas fa-file-export"></i> Export CSV</button>
+          <button class="btn btn-soft" onclick="triggerImportCsv()"><i class="fas fa-file-import"></i> Import CSV</button>
+          <button class="btn btn-soft" onclick="downloadSampleCsv()"><i class="fas fa-file-circle-plus"></i> Sample CSV</button>
+          <input type="file" id="importCsvInput" accept=".csv" style="display:none" onchange="importLenderCsv(event)">
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Lender</th>
+                <th>Mobile</th>
+                <th>Principal</th>
+                <th>Interest</th>
+                <th>Total</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Risk</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="lenderTableBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </div>
+
+  <div id="lenderAuditModal" class="modal-overlay" onclick="backdropClose(event, 'lenderAuditModal')">
+    <div class="modal-card">
+      <div class="modal-head">
+        <span>📑 Lender Audit Trail</span>
+        <button class="modal-close" onclick="closeModal('lenderAuditModal')">Close</button>
+      </div>
+      <div class="modal-content">
+        <div class="modal-tools">
+          <input type="text" id="auditSearch" placeholder="Search actor/action..." oninput="renderAuditModalRows()">
+          <select id="auditStatusFilter" onchange="renderAuditModalRows()">
+            <option value="all">All Status</option>
+            <option value="success">Success</option>
+            <option value="failed">Failed</option>
+          </select>
+        </div>
+        <div class="table-wrap" style="max-height: 68vh;">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Actor</th>
+                <th>Action</th>
+                <th>Details</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="auditModalBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="lenderJobsModal" class="modal-overlay" onclick="backdropClose(event, 'lenderJobsModal')">
+    <div class="modal-card">
+      <div class="modal-head">
+        <span>⏱️ Lender Scheduler Jobs</span>
+        <button class="modal-close" onclick="closeModal('lenderJobsModal')">Close</button>
+      </div>
+      <div class="modal-content">
+        <div class="modal-tools">
+          <select id="jobStatusFilter" onchange="renderJobsModalRows()">
+            <option value="all">All Jobs</option>
+            <option value="queued">Queued</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="retry_pending">Retry Pending</option>
+            <option value="sent">Sent</option>
+            <option value="failed">Failed</option>
+          </select>
+          <button class="mini-btn" onclick="reloadJobsModal()">Refresh</button>
+        </div>
+        <div class="table-wrap" style="max-height: 68vh;">
+          <table>
+            <thead>
+              <tr>
+                <th>Created</th>
+                <th>Lender</th>
+                <th>Mobile</th>
+                <th>Status</th>
+                <th>Attempts</th>
+                <th>Next Run</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="jobsModalBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let lenders = [];
+    let editingId = '';
+    let lenderAuditRows = [];
+    let lenderJobRows = [];
+
+    function getActorContext() {
+      const raw = localStorage.getItem('user');
+      if (!raw) {
+        return { name: 'Admin User', role: 'admin' };
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        return {
+          name: String(parsed.fullname || parsed.name || parsed.username || 'Admin User').trim() || 'Admin User',
+          role: String(parsed.role || 'admin').trim().toLowerCase() || 'admin'
+        };
+      } catch (_error) {
+        return { name: 'Admin User', role: 'admin' };
+      }
+    }
+
+    async function apiFetch(url, options = {}) {
+      const actor = getActorContext();
+      const response = await fetch(url, {
+        credentials: 'include',
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-role': actor.role,
+          'x-user-name': actor.name,
+          ...(options.headers || {})
+        }
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        alert('Admin access required. Please login again.');
+        window.location.href = '/Login.html';
+        throw new Error('Unauthorized');
+      }
+
+      return response;
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.querySelector('.sidebar');
+      if (sidebar) sidebar.classList.toggle('open');
+    }
+
+    function logout(event) {
+      if (event) event.preventDefault();
+      localStorage.removeItem('user');
+      window.location.href = '/Login.html';
+      return false;
+    }
+
+    function normalizeMoney(value, snapNearInteger = false) {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) return 0;
+      const rounded = Math.round((parsed + Number.EPSILON) * 100) / 100;
+      if (!snapNearInteger) return rounded;
+      const nearestInteger = Math.round(rounded);
+      return Math.abs(rounded - nearestInteger) <= 0.01 ? nearestInteger : rounded;
+    }
+
+    function formatMoney(value) {
+      const amount = normalizeMoney(value);
+      return amount.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+    }
+
+    function safeMobile(value) {
+      return String(value || '').replace(/\D/g, '').slice(-10);
+    }
+
+    async function loadLendersFromApi() {
+      try {
+        const response = await apiFetch('/api/lenders');
+        const payload = await response.json().catch(() => ({ data: [] }));
+        if (!response.ok) {
+          throw new Error(payload.message || 'Failed to load lenders');
+        }
+        lenders = Array.isArray(payload.data) ? payload.data : [];
+      } catch (error) {
+        console.error('load lenders error', error);
+        document.getElementById('formStatus').textContent = error.message || 'Failed to load lenders from server.';
+        lenders = [];
+      }
+    }
+
+    function getInterestAmount(principal, rate) {
+      return normalizeMoney((principal * rate) / 100);
+    }
+
+    function getTotalPayable(principal, rate) {
+      return normalizeMoney(principal + getInterestAmount(principal, rate), true);
+    }
+
+    function daysUntil(dueDate) {
+      if (!dueDate) return null;
+      const due = new Date(dueDate);
+      if (Number.isNaN(due.getTime())) return null;
+      const today = new Date();
+      due.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+      return Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
+    function getStatusChip(item) {
+      const days = daysUntil(item.dueDate);
+      if (item.status !== 'closed' && Number.isFinite(days) && days < 0) {
+        return '<span class="chip overdue">Overdue</span>';
+      }
+      if (item.status === 'closed') {
+        return '<span class="chip closed">Closed</span>';
+      }
+      return '<span class="chip active">Active</span>';
+    }
+
+    function refreshCalcPreview() {
+      const principal = normalizeMoney(document.getElementById('loanAmount').value, true);
+      const rate = normalizeMoney(document.getElementById('interestRate').value);
+      const dueDate = document.getElementById('dueDate').value;
+
+      const interest = getInterestAmount(principal, rate);
+      const total = getTotalPayable(principal, rate);
+      const days = daysUntil(dueDate);
+
+      document.getElementById('pillInterest').textContent = `Interest: Rs. ${formatMoney(interest)}`;
+      document.getElementById('pillTotal').textContent = `Total Payable: Rs. ${formatMoney(total)}`;
+      document.getElementById('pillDays').textContent = Number.isFinite(days)
+        ? (days < 0 ? `Overdue by ${Math.abs(days)} days` : `Days Left: ${days}`)
+        : 'Days Left: -';
+    }
+
+    function resetLenderForm() {
+      editingId = '';
+      document.getElementById('lenderName').value = '';
+      document.getElementById('lenderMobile').value = '';
+      document.getElementById('loanAmount').value = '';
+      document.getElementById('interestRate').value = '';
+      document.getElementById('lendDate').value = '';
+      document.getElementById('dueDate').value = '';
+      document.getElementById('repaymentCycle').value = 'monthly';
+      document.getElementById('lenderStatus').value = 'active';
+      document.getElementById('lenderNotes').value = '';
+      document.getElementById('formStatus').textContent = 'Form reset. Ready for a new lender.';
+      refreshCalcPreview();
+    }
+
+    async function saveLender() {
+      const name = String(document.getElementById('lenderName').value || '').trim();
+      const mobile = safeMobile(document.getElementById('lenderMobile').value);
+      const principal = normalizeMoney(document.getElementById('loanAmount').value, true);
+      const interestRate = normalizeMoney(document.getElementById('interestRate').value);
+      const lendDate = document.getElementById('lendDate').value;
+      const dueDate = document.getElementById('dueDate').value;
+      const repaymentCycle = document.getElementById('repaymentCycle').value;
+      const status = document.getElementById('lenderStatus').value;
+      const notes = String(document.getElementById('lenderNotes').value || '').trim();
+
+      if (!name || mobile.length !== 10) {
+        document.getElementById('formStatus').textContent = 'Please enter lender name and a valid 10-digit mobile.';
+        return;
+      }
+
+      if (!principal || principal <= 0) {
+        document.getElementById('formStatus').textContent = 'Please enter a valid principal amount.';
+        return;
+      }
+
+      if (dueDate && lendDate && dueDate < lendDate) {
+        document.getElementById('formStatus').textContent = 'Due date cannot be before lend date.';
+        return;
+      }
+
+      const payload = {
+        name,
+        mobile,
+        principal,
+        interestRate,
+        lendDate,
+        dueDate,
+        repaymentCycle,
+        status,
+        notes
+      };
+
+      try {
+        const response = await apiFetch(editingId ? `/api/lenders/${editingId}` : '/api/lenders', {
+          method: editingId ? 'PUT' : 'POST',
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(result.message || 'Failed to save lender');
+        }
+      } catch (error) {
+        document.getElementById('formStatus').textContent = error.message || 'Failed to save lender.';
+        return;
+      }
+
+      await loadLendersFromApi();
+      resetLenderForm();
+      renderLenderRows();
+      document.getElementById('formStatus').textContent = 'Lender saved successfully.';
+    }
+
+    function editLender(id) {
+      const item = lenders.find((entry) => entry.id === id);
+      if (!item) return;
+
+      editingId = item.id;
+      document.getElementById('lenderName').value = item.name || '';
+      document.getElementById('lenderMobile').value = item.mobile || '';
+      document.getElementById('loanAmount').value = item.principal ?? '';
+      document.getElementById('interestRate').value = item.interestRate ?? '';
+      document.getElementById('lendDate').value = item.lendDate || '';
+      document.getElementById('dueDate').value = item.dueDate || '';
+      document.getElementById('repaymentCycle').value = item.repaymentCycle || 'monthly';
+      document.getElementById('lenderStatus').value = item.status || 'active';
+      document.getElementById('lenderNotes').value = item.notes || '';
+      document.getElementById('formStatus').textContent = 'Edit mode enabled. Update details and save.';
+      refreshCalcPreview();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function deleteLender(id) {
+      if (!confirm('Delete this lender entry?')) return;
+
+      try {
+        const response = await apiFetch(`/api/lenders/${id}`, { method: 'DELETE' });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(result.message || 'Failed to delete lender');
+        }
+      } catch (error) {
+        alert(error.message || 'Failed to delete lender.');
+        return;
+      }
+
+      await loadLendersFromApi();
+      renderLenderRows();
+      if (editingId === id) resetLenderForm();
+    }
+
+    async function scheduleLenderReminder(id) {
+      const item = lenders.find((entry) => entry.id === id);
+      if (!item) return;
+
+      const defaultDate = item.dueDate || new Date().toISOString().slice(0, 10);
+      const scheduleDate = prompt('Schedule date (YYYY-MM-DD):', defaultDate);
+      if (scheduleDate === null) return;
+      const scheduleTime = prompt('Schedule time (HH:MM, 24h):', '09:00');
+      if (scheduleTime === null) return;
+
+      try {
+        const response = await apiFetch(`/api/lenders/${id}/reminders/schedule`, {
+          method: 'POST',
+          body: JSON.stringify({ scheduleDate, scheduleTime, template: 'standard' })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(result.message || 'Failed to schedule reminder');
+        }
+        document.getElementById('formStatus').textContent = result.message || 'Reminder scheduled.';
+      } catch (error) {
+        alert(error.message || 'Failed to schedule reminder.');
+      }
+    }
+
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) {
+        modal.style.display = 'flex';
+      }
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    function backdropClose(event, id) {
+      if (event.target && event.target.id === id) {
+        closeModal(id);
+      }
+    }
+
+    function renderAuditModalRows() {
+      const tbody = document.getElementById('auditModalBody');
+      const statusFilter = String(document.getElementById('auditStatusFilter')?.value || 'all');
+      const text = String(document.getElementById('auditSearch')?.value || '').trim().toLowerCase();
+
+      const rows = lenderAuditRows.filter((entry) => {
+        if (statusFilter !== 'all' && String(entry.status || '').toLowerCase() !== statusFilter) {
+          return false;
+        }
+        if (!text) {
+          return true;
+        }
+        const haystack = `${entry.actor || ''} ${entry.action || ''} ${entry.details || ''}`.toLowerCase();
+        return haystack.includes(text);
+      });
+
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">No audit records found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = rows.slice(0, 800).map((entry) => {
+        const when = String(entry.createdAt || '').replace('T', ' ').slice(0, 16);
+        return `
+          <tr>
+            <td>${escapeHtml(when)}</td>
+            <td>${escapeHtml(entry.actor || 'System')}</td>
+            <td>${escapeHtml(entry.action || '-')}</td>
+            <td>${escapeHtml(entry.details || '-')}</td>
+            <td>${escapeHtml(entry.status || 'info')}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function openLenderAudit() {
+      try {
+        const response = await apiFetch('/api/lenders/audit');
+        const payload = await response.json().catch(() => ({ data: [] }));
+        if (!response.ok) {
+          throw new Error(payload.message || 'Failed to load audit log');
+        }
+        lenderAuditRows = Array.isArray(payload.data) ? payload.data : [];
+        renderAuditModalRows();
+        openModal('lenderAuditModal');
+      } catch (error) {
+        alert(error.message || 'Failed to fetch lender audit records.');
+      }
+    }
+
+    function renderJobsModalRows() {
+      const tbody = document.getElementById('jobsModalBody');
+      const statusFilter = String(document.getElementById('jobStatusFilter')?.value || 'all').toLowerCase();
+      const rows = lenderJobRows.filter((job) => {
+        if (statusFilter === 'all') {
+          return true;
+        }
+        return String(job.status || '').toLowerCase() === statusFilter;
+      });
+
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">No jobs found for selected status.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = rows.slice(0, 1000).map((job) => {
+        const created = String(job.createdAt || '').replace('T', ' ').slice(0, 16);
+        const nextRun = String(job.scheduledFor || '').replace('T', ' ').slice(0, 16);
+        const retryBtn = String(job.status || '').toLowerCase() === 'failed'
+          ? `<button class="mini-btn" onclick="retryLenderJob('${job.id}')">Retry</button>`
+          : '-';
+        return `
+          <tr>
+            <td>${escapeHtml(created)}</td>
+            <td>${escapeHtml(job.name || '-')}</td>
+            <td>${escapeHtml(job.mobile || '-')}</td>
+            <td>${escapeHtml(job.status || '-')}</td>
+            <td>${escapeHtml(String(job.attempts || 0))}</td>
+            <td>${escapeHtml(nextRun || '-')}</td>
+            <td>${retryBtn}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function reloadJobsModal() {
+      try {
+        const response = await apiFetch('/api/lenders/reminders/jobs');
+        const payload = await response.json().catch(() => ({ data: [] }));
+        if (!response.ok) {
+          throw new Error(payload.message || 'Failed to load jobs');
+        }
+        lenderJobRows = Array.isArray(payload.data) ? payload.data : [];
+        renderJobsModalRows();
+      } catch (error) {
+        alert(error.message || 'Failed to refresh reminder jobs.');
+      }
+    }
+
+    async function retryLenderJob(jobId) {
+      try {
+        const response = await apiFetch(`/api/lenders/reminders/${jobId}/retry`, { method: 'POST' });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.message || 'Failed to queue retry');
+        }
+        await reloadJobsModal();
+      } catch (error) {
+        alert(error.message || 'Retry failed.');
+      }
+    }
+
+    async function openLenderJobs() {
+      await reloadJobsModal();
+      openModal('lenderJobsModal');
+    }
+
+    function shareLenderWhatsapp(id) {
+      const item = lenders.find((entry) => entry.id === id);
+      if (!item) return;
+
+      const interest = getInterestAmount(item.principal, item.interestRate || 0);
+      const total = getTotalPayable(item.principal, item.interestRate || 0);
+      const msg = [
+        `Dear ${item.name},`,
+        '',
+        'Payment reminder details:',
+        `Principal: Rs. ${formatMoney(item.principal)}`,
+        `Interest: ${item.interestRate || 0}% (Rs. ${formatMoney(interest)})`,
+        `Total payable: Rs. ${formatMoney(total)}`,
+        `Due date: ${item.dueDate || 'Not set'}`,
+        '',
+        'Please arrange payment on time. Thank you.'
+      ].join('\n');
+
+      const url = `https://wa.me/91${item.mobile}?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
+    }
+
+    function exportLenderCsv() {
+      const rows = [['Name', 'Mobile', 'Principal', 'InterestRate', 'InterestAmount', 'TotalPayable', 'LendDate', 'DueDate', 'Status', 'RepaymentCycle', 'Notes']];
+      lenders.forEach((item) => {
+        const interest = getInterestAmount(item.principal, item.interestRate || 0);
+        const total = getTotalPayable(item.principal, item.interestRate || 0);
+        rows.push([
+          item.name,
+          item.mobile,
+          item.principal,
+          item.interestRate || 0,
+          interest,
+          total,
+          item.lendDate || '',
+          item.dueDate || '',
+          item.status || 'active',
+          item.repaymentCycle || 'monthly',
+          item.notes || ''
+        ]);
+      });
+
+      const csv = rows.map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `lender-portfolio-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function triggerImportCsv() {
+      const input = document.getElementById('importCsvInput');
+      if (!input) return;
+      input.value = '';
+      input.click();
+    }
+
+    function parseCsvLine(line) {
+      const values = [];
+      let current = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i += 1) {
+        const char = line[i];
+        if (char === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            current += '"';
+            i += 1;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          values.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+
+      values.push(current.trim());
+      return values;
+    }
+
+    function importLenderCsv(event) {
+      const file = event?.target?.files?.[0];
+      if (!file) {
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = String(reader.result || '');
+        const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+        if (lines.length < 2) {
+          alert('CSV is empty or invalid.');
+          return;
+        }
+
+        const header = parseCsvLine(lines[0]).map((item) => item.toLowerCase());
+        const idx = {
+          name: header.indexOf('name'),
+          mobile: header.indexOf('mobile'),
+          principal: header.indexOf('principal'),
+          interestRate: header.indexOf('interestrate'),
+          lendDate: header.indexOf('lenddate'),
+          dueDate: header.indexOf('duedate'),
+          status: header.indexOf('status'),
+          repaymentCycle: header.indexOf('repaymentcycle'),
+          notes: header.indexOf('notes')
+        };
+
+        if (idx.name < 0 || idx.mobile < 0 || idx.principal < 0) {
+          alert('CSV must include Name, Mobile and Principal columns.');
+          return;
+        }
+
+        let imported = 0;
+        lines.slice(1).forEach((line) => {
+          const row = parseCsvLine(line);
+          const name = String(row[idx.name] || '').trim();
+          const mobile = safeMobile(row[idx.mobile] || '');
+          const principal = normalizeMoney(row[idx.principal], true);
+          if (!name || mobile.length !== 10 || principal <= 0) {
+            return;
+          }
+
+          lenders.unshift({
+            id: `lender-${Date.now()}-${imported}`,
+            name,
+            mobile,
+            principal,
+            interestRate: idx.interestRate >= 0 ? normalizeMoney(row[idx.interestRate]) : 0,
+            lendDate: idx.lendDate >= 0 ? String(row[idx.lendDate] || '').trim() : '',
+            dueDate: idx.dueDate >= 0 ? String(row[idx.dueDate] || '').trim() : '',
+            status: idx.status >= 0 ? (String(row[idx.status] || '').toLowerCase() === 'closed' ? 'closed' : 'active') : 'active',
+            repaymentCycle: idx.repaymentCycle >= 0 ? String(row[idx.repaymentCycle] || 'monthly').trim().toLowerCase() : 'monthly',
+            notes: idx.notes >= 0 ? String(row[idx.notes] || '').trim() : '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+          imported += 1;
+        });
+
+        if (!imported) {
+          alert('No valid lender rows found in CSV.');
+          return;
+        }
+
+        const actor = getActorContext();
+        const requests = lenders.slice(0, imported).map((entry) => apiFetch('/api/lenders', {
+          method: 'POST',
+          headers: {
+            'x-user-name': actor.name,
+            'x-user-role': actor.role
+          },
+          body: JSON.stringify(entry)
+        }));
+
+        Promise.all(requests)
+          .then(async () => {
+            await loadLendersFromApi();
+            renderLenderRows();
+            document.getElementById('formStatus').textContent = `${imported} lender rows imported successfully.`;
+          })
+          .catch((error) => {
+            alert(error.message || 'Import failed while saving rows.');
+          });
+      };
+
+      reader.readAsText(file);
+    }
+
+    function downloadSampleCsv() {
+      const sample = [
+        ['Name', 'Mobile', 'Principal', 'InterestRate', 'LendDate', 'DueDate', 'Status', 'RepaymentCycle', 'Notes'],
+        ['Suresh Finance', '9876543210', '60000', '2', '2026-04-10', '2026-05-10', 'active', 'monthly', 'Preferred lender']
+      ];
+      const csv = sample.map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'lender-sample-template.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function sortLenders(list) {
+      const mode = document.getElementById('sortFilter').value;
+      const cloned = [...list];
+
+      if (mode === 'name') {
+        cloned.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+      } else if (mode === 'amount') {
+        cloned.sort((a, b) => (b.principal || 0) - (a.principal || 0));
+      } else if (mode === 'due') {
+        cloned.sort((a, b) => {
+          const da = daysUntil(a.dueDate);
+          const db = daysUntil(b.dueDate);
+          if (!Number.isFinite(da)) return 1;
+          if (!Number.isFinite(db)) return -1;
+          return da - db;
+        });
+      } else {
+        cloned.sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+      }
+
+      return cloned;
+    }
+
+    function getRiskChip(item) {
+      const days = daysUntil(item.dueDate);
+      const total = getTotalPayable(item.principal || 0, item.interestRate || 0);
+
+      if (item.status === 'closed') {
+        return '<span class="chip closed">Closed</span>';
+      }
+      if (Number.isFinite(days) && days < 0) {
+        return '<span class="chip risk-high">High</span>';
+      }
+      if (total >= 100000 || (Number.isFinite(days) && days <= 7)) {
+        return '<span class="chip risk-med">Medium</span>';
+      }
+      return '<span class="chip risk-low">Low</span>';
+    }
+
+    function passesFilters(item) {
+      const text = String(document.getElementById('searchInput').value || '').trim().toLowerCase();
+      const statusFilter = document.getElementById('statusFilter').value;
+      const bucket = document.getElementById('bucketFilter').value;
+
+      const haystack = `${item.name} ${item.mobile} ${item.notes || ''}`.toLowerCase();
+      if (text && !haystack.includes(text)) return false;
+
+      const days = daysUntil(item.dueDate);
+      const isOverdue = item.status !== 'closed' && Number.isFinite(days) && days < 0;
+
+      if (statusFilter === 'active' && item.status !== 'active') return false;
+      if (statusFilter === 'closed' && item.status !== 'closed') return false;
+      if (statusFilter === 'overdue' && !isOverdue) return false;
+
+      if (bucket === 'overdue' && !isOverdue) return false;
+      if (bucket === '7' && !(Number.isFinite(days) && days >= 0 && days <= 7)) return false;
+      if (bucket === '30' && !(Number.isFinite(days) && days >= 0 && days <= 30)) return false;
+
+      return true;
+    }
+
+    function renderStats(filtered) {
+      const active = lenders.filter((item) => item.status === 'active').length;
+      const overdue = lenders.filter((item) => {
+        const days = daysUntil(item.dueDate);
+        return item.status !== 'closed' && Number.isFinite(days) && days < 0;
+      }).length;
+      const dueSoon = lenders.filter((item) => {
+        const days = daysUntil(item.dueDate);
+        return item.status !== 'closed' && Number.isFinite(days) && days >= 0 && days <= 7;
+      }).length;
+
+      const portfolio = lenders.reduce((sum, item) => sum + getTotalPayable(item.principal || 0, item.interestRate || 0), 0);
+
+      document.getElementById('statLenders').textContent = lenders.length;
+      document.getElementById('statActive').textContent = active;
+      document.getElementById('statPortfolio').textContent = `Rs. ${formatMoney(portfolio)}`;
+      document.getElementById('statOverdue').textContent = overdue;
+      document.getElementById('statDueSoon').textContent = dueSoon;
+
+      return filtered;
+    }
+
+    function renderLenderRows() {
+      const tbody = document.getElementById('lenderTableBody');
+      const filtered = sortLenders(lenders.filter(passesFilters));
+      renderStats(filtered);
+
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="empty">No lender entries match current filters.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((item) => {
+        const interest = getInterestAmount(item.principal || 0, item.interestRate || 0);
+        const total = getTotalPayable(item.principal || 0, item.interestRate || 0);
+        const due = item.dueDate || '-';
+
+        return `
+          <tr>
+            <td><strong>${escapeHtml(item.name || '-')}</strong><br><small>${escapeHtml(item.repaymentCycle || 'monthly')}</small></td>
+            <td>${escapeHtml(item.mobile || '-')}</td>
+            <td>Rs. ${formatMoney(item.principal || 0)}</td>
+            <td>${item.interestRate || 0}%<br><small>Rs. ${formatMoney(interest)}</small></td>
+            <td><strong>Rs. ${formatMoney(total)}</strong></td>
+            <td>${escapeHtml(due)}</td>
+            <td>${getStatusChip(item)}</td>
+            <td>${getRiskChip(item)}</td>
+            <td>
+              <div class="row-actions">
+                <button class="row-btn" onclick="editLender('${item.id}')">Edit</button>
+                <button class="row-btn" onclick="scheduleLenderReminder('${item.id}')">Schedule</button>
+                <button class="row-btn" onclick="shareLenderWhatsapp('${item.id}')">WhatsApp</button>
+                <button class="row-btn" onclick="deleteLender('${item.id}')">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function ensureAdminAuth() {
+      const raw = localStorage.getItem('user');
+      if (!raw) {
+        alert('Please login to access admin pages.');
+        window.location.href = '/Login.html';
+        return false;
+      }
+
+      try {
+        const user = JSON.parse(raw);
+        const role = String(user?.role || '').toLowerCase();
+        if (role && role !== 'admin') {
+          alert('Only admin can open Lender Command Center.');
+          window.location.href = '/Login.html';
+          return false;
+        }
+      } catch (_error) {
+        window.location.href = '/Login.html';
+        return false;
+      }
+
+      return true;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!ensureAdminAuth()) return;
+      const actionsBar = document.querySelector('.toolbar-actions');
+      if (actionsBar) {
+        const auditBtn = document.createElement('button');
+        auditBtn.className = 'btn btn-soft';
+        auditBtn.innerHTML = '<i class="fas fa-clipboard-list"></i> Audit Log';
+        auditBtn.onclick = openLenderAudit;
+
+        const jobsBtn = document.createElement('button');
+        jobsBtn.className = 'btn btn-soft';
+        jobsBtn.innerHTML = '<i class="fas fa-clock"></i> Scheduler Jobs';
+        jobsBtn.onclick = openLenderJobs;
+
+        actionsBar.appendChild(auditBtn);
+        actionsBar.appendChild(jobsBtn);
+      }
+
+      refreshCalcPreview();
+      loadLendersFromApi().then(() => renderLenderRows());
+    });
+  </script>
+</body>
+</html>

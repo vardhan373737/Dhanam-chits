@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Setup Checklist</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="admin-sidebar.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(145deg, #f7fbff, #eef7ff 55%, #f6fffd);
+      color: #0b2239;
+    }
+    .content { margin-left: 270px; padding: 24px; }
+    .hero, .panel {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(15, 118, 110, 0.15);
+      border-radius: 18px;
+      box-shadow: 0 18px 40px rgba(12, 28, 45, 0.12);
+    }
+    .hero { padding: 22px; margin-bottom: 16px; }
+    .hero h1 { margin: 0 0 8px; font-size: clamp(1.5rem, 3vw, 2.1rem); }
+    .hero p, li { color: #50667d; line-height: 1.55; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(280px, 1fr)); gap: 14px; margin-bottom: 16px; }
+    .panel { padding: 18px; }
+    .panel h2 { margin: 0 0 12px; font-size: 1.05rem; }
+    .step { padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(15, 118, 110, 0.12); background: #fff; margin-bottom: 10px; }
+    .badge { display: inline-block; margin-bottom: 8px; padding: 4px 10px; border-radius: 999px; background: rgba(15, 118, 110, 0.12); color: #0f766e; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+    .codebox { margin-top: 10px; padding: 12px 14px; border-radius: 14px; background: #0f172a; color: #e2e8f0; font-family: Consolas, monospace; white-space: pre-wrap; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 12px; padding: 10px 14px; font-weight: 700; text-decoration: none; }
+    .btn-primary { background: linear-gradient(120deg, #1d4ed8, #2563eb); color: #fff; }
+    .btn-soft { background: #e8f4ff; color: #0b4b77; border: 1px solid #cde3ff; }
+    .note { margin-top: 10px; color: #b45309; font-size: 0.92rem; }
+    @media (max-width: 768px) { .content { margin-left: 0; padding: 14px; } .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+  <div class="sidebar">
+    <h2>Admin Panel</h2>
+    <a href="admin.html"><i class="fas fa-tachometer-alt"></i> <span class="menu-text">Dashboard</span></a>
+    <a href="users.html"><i class="fas fa-users"></i> <span class="menu-text">Users</span></a>
+    <a href="adminbank.html"><i class="fas fa-university"></i> <span class="menu-text">Admin-Bank</span></a>
+    <a href="bankdetailA.html"><i class="fas fa-university"></i> <span class="menu-text">Bank Details</span></a>
+    <a href="ChitIdA.html"><i class="fas fa-university"></i> <span class="menu-text">chit-ids Approve</span></a>
+    <a href="borrowA.html"><i class="fas fa-hand-holding-usd"></i> <span class="menu-text">Borrows</span></a>
+    <a href="paymentA.html"><i class="fas fa-credit-card"></i> <span class="menu-text">Payments</span></a>
+    <a href="payment-reminderA.html"><i class="fas fa-bell"></i> <span class="menu-text">Payment Reminder</span></a>
+    <a href="lenderA.html"><i class="fas fa-landmark"></i> <span class="menu-text">Lender Center</span></a>
+    <a href="whatsapp-setup.html"><i class="fab fa-whatsapp"></i> <span class="menu-text">WhatsApp Setup</span></a>
+    <a href="ContactA.html"><i class="fas fa-envelope"></i> <span class="menu-text">Contact Details</span></a>
+    <a href="/Login.html" class="logout-btn" onclick="return logout(event)"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
+  </div>
+  <div class="content">
+    <section class="hero">
+      <h1><i class="fab fa-whatsapp"></i> WhatsApp Setup Checklist</h1>
+      <p>Use this page to set up Meta WhatsApp Cloud API, Twilio WhatsApp, or fallback mode for lender reminders.</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="lenderA.html"><i class="fas fa-landmark"></i> Open Lender Center</a>
+        <a class="btn btn-soft" href="payment-reminderA.html"><i class="fas fa-bell"></i> Open Payment Reminder</a>
+      </div>
+    </section>
+    <div class="grid">
+      <article class="panel">
+        <h2>Meta WhatsApp Cloud API</h2>
+        <div class="step"><span class="badge">Step 1</span><br>Open Meta Developers, select your app, then open the WhatsApp product.</div>
+        <div class="step"><span class="badge">Step 2</span><br>Copy <strong>WHATSAPP_META_PHONE_NUMBER_ID</strong> and <strong>WHATSAPP_META_ACCESS_TOKEN</strong> from WhatsApp API Setup.</div>
+        <div class="step"><span class="badge">Step 3</span><div class="codebox">WHATSAPP_PROVIDER=meta
+WHATSAPP_PROVIDER_ORDER=meta</div></div>
+      </article>
+      <article class="panel">
+        <h2>Twilio WhatsApp</h2>
+        <div class="step"><span class="badge">Step 1</span><br>Open the Twilio Console, then find your Account Info and Messaging / WhatsApp sender setup.</div>
+        <div class="step"><span class="badge">Step 2</span><br>Copy <strong>TWILIO_ACCOUNT_SID</strong>, <strong>TWILIO_AUTH_TOKEN</strong>, and <strong>TWILIO_WHATSAPP_FROM</strong>.</div>
+        <div class="step"><span class="badge">Step 3</span><div class="codebox">WHATSAPP_PROVIDER=twilio
+WHATSAPP_PROVIDER_ORDER=twilio</div></div>
+      </article>
+    </div>
+    <article class="panel">
+      <h2>Fallback Mode</h2>
+      <ul>
+        <li>Set both Meta and Twilio credentials.</li>
+        <li>Use <strong>WHATSAPP_PROVIDER=auto</strong>.</li>
+        <li>Use <strong>WHATSAPP_PROVIDER_ORDER=meta,twilio</strong>.</li>
+        <li>The app tries Meta first, then Twilio if Meta is unavailable.</li>
+      </ul>
+      <div class="note">Keep the secret values in your deployment dashboard or environment file. Do not commit them to the repository.</div>
+    </article>
+  </div>
+  <script>
+    function toggleSidebar() { document.body.classList.toggle('sidebar-open'); }
+    function logout(event) { if (event) event.preventDefault(); localStorage.removeItem('user'); window.location.href = '/Login.html'; return false; }
+  </script>
+</body>
+</html>
