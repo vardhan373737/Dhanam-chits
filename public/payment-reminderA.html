@@ -534,7 +534,7 @@
 
     .bill-item {
       display: grid;
-      grid-template-columns: 48px 1fr auto;
+      grid-template-columns: auto 48px 1fr auto;
       gap: 10px;
       align-items: center;
       padding: 10px 11px;
@@ -2863,7 +2863,7 @@
       }
 
       .bill-item {
-        grid-template-columns: 42px 1fr auto;
+        grid-template-columns: auto 42px 1fr auto;
         padding: 9px;
       }
 
@@ -4286,17 +4286,32 @@
     }
 
     function buildCampaignMessage(payment, variant) {
-      if (variant === 'B') {
+      try {
         const total = totalPayable(payment);
-        return [
-          `Hello ${payment.name || 'Customer'},`,
-          `This is a quick reminder for your payment of ${formatCurrency(total)}.`,
-          payment.reminderRepaymentDate ? `Due date: ${payment.reminderRepaymentDate}` : '',
-          'Please confirm once paid. Thank you.'
-        ].filter(Boolean).join('\n');
-      }
+        const paymentLink = buildCashfreePaymentLink(payment);
+        
+        if (variant === 'B') {
+          const lines = [
+            `Hello ${payment.name || 'Customer'},`,
+            `This is a quick reminder for your payment of ${formatCurrency(total)}.`,
+            payment.reminderRepaymentDate ? `Due date: ${payment.reminderRepaymentDate}` : '',
+          ];
+          
+          if (paymentLink) {
+            lines.push('');
+            lines.push(paymentLink);
+          }
+          
+          lines.push('');
+          lines.push('Please confirm once paid. Thank you.');
+          return lines.filter(Boolean).join('\n');
+        }
 
-      return buildWhatsAppMessage(payment);
+        return buildWhatsAppMessage(payment);
+      } catch (e) {
+        console.error('Error building campaign message:', e);
+        return buildWhatsAppMessage(payment);
+      }
     }
 
     function trackCampaignAttempt(variant, delivered, wasRetry = false) {
@@ -4866,6 +4881,7 @@
       const cleanNote = stripPlanTag(payment.reminderNote || '');
 
       item.innerHTML = `
+        <input type="checkbox" class="bulk-checkbox" style="margin-right: 12px; cursor: pointer;">
         <div class="bill-icon">₹</div>
         <div class="bill-main">
           <div class="bill-name">${payment.name || 'Manual Reminder'}</div>
@@ -4887,6 +4903,12 @@
           <button type="button" class="btn btn-clear">Clear</button>
         </div>
       `;
+
+      const checkbox = item.querySelector('.bulk-checkbox');
+      checkbox.onchange = (event) => {
+        event.stopPropagation();
+        toggleBulkSelect(payment.id || `${payment.mobile}-${payment.reminderRepaymentDate}`, checkbox);
+      };
 
       const editBtn = item.querySelector('.btn-edit');
       const shareBtn = item.querySelector('.btn-share');
