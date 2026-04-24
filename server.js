@@ -616,6 +616,19 @@ const getTwilioContentSidForTemplate = (templateType) => {
     return String(map[normalized] || process.env.TWILIO_CONTENT_SID_DEFAULT || '').trim();
 };
 
+const buildCashfreePaymentLink = (amount, customerId, description = '') => {
+    const orderId = buildCashfreeOrderId(customerId);
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+    const returnUrl = String(process.env.CASHFREE_RETURN_URL || '').trim() || `${protocol}://localhost:5001/chitpayment.html?order_id={order_id}`;
+    const safeReturnUrl = returnUrl.replace('{order_id}', encodeURIComponent(orderId));
+    return {
+        orderId,
+        paymentUrl: `${CASHFREE_BASE_URL}/pg/orders`,
+        returnUrl: safeReturnUrl,
+        displayLink: `💳 Pay via Cashfree: ${safeReturnUrl.split('?')[0]}?order_id=${orderId}`
+    };
+};
+
 const buildLenderReminderMessage = (lender, template = 'standard', templateVariables = {}) => {
     const templateType = normalizeLenderTemplateType(template);
     const vars = normalizeLenderTemplateVariables(templateVariables);
@@ -658,6 +671,7 @@ const buildLenderReminderMessage = (lender, template = 'standard', templateVaria
     }
 
     if (templateType === 'urgent') {
+        const paymentLink = buildCashfreePaymentLink(totalAmount, lender?.mobile || lender?.id || '', `Urgent payment for ${lender?.name}`);
         return [
             `Dear ${lender?.name || 'Lender'},`,
             '',
@@ -667,10 +681,13 @@ const buildLenderReminderMessage = (lender, template = 'standard', templateVaria
             `Total payable: Rs. ${totalAmount}`,
             `Due date: ${lender?.dueDate || 'Not set'}`,
             '',
+            paymentLink.displayLink,
+            '',
             'Please settle immediately.'
         ].join('\n');
     }
 
+    const paymentLink = buildCashfreePaymentLink(totalAmount, lender?.mobile || lender?.id || '', `Payment for ${lender?.name}`);
     return [
         `Dear ${lender?.name || 'Lender'},`,
         '',
@@ -679,6 +696,8 @@ const buildLenderReminderMessage = (lender, template = 'standard', templateVaria
         `Interest: ${interestRate}% (Rs. ${interestAmount})`,
         `Total payable: Rs. ${totalAmount}`,
         `Due date: ${lender?.dueDate || 'Not set'}`,
+        '',
+        paymentLink.displayLink,
         '',
         'Thank you.'
     ].join('\n');

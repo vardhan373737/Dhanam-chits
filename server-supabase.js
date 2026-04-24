@@ -1460,6 +1460,19 @@ function getTwilioContentSidForTemplate(templateType) {
   return String(map[normalized] || process.env.TWILIO_CONTENT_SID_DEFAULT || "").trim();
 }
 
+function buildCashfreePaymentLink(amount, customerId, description = "") {
+  const normalizedMobile = String(customerId || "").replace(/\D/g, "").slice(-10) || "guest";
+  const orderId = `CHIT_${Date.now()}_${normalizedMobile}_${Math.random().toString(16).slice(2, 6)}`;
+  const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+  const baseUrl = process.env.APP_URL || `${protocol}://localhost:5001`;
+  const returnUrl = `${baseUrl}/chitpayment.html?order_id=${encodeURIComponent(orderId)}`;
+  return {
+    orderId,
+    returnUrl,
+    displayLink: `💳 Pay via Cashfree: ${returnUrl}`,
+  };
+}
+
 function buildLenderReminderMessage(lender, template = "standard", templateVariables = {}) {
   const templateType = normalizeLenderTemplateType(template);
   const vars = normalizeLenderTemplateVariables(templateVariables);
@@ -1502,6 +1515,7 @@ function buildLenderReminderMessage(lender, template = "standard", templateVaria
   }
 
   if (templateType === "urgent") {
+    const paymentLink = buildCashfreePaymentLink(total, lender?.mobile || lender?.id || "", `Urgent payment for ${lender?.name}`);
     return [
       `Dear ${lender?.name || "Lender"},`,
       "",
@@ -1511,10 +1525,13 @@ function buildLenderReminderMessage(lender, template = "standard", templateVaria
       `Total payable: Rs. ${total}`,
       `Due date: ${lender?.dueDate || "Not set"}`,
       "",
+      paymentLink.displayLink,
+      "",
       "Please settle immediately.",
     ].join("\n");
   }
 
+  const paymentLink = buildCashfreePaymentLink(total, lender?.mobile || lender?.id || "", `Payment for ${lender?.name}`);
   return [
     `Dear ${lender?.name || "Lender"},`,
     "",
@@ -1523,6 +1540,8 @@ function buildLenderReminderMessage(lender, template = "standard", templateVaria
     `Interest: ${rate}% (Rs. ${interest})`,
     `Total payable: Rs. ${total}`,
     `Due date: ${lender?.dueDate || "Not set"}`,
+    "",
+    paymentLink.displayLink,
     "",
     "Thank you.",
   ].join("\n");

@@ -4214,6 +4214,16 @@
       }
     }
 
+    function buildCashfreePaymentLink(payment) {
+      const amount = totalPayable(payment);
+      const mobile = String(payment.mobile || 'guest').replace(/\D/g, '').slice(-10) || 'guest';
+      const timestamp = Date.now();
+      const random = Math.random().toString(16).slice(2, 6);
+      const orderId = `CHIT_${timestamp}_${mobile}_${random}`;
+      const paymentPageUrl = window.location.origin + '/chitpayment.html?order_id=' + encodeURIComponent(orderId);
+      return `💳 Pay now: ${paymentPageUrl}`;
+    }
+
     function buildWhatsAppMessage(payment) {
       const name = payment.name || 'Customer';
       const lines = [
@@ -4250,6 +4260,9 @@
         lines.push(`Note: ${cleanNote}`);
       }
 
+      lines.push('');
+      lines.push(buildCashfreePaymentLink(payment));
+      lines.push('');
       lines.push('Please repay on time. Thank you.');
       return lines.join('\n');
     }
