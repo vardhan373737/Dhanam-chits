@@ -3513,11 +3513,11 @@
           </div>
           <div class="field">
             <label for="reminderAmount">💵 Amount (Principal)</label>
-            <input type="number" id="reminderAmount" min="0" step="1" placeholder="e.g. 1500" oninput="calculateAmounts('principal')">
+            <input type="number" id="reminderAmount" min="0" step="1" placeholder="e.g. 1500" oninput="calculateAmounts('principal')" onchange="calculateAmounts('principal')">
           </div>
           <div class="field">
             <label for="reminderInterest">📊 Interest (%)</label>
-            <input type="number" id="reminderInterest" min="0" step="0.01" placeholder="Enter interest %" oninput="calculateAmounts('interest')">
+            <input type="number" id="reminderInterest" min="0" step="0.01" placeholder="Enter interest %" oninput="calculateAmounts('interest')" onchange="calculateAmounts('interest')">
           </div>
           <div class="field">
             <label for="interestAmount">💰 Interest Amount</label>
@@ -3525,7 +3525,7 @@
           </div>
           <div class="field">
             <label for="totalAmount">🎯 Total Amount (Principal + Interest)</label>
-            <input type="number" id="totalAmount" min="0" step="1" placeholder="Enter total amount" oninput="calculateAmounts('total')">
+            <input type="number" id="totalAmount" min="0" step="1" placeholder="Enter total amount" oninput="calculateAmounts('total')" onchange="calculateAmounts('total')">
           </div>
           <div class="field">
             <label for="repaymentMode">🧾 Repayment Option</label>
@@ -4047,13 +4047,33 @@
         return;
       }
 
-      if (source === 'principal' && Number.isFinite(interestRate) && interestRate > 0) {
-        const interestAmount = normalizeMoney((principal * interestRate) / 100) || 0;
-        totalAmount = normalizeMoney(principal + interestAmount, { snapNearInteger: true }) || principal;
-        totalInput.value = String(totalAmount);
-        interestAmountInput.value = formatAmount(interestAmount);
-        updateRepaymentPlanPreview();
-        return;
+      if (source === 'principal') {
+        const hasTypedTotal = String(totalInput.value || '').trim() !== '' && Number.isFinite(totalAmount);
+        const hasTypedRate = String(interestRateInput.value || '').trim() !== '' && Number.isFinite(interestRate) && interestRate >= 0;
+
+        // If total is present, keep total fixed and auto-calculate interest.
+        if (hasTypedTotal) {
+          if (totalAmount < principal) {
+            totalAmount = principal;
+            totalInput.value = String(totalAmount);
+          }
+          const interestAmount = normalizeMoney(Math.max(0, totalAmount - principal)) || 0;
+          const derivedRate = principal > 0 ? (interestAmount / principal) * 100 : 0;
+          interestRateInput.value = Number.isFinite(derivedRate) ? String(Number(derivedRate.toFixed(2))) : '';
+          interestAmountInput.value = formatAmount(interestAmount);
+          updateRepaymentPlanPreview();
+          return;
+        }
+
+        // Otherwise, use typed interest rate to auto-calculate total.
+        if (hasTypedRate) {
+          const interestAmount = normalizeMoney((principal * interestRate) / 100) || 0;
+          totalAmount = normalizeMoney(principal + interestAmount, { snapNearInteger: true }) || principal;
+          totalInput.value = String(totalAmount);
+          interestAmountInput.value = formatAmount(interestAmount);
+          updateRepaymentPlanPreview();
+          return;
+        }
       }
 
       if (!Number.isFinite(totalAmount) || totalAmount < 0) {
@@ -4079,6 +4099,21 @@
 
     function onRepaymentModeChange() {
       updateRepaymentPlanPreview();
+    }
+
+    function stabilizeMoneyInputs() {
+      const fieldIds = ['reminderAmount', 'reminderInterest', 'totalAmount', 'emiMonths'];
+      fieldIds.forEach((id) => {
+        const input = document.getElementById(id);
+        if (!input) {
+          return;
+        }
+
+        // Prevent accidental scroll/spinner changes while moving page.
+        input.addEventListener('wheel', (event) => {
+          event.preventDefault();
+        }, { passive: false });
+      });
     }
 
     function updateRepaymentPlanPreview() {
@@ -4266,12 +4301,7 @@
           lines.push(`Note: ${cleanNote}`);
         }
 
-        lines.push('');
-        const paymentLink = buildCashfreePaymentLink(payment);
-        if (paymentLink) {
-          lines.push(paymentLink);
           lines.push('');
-        }
         lines.push('Please repay on time. Thank you.');
         return lines.join('\n');
       } catch (e) {
@@ -4287,26 +4317,7 @@
 
     function buildCampaignMessage(payment, variant) {
       try {
-        const total = totalPayable(payment);
-        const paymentLink = buildCashfreePaymentLink(payment);
-        
-        if (variant === 'B') {
-          const lines = [
-            `Hello ${payment.name || 'Customer'},`,
-            `This is a quick reminder for your payment of ${formatCurrency(total)}.`,
-            payment.reminderRepaymentDate ? `Due date: ${payment.reminderRepaymentDate}` : '',
-          ];
-          
-          if (paymentLink) {
-            lines.push('');
-            lines.push(paymentLink);
-          }
-          
-          lines.push('');
-          lines.push('Please confirm once paid. Thank you.');
-          return lines.filter(Boolean).join('\n');
-        }
-
+        // Keep a single reminder format for consistency across all sends.
         return buildWhatsAppMessage(payment);
       } catch (e) {
         console.error('Error building campaign message:', e);
@@ -4340,13 +4351,40 @@
       ].join('|');
     }
 
+    function getStoredTotalAmount(payment) {
+      const directValue = Number(
+        payment?.totalAmount
+        ?? payment?.reminderTotalAmount
+        ?? payment?.reminder_total_amount
+        ?? payment?.paidAmount
+      );
+
+      if (Number.isFinite(directValue) && directValue > 0) {
+        return directValue;
+      }
+
+      const note = String(payment?.reminderNote || '');
+      const noteMatch = note.match(/total\s*amount\s*[:=]\s*([0-9]+(?:\.[0-9]+)?)/i);
+      if (noteMatch && noteMatch[1]) {
+        const noteTotal = Number(noteMatch[1]);
+        if (Number.isFinite(noteTotal) && noteTotal > 0) {
+          return noteTotal;
+        }
+      }
+
+      return 0;
+    }
+
     function getPaymentAmounts(payment) {
       const principal = Number(payment.reminderAmount ?? payment.amount ?? 0) || 0;
       let interestRate = Number(payment.reminderInterest ?? 0) || 0;
       let interestAmount = (principal * interestRate) / 100;
 
-      const storedTotal = Number(payment.totalAmount ?? payment.paidAmount ?? payment.amount ?? 0) || 0;
-      if ((!Number.isFinite(interestRate) || interestRate <= 0) && principal > 0 && storedTotal > principal) {
+      const storedTotal = getStoredTotalAmount(payment);
+      if (principal >= 0 && storedTotal >= principal && storedTotal > 0) {
+        interestAmount = storedTotal - principal;
+        interestRate = principal > 0 ? (interestAmount / principal) * 100 : 0;
+      } else if ((!Number.isFinite(interestRate) || interestRate <= 0) && principal > 0 && storedTotal > principal) {
         interestAmount = storedTotal - principal;
         interestRate = (interestAmount / principal) * 100;
       }
@@ -4359,7 +4397,9 @@
         interestRate = 0;
       }
 
-      const totalAmount = principal + interestAmount;
+      const totalAmount = principal >= 0 && storedTotal >= principal && storedTotal > 0
+        ? storedTotal
+        : (principal + interestAmount);
 
       return { principal, interestRate, interestAmount, totalAmount };
     }
@@ -4496,6 +4536,10 @@
         return plan.monthly;
       }
       const principal = parseFloat(payment.reminderAmount) || 0;
+      const storedTotal = getStoredTotalAmount(payment);
+      if (storedTotal >= principal && storedTotal > 0) {
+        return storedTotal;
+      }
       const interestRate = parseFloat(payment.reminderInterest) || 0;
       const interestAmount = (principal * interestRate) / 100;
       return principal + interestAmount;
@@ -6462,6 +6506,7 @@
     document.addEventListener('DOMContentLoaded', async function() {
       initPremiumFeaturesCore();
       initAdvancedPremiumFeatures();
+      stabilizeMoneyInputs();
       updateRepaymentPlanPreview();
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {

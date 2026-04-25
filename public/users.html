@@ -142,6 +142,30 @@
             margin-bottom: 16px;
         }
 
+        .toolbar-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-left: auto;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .search-input,
+        .role-filter {
+            border: 1px solid #8eb3c4;
+            border-radius: 10px;
+            padding: 8px 10px;
+            min-height: 38px;
+            background: #ffffff;
+            color: #113046;
+            outline: none;
+        }
+
+        .search-input {
+            min-width: 220px;
+        }
+
         .user-toolbar h1 {
             margin: 0;
             color: #0f2a3f;
@@ -233,12 +257,94 @@
             justify-content: center;
         }
 
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 23, 35, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            padding: 14px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-card {
+            width: 100%;
+            max-width: 440px;
+            background: #ffffff;
+            border-radius: 14px;
+            border: 1px solid rgba(17, 56, 84, 0.15);
+            box-shadow: 0 16px 35px rgba(11, 35, 53, 0.2);
+            padding: 18px;
+        }
+
+        .modal-card h4 {
+            margin: 0 0 8px;
+            color: #0f2a3f;
+            font-weight: 800;
+        }
+
+        .modal-card p {
+            margin: 0 0 12px;
+            color: #31556a;
+        }
+
+        .modal-field {
+            margin-bottom: 10px;
+        }
+
+        .modal-field label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #0f2a3f;
+        }
+
+        .modal-field input {
+            width: 100%;
+            border: 1px solid #9ebac7;
+            border-radius: 9px;
+            padding: 8px 10px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .btn-secondary {
+            border: 1px solid #8ba6b2;
+            background: #ffffff;
+            color: #24465a;
+            border-radius: 8px;
+            padding: 7px 11px;
+            font-weight: 700;
+        }
+
         /* Mobile Styles */
         @media (max-width: 576px) {
             .user-toolbar {
-                flex-direction: row;
+                flex-direction: column;
                 align-items: flex-start;
-                justify-content: space-between;
+                justify-content: flex-start;
+            }
+
+            .toolbar-actions {
+                width: 100%;
+                margin-left: 0;
+                justify-content: flex-start;
+            }
+
+            .search-input,
+            .role-filter {
+                width: 100%;
+                min-width: 0;
             }
 
             .stats-row {
@@ -258,12 +364,7 @@
             .user-toolbar h1 {
                 font-size: 1.95rem;
                 line-height: 1.05;
-                max-width: calc(100% - 120px);
-            }
-
-            .user-toolbar .btn-logout {
-                margin-top: 4px;
-                padding: 8px 12px;
+                max-width: 100%;
             }
         }
     </style>
@@ -274,7 +375,7 @@
 <body>
 
     <!-- Toggle Button -->
-    <button class="menu-toggle" onclick="toggleSidebar()">â˜°</button>
+    <button class="menu-toggle" onclick="toggleSidebar()">&#9776;</button>
 
     <!-- Sidebar -->
     <div class="sidebar">
@@ -297,7 +398,15 @@
     <div class="content">
         <div class="user-toolbar">
             <h1>User & Admin Directory</h1>
-            <button class="btn-logout" onclick="fetchUserDetails()">Refresh</button>
+            <div class="toolbar-actions">
+                <input id="userSearchInput" class="search-input" type="text" placeholder="Search name, email, mobile" />
+                <select id="roleFilter" class="role-filter">
+                    <option value="all">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="user">User</option>
+                </select>
+                <button class="btn-logout" onclick="fetchUserDetails()">Refresh</button>
+            </div>
         </div>
 
         <div class="stats-row">
@@ -333,8 +442,30 @@
         </div>
     </div>
 
+    <div id="passwordModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="passwordModalTitle">
+        <div class="modal-card">
+            <h4 id="passwordModalTitle">Change Password</h4>
+            <p id="passwordModalUser">Update password for selected user.</p>
+            <div class="modal-field">
+                <label for="newPasswordInput">New Password</label>
+                <input id="newPasswordInput" type="password" minlength="6" maxlength="128" />
+            </div>
+            <div class="modal-field">
+                <label for="confirmPasswordInput">Confirm Password</label>
+                <input id="confirmPasswordInput" type="password" minlength="6" maxlength="128" />
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="closePasswordModal()">Cancel</button>
+                <button type="button" class="btn-password" onclick="submitPasswordChange()">Update</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const AUTH_API_BASES = ['/api'];
+        const AUTH_API_BASES = ['/api', ''];
+        let allUsers = [];
+        let pendingPasswordUserId = '';
+        let pendingPasswordUserLabel = '';
 
         async function fetchAuthApi(path, options = {}) {
             let lastError = null;
@@ -373,48 +504,113 @@
                     throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
                 }
                 const data = await response.json();
-                console.log('Fetched user details:', data); // Add logging
-                const tableBody = document.getElementById('user-details-table');
-                tableBody.innerHTML = '';
 
                 if (!Array.isArray(data)) {
                     throw new Error('Invalid data format received');
                 }
 
-                const adminCount = data.filter((user) => user.role === 'admin').length;
-                const userCount = data.filter((user) => user.role !== 'admin').length;
+                allUsers = data;
 
-                document.getElementById('total-accounts').textContent = data.length;
-                document.getElementById('total-admins').textContent = adminCount;
-                document.getElementById('total-users').textContent = userCount;
-
-                if (data.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; font-weight:600; color:#264653;">No accounts found.</td></tr>';
-                    return;
-                }
-
-                data.forEach((user) => {
-                    const role = user.role || 'user';
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${user.fullname}</td>
-                        <td>${user.email}</td>
-                        <td>${user.mobile}</td>
-                        <td><span class="role-badge ${role === 'admin' ? 'admin' : 'user'}">${role}</span></td>
-                        <td>
-                            <div class="action-wrap">
-                                <button class="btn-action" onclick="viewUser('${user._id || user.id}')">View</button>
-                                <button class="btn-password" onclick="changePassword('${user._id || user.id}')">Change Password</button>
-                                <button class="btn-delete" onclick="deleteUser('${user._id || user.id}')">Delete</button>
-                            </div>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
-                });
+                renderUsersTable();
             } catch (error) {
                 console.error('Error fetching user details:', error);
                 alert(error.message || 'Failed to fetch user details. Please try again later.');
             }
+        }
+
+        function getCurrentUserContext() {
+            const raw = JSON.parse(localStorage.getItem('user') || 'null') || {};
+            return {
+                id: String(raw._id || raw.id || '').trim(),
+                mobile: String(raw.mobile || '').trim(),
+            };
+        }
+
+        function canDeleteUser(user) {
+            const current = getCurrentUserContext();
+            const candidateId = String(user._id || user.id || '').trim();
+            const candidateMobile = String(user.mobile || '').trim();
+            const role = String(user.role || 'user').toLowerCase();
+
+            if (role === 'admin') {
+                return false;
+            }
+
+            if (current.id && candidateId && current.id === candidateId) {
+                return false;
+            }
+
+            if (current.mobile && candidateMobile && current.mobile === candidateMobile) {
+                return false;
+            }
+
+            return true;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function renderUsersTable() {
+            const searchText = String(document.getElementById('userSearchInput')?.value || '').trim().toLowerCase();
+            const roleFilter = String(document.getElementById('roleFilter')?.value || 'all').toLowerCase();
+            const tableBody = document.getElementById('user-details-table');
+            tableBody.innerHTML = '';
+
+            const filteredUsers = allUsers.filter((user) => {
+                const role = String(user.role || 'user').toLowerCase();
+                if (roleFilter !== 'all' && role !== roleFilter) {
+                    return false;
+                }
+
+                if (!searchText) {
+                    return true;
+                }
+
+                const haystack = [user.fullname, user.email, user.mobile, user.role]
+                    .map((part) => String(part || '').toLowerCase())
+                    .join(' ');
+                return haystack.includes(searchText);
+            });
+
+            const adminCount = allUsers.filter((user) => String(user.role || '').toLowerCase() === 'admin').length;
+            const userCount = allUsers.length - adminCount;
+
+            document.getElementById('total-accounts').textContent = allUsers.length;
+            document.getElementById('total-admins').textContent = adminCount;
+            document.getElementById('total-users').textContent = userCount;
+
+            if (filteredUsers.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; font-weight:600; color:#264653;">No matching accounts found.</td></tr>';
+                return;
+            }
+
+            filteredUsers.forEach((user) => {
+                const role = String(user.role || 'user').toLowerCase();
+                const userId = String(user._id || user.id || '').trim();
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${escapeHtml(user.fullname || '')}</td>
+                    <td>${escapeHtml(user.email || '')}</td>
+                    <td>${escapeHtml(user.mobile || '')}</td>
+                    <td><span class="role-badge ${role === 'admin' ? 'admin' : 'user'}">${escapeHtml(role)}</span></td>
+                    <td>
+                        <div class="action-wrap">
+                            <button class="btn-action" onclick="viewUser('${escapeHtml(userId)}')">View</button>
+                            <button class="btn-password" onclick="openPasswordModal('${escapeHtml(userId)}', '${escapeHtml(user.fullname || user.mobile || 'User')}')">Change Password</button>
+                            ${canDeleteUser(user)
+                                ? `<button class="btn-delete" onclick="deleteUser('${escapeHtml(userId)}')">Delete</button>`
+                                : '<span style="font-size:0.78rem; color:#5a6f7a; font-weight:700;">Protected</span>'}
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
         }
 
         function viewUser(userId) {
@@ -422,14 +618,48 @@
             alert(`View details for user ID: ${userId}`);
         }
 
-        async function changePassword(userId) {
-            const newPassword = prompt('Enter new password:');
-            if (!newPassword) {
+        function openPasswordModal(userId, userLabel = 'User') {
+            pendingPasswordUserId = String(userId || '').trim();
+            pendingPasswordUserLabel = String(userLabel || 'User');
+
+            if (!pendingPasswordUserId) {
+                alert('Missing user id for password update.');
+                return;
+            }
+
+            document.getElementById('passwordModalUser').textContent = `Update password for ${pendingPasswordUserLabel}`;
+            document.getElementById('newPasswordInput').value = '';
+            document.getElementById('confirmPasswordInput').value = '';
+            document.getElementById('passwordModal').classList.add('show');
+        }
+
+        function closePasswordModal() {
+            pendingPasswordUserId = '';
+            pendingPasswordUserLabel = '';
+            document.getElementById('passwordModal').classList.remove('show');
+        }
+
+        async function submitPasswordChange() {
+            const newPassword = String(document.getElementById('newPasswordInput').value || '');
+            const confirmPassword = String(document.getElementById('confirmPasswordInput').value || '');
+
+            if (!pendingPasswordUserId) {
+                alert('No user selected for password change.');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                alert('Password must be at least 6 characters.');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                alert('Passwords do not match.');
                 return;
             }
 
             try {
-                const response = await fetchAuthApi(`/users/${userId}/password`, {
+                const response = await fetchAuthApi(`/users/${pendingPasswordUserId}/password`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -442,6 +672,7 @@
                 }
 
                 alert('Password changed successfully');
+                closePasswordModal();
             } catch (error) {
                 console.error('Error changing password:', error);
                 alert('Failed to change password. Please try again later.');
@@ -497,7 +728,25 @@
             document.body.classList.toggle('sidebar-open');
         }
 
-        document.addEventListener('DOMContentLoaded', fetchUserDetails);
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchUserDetails();
+            const searchInput = document.getElementById('userSearchInput');
+            const roleFilter = document.getElementById('roleFilter');
+            if (searchInput) {
+                searchInput.addEventListener('input', renderUsersTable);
+            }
+            if (roleFilter) {
+                roleFilter.addEventListener('change', renderUsersTable);
+            }
+            const modal = document.getElementById('passwordModal');
+            if (modal) {
+                modal.addEventListener('click', (event) => {
+                    if (event.target === modal) {
+                        closePasswordModal();
+                    }
+                });
+            }
+        });
     </script>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
