@@ -613,6 +613,12 @@ function mapPaymentRow(row) {
     : null;
   const reminderPayload = parseReminderPayload(row.reminder_note);
   const reminderStatus = String(reminderPayload?.reminderStatus || "").toLowerCase();
+  const noteTotalAmount = extractReminderTotalFromNote(reminderPayload?.note || row.reminder_note);
+  const reminderTotalAmount = reminderPayload?.totalAmount
+    ?? row.reminder_total_amount
+    ?? row.total_amount
+    ?? noteTotalAmount
+    ?? null;
   return {
     _id: row.id,
     id: row.id,
@@ -630,6 +636,8 @@ function mapPaymentRow(row) {
     reminderRepaymentDate: reminderPayload?.repaymentDate || null,
     reminderAmount: reminderPayload?.reminderAmount ?? null,
     reminderInterest: reminderPayload?.reminderInterest ?? null,
+    totalAmount: reminderTotalAmount,
+    reminderTotalAmount,
     reminderStatus: reminderPayload?.reminderStatus || null,
     reminderPaidAt: reminderPayload?.paidAt || null,
     screenshotUrl,
@@ -658,13 +666,14 @@ function normalizeReminderNumber(value, { snapNearInteger = false } = {}) {
   return Math.abs(rounded - nearestInteger) <= 0.01 ? nearestInteger : rounded;
 }
 
-function buildReminderPayload({ note = "", borrowDate = null, repaymentDate = null, reminderAmount = null, reminderInterest = null, name = null, reminderStatus = null, paidAt = null }) {
+function buildReminderPayload({ note = "", borrowDate = null, repaymentDate = null, reminderAmount = null, reminderInterest = null, totalAmount = null, name = null, reminderStatus = null, paidAt = null }) {
   return {
     note: String(note || "").trim(),
     borrowDate: borrowDate || null,
     repaymentDate: repaymentDate || null,
     reminderAmount: normalizeReminderNumber(reminderAmount, { snapNearInteger: true }),
     reminderInterest: normalizeReminderNumber(reminderInterest),
+    totalAmount: normalizeReminderNumber(totalAmount, { snapNearInteger: true }),
     name: String(name || "").trim() || null,
     reminderStatus: String(reminderStatus || "manual").trim() || "manual",
     paidAt: paidAt || null,
@@ -697,12 +706,26 @@ function parseReminderPayload(value) {
       reminderInterest: payload.reminderInterest === null || payload.reminderInterest === undefined || payload.reminderInterest === ""
         ? null
         : Number(payload.reminderInterest),
+      totalAmount: payload.totalAmount === null || payload.totalAmount === undefined || payload.totalAmount === ""
+        ? null
+        : Number(payload.totalAmount),
       reminderStatus: String(payload.reminderStatus || "manual").trim() || "manual",
       paidAt: String(payload.paidAt || "").trim() || null,
     };
   } catch (_error) {
     return null;
   }
+}
+
+function extractReminderTotalFromNote(note) {
+  const text = String(note || "");
+  const match = text.match(/total\s*amount\s*[:=]\s*([0-9]+(?:\.[0-9]+)?)/i);
+  if (!match || !match[1]) {
+    return null;
+  }
+
+  const parsed = Number(match[1]);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
 function normalizeReminderRow(row) {
@@ -712,6 +735,13 @@ function normalizeReminderRow(row) {
 
   const reminderPayload = parseReminderPayload(row.reminder_note);
   const reminderStatus = String(row.reminder_status || reminderPayload?.reminderStatus || "manual").toLowerCase();
+  const noteTotalAmount = extractReminderTotalFromNote(reminderPayload?.note || row.reminder_note);
+  const reminderTotalAmount = reminderPayload?.totalAmount
+    ?? row.reminder_total_amount
+    ?? row.total_amount
+    ?? noteTotalAmount
+    ?? row.amount
+    ?? null;
   return {
     id: row.id,
     _id: row.id,
@@ -722,11 +752,13 @@ function normalizeReminderRow(row) {
     status: reminderStatus === "paid" ? "paid-reminder" : "manual-reminder",
     chitsPlan: "Manual",
     created_at: row.created_at || row.updated_at || null,
-    reminderNote: row.reminder_note || reminderPayload?.note || "",
+    reminderNote: reminderPayload?.note || row.reminder_note || "",
     reminderBorrowDate: row.reminder_borrow_date || reminderPayload?.borrowDate || null,
     reminderRepaymentDate: row.reminder_repayment_date || reminderPayload?.repaymentDate || null,
     reminderAmount: row.reminder_amount ?? reminderPayload?.reminderAmount ?? null,
     reminderInterest: row.reminder_interest ?? reminderPayload?.reminderInterest ?? null,
+    totalAmount: reminderTotalAmount,
+    reminderTotalAmount,
     reminderStatus: reminderStatus || "manual",
     reminderPaidAt: row.paid_at || reminderPayload?.paidAt || null,
   };
@@ -1876,7 +1908,7 @@ async function upsertPaymentReminderRow({ paymentId = null, mobile, name = null,
     payment_id: paymentId || null,
     payment_mobile: normalizeMobile(mobile || ""),
     payment_name: String(name || "").trim() || null,
-    reminder_note: reminderData?.note || "",
+    reminder_note: reminderData ? encodeReminderPayload(reminderData) : "",
     reminder_borrow_date: reminderData?.borrowDate || null,
     reminder_repayment_date: reminderData?.repaymentDate || null,
     reminder_amount: reminderData?.reminderAmount ?? null,
@@ -1931,6 +1963,7 @@ async function syncReminderColumnsOnPayment(paymentId, reminderData, nextStatus 
         reminder_repayment_date: reminderData.repaymentDate || null,
         reminder_amount: reminderData.reminderAmount ?? null,
         reminder_interest: reminderData.reminderInterest ?? null,
+        reminder_total_amount: reminderData.totalAmount ?? null,
       }
     : {
         reminder_note: null,
@@ -1938,6 +1971,7 @@ async function syncReminderColumnsOnPayment(paymentId, reminderData, nextStatus 
         reminder_repayment_date: null,
         reminder_amount: null,
         reminder_interest: null,
+        reminder_total_amount: null,
       };
 
   const updatePayload = { ...basePayload };
@@ -4179,6 +4213,7 @@ app.put("/api/payments/:id/reminder", requireAdmin, paymentAdminActionLimiter, a
   const rawPaidAt = String(req.body?.paidAt || "").trim();
   const rawAmount = req.body?.reminderAmount;
   const rawInterest = req.body?.reminderInterest;
+  const rawTotalAmount = req.body?.totalAmount;
 
   if (rawReminder.length > 500) {
     return res.status(400).json({ message: "Reminder note should be 500 characters or less." });
@@ -4201,6 +4236,7 @@ app.put("/api/payments/:id/reminder", requireAdmin, paymentAdminActionLimiter, a
 
   const reminderAmount = normalizeReminderNumber(rawAmount, { snapNearInteger: true });
   const reminderInterest = normalizeReminderNumber(rawInterest);
+  const reminderTotalAmount = normalizeReminderNumber(rawTotalAmount, { snapNearInteger: true });
 
   if (reminderAmount !== null && (!Number.isFinite(reminderAmount) || reminderAmount < 0)) {
     return res.status(400).json({ message: "Reminder amount must be a valid number." });
@@ -4208,6 +4244,10 @@ app.put("/api/payments/:id/reminder", requireAdmin, paymentAdminActionLimiter, a
 
   if (reminderInterest !== null && (!Number.isFinite(reminderInterest) || reminderInterest < 0)) {
     return res.status(400).json({ message: "Interest must be a valid number." });
+  }
+
+  if (reminderTotalAmount !== null && (!Number.isFinite(reminderTotalAmount) || reminderTotalAmount < 0)) {
+    return res.status(400).json({ message: "Total amount must be a valid number." });
   }
 
   // Try to find existing payment record
@@ -4238,6 +4278,7 @@ app.put("/api/payments/:id/reminder", requireAdmin, paymentAdminActionLimiter, a
     repaymentDate ? `Repayment Date: ${repaymentDate}` : "",
     reminderAmount !== null ? `Amount: ${reminderAmount}` : "",
     reminderInterest !== null ? `Interest: ${reminderInterest}%` : "",
+    reminderTotalAmount !== null ? `Total Amount: ${reminderTotalAmount}` : "",
   ].filter(Boolean).join(", ");
 
   const reminderData = reminderNote
@@ -4247,6 +4288,7 @@ app.put("/api/payments/:id/reminder", requireAdmin, paymentAdminActionLimiter, a
         repaymentDate,
         reminderAmount,
         reminderInterest,
+        totalAmount: reminderTotalAmount,
         name: rawName,
         reminderStatus: rawReminderStatus === "paid" ? "paid" : "manual",
         paidAt: rawReminderStatus === "paid" ? (rawPaidAt || new Date().toISOString()) : null,
