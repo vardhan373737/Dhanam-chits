@@ -384,6 +384,7 @@ const paymentSchema = new mongoose.Schema({
     reminderRepaymentDate: { type: String, default: null },
     reminderAmount: { type: Number, default: null },
     reminderInterest: { type: Number, default: null },
+    reminderTotalAmount: { type: Number, default: null },
     reminderStatus: { type: String, default: null },
     reminderPaidAt: { type: String, default: null }
 });
@@ -1268,6 +1269,7 @@ const toReminderPaymentRow = (paymentDoc) => {
         reminderRepaymentDate: payload?.reminderRepaymentDate || null,
         reminderAmount: payload?.reminderAmount ?? null,
         reminderInterest: payload?.reminderInterest ?? null,
+        totalAmount: payload?.reminderTotalAmount ?? payload?.totalAmount ?? null,
         reminderPaidAt: payload?.reminderPaidAt || null,
     };
 };
@@ -1285,6 +1287,7 @@ const toManualReminderRow = (entry) => ({
     reminderRepaymentDate: entry.reminderRepaymentDate || null,
     reminderAmount: entry.reminderAmount ?? null,
     reminderInterest: entry.reminderInterest ?? null,
+    totalAmount: entry.reminderTotalAmount ?? entry.totalAmount ?? null,
     reminderPaidAt: entry.reminderPaidAt || null,
     created_at: entry.createdAt || null,
     updated_at: entry.updatedAt || null,
@@ -1891,6 +1894,7 @@ app.put('/api/payments/:id/reminder', async (req, res) => {
         const reminderRepaymentDate = String(req.body?.repaymentDate || '').trim() || null;
         const reminderAmount = toNumberOrNull(req.body?.reminderAmount, { snapNearInteger: true });
         const reminderInterest = toNumberOrNull(req.body?.reminderInterest);
+        const reminderTotalAmount = toNumberOrNull(req.body?.totalAmount, { snapNearInteger: true });
         const reminderStatus = String(req.body?.reminderStatus || 'manual').trim().toLowerCase() === 'paid' ? 'paid' : 'manual';
         const reminderPaidAt = reminderStatus === 'paid'
             ? (String(req.body?.paidAt || '').trim() || new Date().toISOString())
@@ -1908,6 +1912,7 @@ app.put('/api/payments/:id/reminder', async (req, res) => {
             reminderRepaymentDate,
             reminderAmount,
             reminderInterest,
+            reminderTotalAmount,
             reminderStatus,
             reminderPaidAt,
         };
@@ -1928,6 +1933,7 @@ app.put('/api/payments/:id/reminder', async (req, res) => {
             payment.reminderRepaymentDate = reminderRepaymentDate;
             payment.reminderAmount = reminderAmount;
             payment.reminderInterest = reminderInterest;
+            payment.reminderTotalAmount = reminderTotalAmount;
             payment.reminderStatus = reminderStatus;
             payment.reminderPaidAt = reminderPaidAt;
             payment.status = reminderStatus === 'paid' ? 'paid-reminder' : 'manual-reminder';
@@ -1952,7 +1958,7 @@ app.put('/api/payments/:id/reminder', async (req, res) => {
             manual = (state.manualReminders || []).find((item) => normalizeMobile(item.mobile) === mobile);
         }
 
-        if (!reminderNote && !reminderBorrowDate && !reminderRepaymentDate && reminderAmount === null && reminderInterest === null) {
+        if (!reminderNote && !reminderBorrowDate && !reminderRepaymentDate && reminderAmount === null && reminderInterest === null && reminderTotalAmount === null) {
             state.manualReminders = (state.manualReminders || []).filter((item) => String(item.id) !== String(manual?.id || '') && normalizeMobile(item.mobile) !== mobile);
             writeReminderPipelineState(state);
             return res.json({
@@ -1970,6 +1976,7 @@ app.put('/api/payments/:id/reminder', async (req, res) => {
                     reminderRepaymentDate: null,
                     reminderAmount: null,
                     reminderInterest: null,
+                    totalAmount: null,
                     reminderPaidAt: null,
                 },
             });
@@ -1990,6 +1997,7 @@ app.put('/api/payments/:id/reminder', async (req, res) => {
         manual.reminderRepaymentDate = reminderRepaymentDate;
         manual.reminderAmount = reminderAmount;
         manual.reminderInterest = reminderInterest;
+        manual.reminderTotalAmount = reminderTotalAmount;
         manual.reminderStatus = reminderStatus;
         manual.reminderPaidAt = reminderPaidAt;
         manual.updatedAt = new Date().toISOString();
