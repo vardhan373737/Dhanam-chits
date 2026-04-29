@@ -4711,6 +4711,230 @@
       doc.text(subtitle, 14, 41);
     }
 
+    async function pdfLoadImageData(src) {
+      try {
+        const response = await fetch(src, { cache: 'no-store' });
+        if (!response.ok) {
+          return null;
+        }
+
+        const blob = await response.blob();
+        return await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(String(reader.result || ''));
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(blob);
+        });
+      } catch (_error) {
+        return null;
+      }
+    }
+
+    function pdfStatusLabel(payment, mode) {
+      if (mode === 'paid') {
+        return 'Paid';
+      }
+
+      const status = normalizeText(payment.reminderStatus || payment.status);
+      if (status === 'paid' || status === 'paid-reminder') {
+        return 'Paid';
+      }
+
+      const dueInfo = getDaysRemainingValue(payment.reminderRepaymentDate);
+      if (!dueInfo) {
+        return 'No due date';
+      }
+
+      return dueInfo.days < 0 ? 'Overdue' : dueInfo.display;
+    }
+
+    function pdfPaymentRows(items, mode) {
+      return items.map((payment) => {
+        const principal = Number(payment.reminderAmount || payment.amount || 0);
+        const interest = Number(payment.reminderInterest || 0);
+        const total = mode === 'paid' ? Number(payment.amount || payment.reminderAmount || 0) : totalPayable(payment);
+        const repaymentDate = mode === 'paid'
+          ? formatDisplayDate(payment.paidAt || payment.created_at)
+          : (payment.reminderRepaymentDate || 'No due date');
+
+        return [
+          payment.name || 'Manual Reminder',
+          payment.mobile || '-',
+          repaymentDate,
+          pdfStatusLabel(payment, mode),
+          pdfCurrency(principal),
+          `${interest || 0}%`,
+          pdfCurrency(total),
+        ];
+      });
+    }
+
+    function pdfDrawSummaryCard(doc, x, y, w, h, label, value, accent) {
+      doc.setFillColor(accent[0], accent[1], accent[2]);
+      doc.roundedRect(x, y, w, h, 4, 4, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.2);
+      doc.text(label, x + 4, y + 7);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text(value, x + 4, y + 16);
+    }
+
+    function pdfDrawMetaChip(doc, x, y, w, label, value) {
+      doc.setFillColor(18, 35, 56);
+      doc.setDrawColor(43, 60, 83);
+      doc.roundedRect(x, y, w, 12, 4, 4, 'FD');
+      doc.setTextColor(153, 170, 189);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.2);
+      doc.text(label, x + 4, y + 4.6);
+      doc.setTextColor(233, 241, 248);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.2);
+      doc.text(value, x + 4, y + 8.6, { maxWidth: w - 8 });
+    }
+
+    function pdfBuildExportId() {
+      const stamp = new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14);
+      return `PR-${stamp}`;
+    }
+
+    function pdfGetReportRange(items) {
+      const dates = (items || [])
+        .flatMap((payment) => [payment.reminderRepaymentDate, payment.paidAt, payment.created_at, payment.updated_at])
+        .map((value) => new Date(value))
+        .filter((date) => !Number.isNaN(date.getTime()))
+        .map((date) => date.getTime())
+        .sort((a, b) => a - b);
+
+      if (!dates.length) {
+        return 'Report range: current records';
+      }
+
+      const format = (value) => new Date(value).toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+      const start = format(dates[0]);
+      const end = format(dates[dates.length - 1]);
+      return start === end ? `Report range: ${start}` : `Report range: ${start} to ${end}`;
+    }
+
+    async function pdfDrawCoverPage(doc, stats, generatedAt, reportRange, exportId) {
+      const width = doc.internal.pageSize.getWidth();
+      const height = doc.internal.pageSize.getHeight();
+      const brandName = localStorage.getItem('brandName') || 'Dhanam Chits Pvt. Ltd';
+      const brandTagline = localStorage.getItem('brandTagline') || 'Trusted Chit Services';
+      const logoData = await pdfLoadImageData('/logo.jpeg');
+
+      doc.setFillColor(9, 18, 34);
+      doc.rect(0, 0, width, height, 'F');
+      doc.setFillColor(13, 39, 57);
+      doc.roundedRect(14, 14, width - 28, 44, 8, 8, 'F');
+
+      doc.setFillColor(15, 100, 136);
+      doc.roundedRect(18, 18, 78, 36, 7, 7, 'F');
+      if (logoData) {
+        doc.setFillColor(255, 255, 255);
+        doc.roundedRect(22, 22, 28, 28, 6, 6, 'F');
+        doc.addImage(logoData, 'JPEG', 24, 24, 24, 24, undefined, 'FAST');
+      } else {
+        doc.setFillColor(255, 255, 255);
+        doc.circle(36, 36, 12, 'F');
+        doc.setTextColor(15, 100, 136);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text('DC', 36, 38, { align: 'center' });
+      }
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text(brandName, 54, 32);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.4);
+      doc.text(brandTagline, 54, 38);
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFillColor(102, 16, 242);
+      doc.roundedRect(width - 90, 18, 72, 28, 8, 8, 'F');
+      doc.setFontSize(15);
+      doc.text('All Payment', width - 54, 30, { align: 'center' });
+      doc.text('Records', width - 54, 37, { align: 'center' });
+
+      doc.setTextColor(214, 224, 234);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10.2);
+      doc.text('Premium payment summary with overdue, reminder, and paid sections.', 20, 62);
+
+      const chipY = 68;
+      pdfDrawMetaChip(doc, 20, chipY, 58, 'Generated', generatedAt);
+      pdfDrawMetaChip(doc, 81, chipY, 58, 'Range', reportRange.replace('Report range: ', ''));
+      pdfDrawMetaChip(doc, 142, chipY, 54, 'Export ID', exportId);
+
+      doc.setFillColor(215, 154, 0);
+      doc.roundedRect(20, 84, width - 40, 1.4, 1, 1, 'F');
+
+      doc.setTextColor(170, 184, 198);
+      doc.setFontSize(8.2);
+      doc.text('Generated by Dhanam Chits Reminder Portal', width - 20, height - 18, { align: 'right' });
+
+      const cardY = 92;
+      const cardW = (width - 42) / 2;
+      pdfDrawSummaryCard(doc, 14, cardY, cardW, 24, 'Total records', String(stats.totalRecords), [15, 154, 95]);
+      pdfDrawSummaryCard(doc, 14 + cardW + 8, cardY, cardW, 24, 'Outstanding amount', pdfCurrency(stats.outstandingAmount), [178, 48, 78]);
+      pdfDrawSummaryCard(doc, 14, cardY + 28, cardW, 24, 'Paid records', String(stats.paidRecords), [15, 100, 136]);
+      pdfDrawSummaryCard(doc, 14 + cardW + 8, cardY + 28, cardW, 24, 'Paid amount', pdfCurrency(stats.paidAmount), [215, 154, 0]);
+
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(255, 255, 255);
+      doc.roundedRect(14, 150, width - 28, 28, 5, 5, 'S');
+      doc.setTextColor(228, 236, 244);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10.4);
+      doc.text('Included sections', 20, 159);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.8);
+      doc.text('Overdue payments, reminder payments, and paid payments are organized into separate, print-friendly tables.', 20, 166, { maxWidth: width - 40 });
+
+      doc.setTextColor(170, 184, 198);
+      doc.setFontSize(8.2);
+      doc.text('Designed for a cleaner client-facing export.', 20, height - 18);
+    }
+
+    function pdfAddPageNumber(doc) {
+      const width = doc.internal.pageSize.getWidth();
+      const height = doc.internal.pageSize.getHeight();
+      const pageNumber = doc.internal.getCurrentPageInfo().pageNumber;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.4);
+      doc.setTextColor(153, 170, 189);
+      doc.text(`Page ${pageNumber}`, width / 2, height - 6.3, { align: 'center' });
+    }
+    function pdfAddFooter(doc, meta = {}) {
+      const width = doc.internal.pageSize.getWidth();
+      const height = doc.internal.pageSize.getHeight();
+      const footerLeft = meta.footerLeft || 'Support: support@dhanamchits.com | +91-9346412185';
+      const footerRight = meta.footerRight || 'Dhanam Chits Pvt. Ltd';
+      const exportId = meta.exportId || '';
+
+      doc.setDrawColor(55, 69, 89);
+      doc.line(14, height - 11.2, width - 14, height - 11.2);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.2);
+      doc.setTextColor(153, 170, 189);
+      doc.text(footerLeft, 14, height - 6.7);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.2);
+      const rightLine = exportId ? `Export ID: ${exportId}` : footerRight;
+      doc.text(rightLine, width - 14, height - 6.7, { align: 'right' });
+    }
+
     function pdfEnsureSpace(doc, y, needed, headerTitle, headerSubtitle) {
       const height = doc.internal.pageSize.getHeight();
       if (y + needed <= height - 10) {
@@ -4837,6 +5061,89 @@
       return y + 2;
     }
 
+    function pdfDrawTableSection(doc, title, items, mode, y, accentColor, headerTitle, headerSubtitle, footerMeta = {}) {
+      const sectionTotal = pdfSectionTotal(items, mode);
+      const rows = pdfPaymentRows(items, mode);
+      y = pdfEnsureSpace(doc, y, 18, headerTitle, headerSubtitle);
+      y = pdfDrawSectionTitle(doc, title, sectionTotal, y, accentColor);
+
+      y = pdfEnsureSpace(doc, y, 10, headerTitle, headerSubtitle);
+      doc.setTextColor(200, 211, 224);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text(`Total ${pdfCurrency(sectionTotal)}   |   ${items.length} record(s)`, 18, y + 4);
+      y += 8;
+
+      if (!items.length) {
+        y = pdfEnsureSpace(doc, y, 14, headerTitle, headerSubtitle);
+        doc.setDrawColor(52, 66, 83);
+        doc.setFillColor(14, 28, 51);
+        doc.roundedRect(14, y, doc.internal.pageSize.getWidth() - 28, 11, 3, 3, 'FD');
+        doc.setTextColor(153, 170, 189);
+        doc.setFontSize(9);
+        doc.text(`No records in ${title.toLowerCase()}.`, 18, y + 7.2);
+        return y + 15;
+      }
+
+      doc.autoTable({
+        startY: y,
+        head: [["Customer", "Mobile", "Due / Paid", "Status", "Principal", "Interest", "Total"]],
+        body: rows,
+        theme: 'grid',
+        margin: { left: 14, right: 14, bottom: 16 },
+        rowPageBreak: 'avoid',
+        styles: {
+          font: 'helvetica',
+          fontSize: 7.6,
+          cellPadding: 1.8,
+          overflow: 'linebreak',
+          valign: 'middle',
+          textColor: [20, 39, 57],
+          lineColor: [221, 230, 238],
+          lineWidth: 0.18,
+        },
+        headStyles: {
+          fillColor: accentColor,
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'left',
+        },
+        alternateRowStyles: {
+          fillColor: [246, 249, 252],
+        },
+        columnStyles: {
+          0: { cellWidth: 36 },
+          1: { cellWidth: 24 },
+          2: { cellWidth: 26 },
+          3: { cellWidth: 16 },
+          4: { cellWidth: 24, halign: 'right' },
+          5: { cellWidth: 16, halign: 'right' },
+          6: { cellWidth: 24, halign: 'right' },
+        },
+        didDrawPage: () => {
+          pdfAddHeader(doc, headerTitle, headerSubtitle);
+          pdfAddFooter(doc, footerMeta);
+          pdfAddPageNumber(doc);
+        },
+        didParseCell: (data) => {
+          if (data.section === 'body' && data.column.index === 3) {
+            const status = String(data.cell.raw || '').toLowerCase();
+            if (status === 'overdue') {
+              data.cell.styles.textColor = [184, 48, 78];
+              data.cell.styles.fontStyle = 'bold';
+            } else if (status === 'paid') {
+              data.cell.styles.textColor = [15, 154, 95];
+              data.cell.styles.fontStyle = 'bold';
+            } else if (status.includes('days')) {
+              data.cell.styles.textColor = [15, 100, 136];
+            }
+          }
+        },
+      });
+
+      return doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 4 : y + 10;
+    }
+
     function downloadSingleSectionPdf(title, items, mode = 'reminder') {
       const jspdfApi = window.jspdf;
       if (!jspdfApi || !jspdfApi.jsPDF) {
@@ -4844,20 +5151,69 @@
         return;
       }
 
-      const doc = new jspdfApi.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const doc = new jspdfApi.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const exportId = pdfBuildExportId();
+      const reportRange = pdfGetReportRange(items);
+      const footerMeta = { exportId };
       pdfSetDarkBackground(doc);
       pdfAddHeader(doc, title, `Generated on ${new Date().toLocaleString('en-IN')}`);
 
       const subtitle = `Generated on ${new Date().toLocaleString('en-IN')}`;
       let y = 50;
-      y = pdfDrawSection(doc, title, items, mode, y, [15, 100, 136], title, subtitle);
+      y = pdfDrawTableSection(doc, title, items, mode, y, [15, 100, 136], title, subtitle, footerMeta);
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(8.4);
+      doc.setTextColor(170, 184, 198);
+      doc.text(reportRange, 14, doc.internal.pageSize.getHeight() - 15);
+
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let page = 1; page <= totalPages; page += 1) {
+        doc.setPage(page);
+        pdfAddFooter(doc, footerMeta);
+        pdfAddPageNumber(doc);
+      }
 
       doc.save(`${title.replace(/\s+/g, '-').toLowerCase()}.pdf`);
     }
 
-    function downloadPaymentsPdf(type) {
+    async function downloadPaymentsPdf(type) {
       if (!requirePermission('export-branded')) return;
-      const { active, paid, grouped } = getReminderBuckets();
+      const exportId = pdfBuildExportId();
+      const reportRange = pdfGetReportRange(paymentCache);
+      const footerMeta = { exportId };
+      const paid = (paymentCache || []).filter((item) => {
+        const status = normalizeText(item.status);
+        const reminderStatus = normalizeText(item.reminderStatus);
+        const reminderPaidAt = String(item.reminderPaidAt || item.paidAt || '').trim();
+        return status === 'approved'
+          || status === 'paid'
+          || status === 'completed'
+          || status === 'paid-reminder'
+          || reminderStatus === 'paid'
+          || Boolean(reminderPaidAt);
+      });
+
+      const active = (paymentCache || []).filter((item) => {
+        const status = normalizeText(item.status);
+        const reminderStatus = normalizeText(item.reminderStatus);
+        const reminderPaidAt = String(item.reminderPaidAt || item.paidAt || '').trim();
+        // Include any item that has a due/reminder date and isn't marked paid.
+        const hasDue = String(item.reminderRepaymentDate || item.repaymentDate || item.dueDate || '').trim();
+        return hasDue && !(status === 'paid' || status === 'completed' || status === 'paid-reminder' || reminderStatus === 'paid' || reminderPaidAt);
+      });
+
+      const grouped = { overdue: [], thisMonth: [], nextMonth: [], later: [] };
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      active.forEach((payment) => {
+        const key = getSectionKey(payment, today);
+        grouped[key].push(payment);
+      });
+
+      grouped.overdue = sortByRemainingDays(grouped.overdue);
+      grouped.thisMonth = sortByRemainingDays(grouped.thisMonth);
+      grouped.nextMonth = sortByRemainingDays(grouped.nextMonth);
+      grouped.later = sortByRemainingDays(grouped.later);
 
       if (type === 'overdue') {
         return downloadSingleSectionPdf('Overdue Payments', grouped.overdue, 'reminder');
@@ -4878,16 +5234,30 @@
         return;
       }
 
-      const doc = new jspdfApi.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const doc = new jspdfApi.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const sections = [
         { title: 'Overdue Payments', items: grouped.overdue, mode: 'reminder' },
         { title: 'Reminder Payments', items: [...grouped.overdue, ...grouped.thisMonth, ...grouped.nextMonth, ...grouped.later], mode: 'reminder' },
         { title: 'Paid Payments', items: paid, mode: 'paid' },
       ];
 
-      pdfSetDarkBackground(doc);
       const headerSubtitle = `Generated on ${new Date().toLocaleString('en-IN')}`;
+      const reminderItems = [...grouped.overdue, ...grouped.thisMonth, ...grouped.nextMonth, ...grouped.later];
+      const stats = {
+        totalRecords: active.length + paid.length,
+        paidRecords: paid.length,
+        paidAmount: paid.reduce((sum, payment) => sum + Number(payment.amount || payment.reminderAmount || 0), 0),
+        outstandingAmount: reminderItems.reduce((sum, payment) => sum + totalPayable(payment), 0),
+      };
+
+      await pdfDrawCoverPage(doc, stats, new Date().toLocaleString('en-IN'), reportRange, exportId);
+      doc.addPage();
+      pdfSetDarkBackground(doc);
       pdfAddHeader(doc, 'All Payment Records', headerSubtitle);
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(8.4);
+      doc.setTextColor(170, 184, 198);
+      doc.text(reportRange, 14, 46);
 
       let y = 50;
       sections.forEach((section, index) => {
@@ -4896,8 +5266,20 @@
         }
 
         const accent = index === 0 ? [178, 48, 78] : index === 1 ? [15, 100, 136] : [15, 154, 95];
-        y = pdfDrawSection(doc, section.title, section.items, section.mode, y, accent, 'All Payment Records', headerSubtitle);
+        y = pdfDrawTableSection(doc, section.title, section.items, section.mode, y, accent, 'All Payment Records', headerSubtitle, footerMeta);
       });
+
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(8.4);
+      doc.setTextColor(170, 184, 198);
+      doc.text(`Export ID: ${exportId}`, 14, doc.internal.pageSize.getHeight() - 15);
+
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let page = 1; page <= totalPages; page += 1) {
+        doc.setPage(page);
+        pdfAddFooter(doc, footerMeta);
+        pdfAddPageNumber(doc);
+      }
 
       doc.save('all-payment-records.pdf');
     }

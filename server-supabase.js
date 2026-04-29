@@ -1903,7 +1903,7 @@ function startLenderPipelineWorker() {
   }, 20000);
 }
 
-async function upsertPaymentReminderRow({ paymentId = null, mobile, name = null, reminderData }) {
+async function upsertPaymentReminderRow({ paymentId = null, mobile, name = null, reminderId = null, reminderData }) {
   const reminderRow = {
     payment_id: paymentId || null,
     payment_mobile: normalizeMobile(mobile || ""),
@@ -1916,6 +1916,48 @@ async function upsertPaymentReminderRow({ paymentId = null, mobile, name = null,
     reminder_status: reminderData?.reminderStatus || "manual",
     paid_at: reminderData?.paidAt || null,
   };
+
+  const existingFilters = [];
+  if (reminderId) {
+    existingFilters.push({ column: "id", value: reminderId });
+  }
+  if (paymentId) {
+    existingFilters.push({ column: "payment_id", value: paymentId });
+  }
+  if (mobile) {
+    existingFilters.push({ column: "payment_mobile", value: normalizeMobile(mobile) });
+  }
+
+  let existingRow = null;
+  for (const filter of existingFilters) {
+    let query = supabase.from(paymentRemindersTable).select("*");
+    query = query.eq(filter.column, filter.value).order("created_at", { ascending: false }).limit(1);
+
+    const { data, error } = await query.maybeSingle();
+    if (error) {
+      throw error;
+    }
+
+    if (data) {
+      existingRow = data;
+      break;
+    }
+  }
+
+  if (existingRow?.id) {
+    const { data, error } = await supabase
+      .from(paymentRemindersTable)
+      .update(reminderRow)
+      .eq("id", existingRow.id)
+      .select("*")
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  }
 
   const { data, error } = await supabase
     .from(paymentRemindersTable)
@@ -4204,6 +4246,7 @@ app.get("/api/payments/:mobile", requireAuthenticatedUser, requireOwnerOrAdminFo
 
 app.put("/api/payments/:id/reminder", requireAdmin, paymentAdminActionLimiter, async (req, res) => {
   const { id } = req.params;
+  const rawReminderId = String(req.body?.reminderId || "").trim();
   const rawReminder = String(req.body?.reminderNote || "").trim();
   const rawBorrowDate = String(req.body?.borrowDate || "").trim();
   const rawRepaymentDate = String(req.body?.repaymentDate || "").trim();
@@ -4306,13 +4349,8 @@ app.put("/api/payments/:id/reminder", requireAdmin, paymentAdminActionLimiter, a
       const updatedPayment = await syncReminderColumnsOnPayment(targetId, reminderData, nextPaymentStatus);
 
       if (reminderData) {
-        if (String(reminderData.reminderStatus || "").toLowerCase() === "paid") {
-          await clearPaymentReminderRows({ mobile: targetMobile });
-        } else {
-          await clearPaymentReminderRows({ paymentId: targetId, mobile: targetMobile });
-        }
-
         await upsertPaymentReminderRow({
+          reminderId: rawReminderId || null,
           paymentId: targetId,
           mobile: targetMobile,
           name: rawName || paymentRecord.name,
@@ -4351,6 +4389,7 @@ app.put("/api/payments/:id/reminder", requireAdmin, paymentAdminActionLimiter, a
     }
 
     const manualReminderRow = await upsertPaymentReminderRow({
+      reminderId: rawReminderId || null,
       paymentId: null,
       mobile: targetMobile,
       name: rawName,
