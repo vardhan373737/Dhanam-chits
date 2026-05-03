@@ -1245,21 +1245,6 @@ function processReminderJob(state, job) {
     targetReminderId: job.reminderId,
     jobId: job.id,
   });
-
-  appendReminderNotification(state, {
-    type: "delivery",
-    severity: "error",
-    title: "Reminder delivery failed",
-    message: `Could not deliver reminder to ${job.name || job.mobile}. ${delivery.error}`,
-    jobId: job.id,
-    targetMobile: job.mobile,
-    targetReminderId: job.reminderId,
-    action: {
-      type: "retry-now",
-      label: "Retry now",
-      jobId: job.id,
-    },
-  });
 }
 
 function processDueReminderJobs() {
@@ -1868,16 +1853,6 @@ async function processDueLenderJobs() {
       action: "Scheduled lender reminder failed",
       details: `${job.lastError} for ${job.mobile}`,
       status: "failed",
-      lenderId: job.lenderId,
-      targetMobile: job.mobile,
-      jobId: job.id,
-    });
-    appendLenderNotification(state, {
-      type: "delivery",
-      severity: "error",
-      title: "Lender reminder failed",
-      message: `Could not process lender reminder for ${job.name || job.mobile}`,
-      action: { type: "retry", jobId: job.id, label: "Retry now" },
       lenderId: job.lenderId,
       targetMobile: job.mobile,
       jobId: job.id,
@@ -3916,8 +3891,17 @@ app.get("/api/payment-reminder/pipeline/audit", requireAdmin, (req, res) => {
 
   const fromTime = from ? new Date(from).getTime() : null;
   const toTime = to ? new Date(to).getTime() : null;
+  const isVisibleAuditEntry = (entry) => {
+    const action = String(entry.action || "").toLowerCase();
+    const details = String(entry.details || "").toLowerCase();
+    return !action.includes("reminder delivery failed") && !details.includes("whatsapp delivery failed");
+  };
 
   const filtered = state.audits.filter((entry) => {
+    if (!isVisibleAuditEntry(entry)) {
+      return false;
+    }
+
     const entryActor = String(entry.actor || "").toLowerCase();
     const entryActionType = String(entry.actionType || "").toLowerCase();
     const entryStatus = String(entry.status || "").toLowerCase();
@@ -3958,8 +3942,17 @@ app.get("/api/payment-reminder/pipeline/audit/export", requireAdmin, (req, res) 
 
   const fromTime = from ? new Date(from).getTime() : null;
   const toTime = to ? new Date(to).getTime() : null;
+  const isVisibleAuditEntry = (entry) => {
+    const action = String(entry.action || "").toLowerCase();
+    const details = String(entry.details || "").toLowerCase();
+    return !action.includes("reminder delivery failed") && !details.includes("whatsapp delivery failed");
+  };
 
   const filtered = state.audits.filter((entry) => {
+    if (!isVisibleAuditEntry(entry)) {
+      return false;
+    }
+
     const entryActor = String(entry.actor || "").toLowerCase();
     const entryActionType = String(entry.actionType || "").toLowerCase();
     const entryStatus = String(entry.status || "").toLowerCase();

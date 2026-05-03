@@ -10,6 +10,7 @@ const connectDB = require('./db');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
 const pdf = require('pdfkit');
+const whatsappConfig = require('./whatsapp-config');
 
 
 const app = express();
@@ -2030,6 +2031,55 @@ app.get('/api/payment-reminder/pipeline/overview', async (_req, res) => {
         lastWorkerRunAt: state.lastWorkerRunAt || null,
         recentJobs: jobs.slice(0, 50),
     });
+});
+
+// NEW: Automation Status Endpoint
+app.get('/api/automation/status', async (_req, res) => {
+    try {
+        const reminderState = readReminderPipelineState();
+        const lenderState = readLenderState();
+        
+        const reminderJobs = reminderState.jobs || [];
+        const lenderJobs = lenderState.jobs || [];
+        
+        return res.json({
+            status: 'active',
+            reminder: {
+                system: 'payment-reminder-pipeline',
+                workerInterval: '15 seconds',
+                lastRun: reminderState.lastWorkerRunAt,
+                stats: {
+                    queued: reminderJobs.filter((j) => j.status === 'queued').length,
+                    scheduled: reminderJobs.filter((j) => j.status === 'scheduled').length,
+                    sent: reminderJobs.filter((j) => j.status === 'sent').length,
+                    failed: reminderJobs.filter((j) => j.status === 'failed').length,
+                },
+                notifications: reminderState.notifications.length,
+            },
+            lender: {
+                system: 'lender-reminder-pipeline',
+                workerInterval: '20 seconds',
+                autoSchedulerTrigger: '2 days before due date',
+                lastRun: lenderState.lastWorkerRunAt,
+                lastAutoSchedule: lenderState.lastAutoSchedulerRunAt,
+                stats: {
+                    queued: lenderJobs.filter((j) => j.status === 'queued').length,
+                    scheduled: lenderJobs.filter((j) => j.status === 'scheduled').length,
+                    sent: lenderJobs.filter((j) => j.status === 'sent').length,
+                    failed: lenderJobs.filter((j) => j.status === 'failed').length,
+                },
+                lendersActive: lenderState.lenders.filter((l) => l.status !== 'closed').length,
+            },
+            whatsapp: {
+                provider: String(process.env.WHATSAPP_PROVIDER || 'meta').trim(),
+                configured: Boolean(String(process.env.WHATSAPP_META_PHONE_NUMBER_ID || '').trim()),
+            },
+            timestamp: new Date().toISOString(),
+        });
+    } catch (error) {
+        console.error('Error getting automation status:', error);
+        return res.status(500).json({ message: 'Failed to get automation status', error: String(error) });
+    }
 });
 
 app.get('/api/payment-reminder/pipeline/notifications', async (req, res) => {

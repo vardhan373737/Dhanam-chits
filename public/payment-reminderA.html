@@ -89,7 +89,7 @@
     .content {
       position: relative;
       z-index: 1;
-      margin-left: 250px;
+      margin-left: 270px;
       padding: 28px;
     }
 
@@ -99,6 +99,9 @@
       justify-content: space-between;
       gap: 12px;
       margin-bottom: 16px;
+      opacity: 1 !important;
+      visibility: visible !important;
+      z-index: 10;
     }
 
     .page-head h1 {
@@ -106,15 +109,32 @@
       font-family: 'Fraunces', serif;
       font-size: clamp(1.5rem, 2.4vw, 2.2rem);
       font-weight: 700;
-      color: #0d2d43;
       letter-spacing: 0.2px;
+      opacity: 1 !important;
+      visibility: visible !important;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      /* Default/Light mode colors */
+      color: #051f37 !important;
+    }
+
+    /* Dark mode - ensure title visibility */
+    body.dark-mode .page-head h1 {
+      color: #ffffff !important;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     }
 
     .page-tagline {
       margin: 4px 0 0;
-      color: var(--muted);
       font-weight: 600;
       font-size: 0.92rem;
+      opacity: 1 !important;
+      visibility: visible !important;
+      color: #4a6c8a;
+    }
+
+    /* Dark mode - ensure tagline visibility */
+    body.dark-mode .page-tagline {
+      color: #b8cce0 !important;
     }
 
     .toolbar-btn {
@@ -131,6 +151,21 @@
       display: inline-flex;
       align-items: center;
       -webkit-tap-highlight-color: transparent;
+      opacity: 1 !important;
+      visibility: visible !important;
+      z-index: 10;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Light mode - button styling */
+    body:not(.dark-mode) .toolbar-btn {
+      box-shadow: 0 8px 16px rgba(10, 76, 102, 0.2);
+    }
+
+    /* Dark mode - enhanced button visibility */
+    body.dark-mode .toolbar-btn {
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
     }
 
     .toolbar-btn.icon-only {
@@ -3176,6 +3211,7 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="premium-shared.css">
   <link rel="stylesheet" href="admin-sidebar.css">
   <link rel="stylesheet" href="index-theme.css">
 </head>
@@ -4239,7 +4275,7 @@
       const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
       
       if (daysDiff < 0) {
-        return { display: `${Math.abs(daysDiff)} overdue`, value: daysDiff, color: '#b8304e' };
+        return { display: `${Math.abs(daysDiff)} days overdue`, value: daysDiff, color: '#b8304e' };
       } else if (daysDiff === 0) {
         return { display: 'Today', value: 0, color: '#d97e2a' };
       } else if (daysDiff <= 3) {
@@ -5286,10 +5322,16 @@
 
     function buildBillItem(payment) {
       const item = document.createElement('div');
-      item.className = 'bill-item';
 
       const isPaidEntry = Boolean(payment.paidMode);
       const dueInfo = isPaidEntry ? null : getDaysRemainingValue(payment.reminderRepaymentDate);
+      const isOverdue = dueInfo && dueInfo.value < 0;
+      
+      item.className = `bill-item ${isOverdue ? 'bill-item-overdue' : ''}`.trim();
+      if (isOverdue) {
+        item.style.borderLeft = '4px solid #b8304e';
+      }
+
       const dueLabel = isPaidEntry ? 'Settled' : (dueInfo ? dueInfo.display : 'No due date');
       const repaymentText = isPaidEntry
         ? `Paid on ${formatDisplayDate(payment.paidDate || payment.created_at)}`
@@ -5305,15 +5347,16 @@
           ? `<span>Mode Extend</span><span>Interest-only this month</span>`
           : '';
       const cleanNote = stripPlanTag(payment.reminderNote || '');
+      const billIconStyle = isOverdue ? 'style="background-color: #b8304e; color: white; font-weight: bold;"' : '';
 
       item.innerHTML = `
         <input type="checkbox" class="bulk-checkbox" style="margin-right: 12px; cursor: pointer;">
-        <div class="bill-icon">₹</div>
+        <div class="bill-icon" ${billIconStyle}>₹</div>
         <div class="bill-main">
           <div class="bill-name">${payment.name || 'Manual Reminder'}</div>
           <div class="bill-meta">
             <span>${repaymentText}</span>
-            <span>${dueLabel}</span>
+            <span ${isOverdue ? 'style="color: #b8304e; font-weight: 600;"' : ''}>${dueLabel}</span>
             <span>${payment.mobile || ''}</span>
             ${extraMeta}
             ${isPaidEntry ? `<span>Principal ${formatCurrency(amounts.principal)}</span><span>Interest ${formatCurrency(amounts.interestAmount)}</span>` : ''}
@@ -6236,39 +6279,18 @@
     
     // Update analytics dashboard with real-time stats
     function updateAnalyticsDashboard() {
-      const payments = getAdminPaymentsOnly(getPaidPayments());
+      const { active, paid, grouped } = getReminderBuckets();
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
-      let overdueCount = 0;
-      let dueSoonCount = 0;
-      let pendingCount = 0;
+      const overdueCount = grouped.overdue.length;
+      const dueSoonCount = grouped.thisMonth.length;
+      const pendingCount = active.length;
       let paidThisMonthCount = 0;
       
-      payments.forEach(payment => {
-        const repaymentDate = toDateStart(payment.reminderRepaymentDate);
-        if (!repaymentDate) {
-          pendingCount++;
-          return;
-        }
-        
-        const daysRemaining = Math.ceil((repaymentDate - today) / (1000 * 3600 * 24));
-        
-        if (daysRemaining < 0) {
-          overdueCount++;
-        } else if (daysRemaining <= 7) {
-          dueSoonCount++;
-        } else {
-          pendingCount++;
-        }
-      });
-      
-      // Count paid this month
-      const currentMonth = today.getMonth();
-      const currentYear = today.getFullYear();
-      getPaidPayments().forEach(payment => {
+      paid.forEach(payment => {
         const paidDate = toDateStart(payment.reminderPaidAt || payment.created_at);
-        if (paidDate && paidDate.getMonth() === currentMonth && paidDate.getFullYear() === currentYear) {
+        if (paidDate && paidDate.getMonth() === today.getMonth() && paidDate.getFullYear() === today.getFullYear()) {
           paidThisMonthCount++;
         }
       });
@@ -6486,7 +6508,7 @@
     function openNotificationPanel() {
       const title = document.getElementById('notificationTitle');
       if (title) {
-        title.textContent = 'Pipeline Notifications';
+        title.textContent = 'Payment Notifications';
       }
       document.getElementById('notificationPanel').classList.add('show');
       loadNotifications();
@@ -6504,92 +6526,117 @@
       return date.toLocaleString('en-IN');
     }
 
-    function getNotificationActionButton(notification) {
-      const action = notification?.action || {};
-      if (action.type === 'retry-now' && action.jobId) {
-        return `<button class="toast-action-btn" onclick="event.stopPropagation(); retryPipelineJob('${String(action.jobId).replace(/'/g, "\\'")}')">${action.label || 'Retry now'}</button>`;
+    function generatePaymentStatusNotifications() {
+      const notifications = [];
+      const payments = getAdminPaymentsOnly(getPaidPayments());
+      const paidPayments = getPaidPayments();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const overdueItems = payments.filter((payment) => {
+        const repayDate = toDateStart(payment.reminderRepaymentDate);
+        return repayDate && repayDate < today;
+      });
+
+      const dueSoonItems = payments.filter((payment) => {
+        const repayDate = toDateStart(payment.reminderRepaymentDate);
+        const daysRemaining = repayDate ? Math.ceil((repayDate - today) / (1000 * 3600 * 24)) : 999;
+        return repayDate && daysRemaining >= 0 && daysRemaining <= 7;
+      });
+
+      const paidThisMonth = paidPayments.filter((payment) => {
+        const paidDate = toDateStart(payment.reminderPaidAt || payment.created_at);
+        return paidDate && paidDate.getMonth() === today.getMonth() && paidDate.getFullYear() === today.getFullYear();
+      });
+
+      if (overdueItems.length) {
+        notifications.push({
+          id: 'payment-overdue',
+          type: 'overdue',
+          severity: 'error',
+          title: `Overdue payments (${overdueItems.length})`,
+          message: `${overdueItems.slice(0, 3).map((item) => item.name || item.mobile || 'Reminder').join(', ')}${overdueItems.length > 3 ? '…' : ''}`,
+          createdAt: new Date().toISOString(),
+        });
       }
 
+      if (dueSoonItems.length) {
+        notifications.push({
+          id: 'payment-due-soon',
+          type: 'due-soon',
+          severity: 'warning',
+          title: `Due soon (${dueSoonItems.length})`,
+          message: `${dueSoonItems.slice(0, 3).map((item) => item.name || item.mobile || 'Reminder').join(', ')}${dueSoonItems.length > 3 ? '…' : ''}`,
+          createdAt: new Date().toISOString(),
+        });
+      }
+
+      if (paidThisMonth.length) {
+        notifications.push({
+          id: 'payment-paid',
+          type: 'paid',
+          severity: 'success',
+          title: `Paid this month (${paidThisMonth.length})`,
+          message: `${paidThisMonth.slice(0, 3).map((item) => item.name || item.mobile || 'Reminder').join(', ')}${paidThisMonth.length > 3 ? '…' : ''}`,
+          createdAt: new Date().toISOString(),
+        });
+      }
+
+      return notifications;
+    }
+
+    function getNotificationBadgeLabel(notification) {
       if (notification?.type === 'overdue') {
-        return `<button class="toast-action-btn" onclick="event.stopPropagation(); openAuditModal()">Review</button>`;
+        return 'OVERDUE';
       }
-
-      return `<button class="toast-action-btn" onclick="event.stopPropagation(); resolvePipelineNotification('${String(notification.id).replace(/'/g, "\\'")}')">Resolve</button>`;
+      if (notification?.type === 'due-soon') {
+        return 'DUE SOON';
+      }
+      if (notification?.type === 'paid') {
+        return 'PAID';
+      }
+      return String(notification?.severity || 'info').toUpperCase();
     }
 
-    async function resolvePipelineNotification(id) {
-      try {
-        const response = await fetch(`/api/payment-reminder/pipeline/notifications/${encodeURIComponent(id)}/resolve`, {
-          method: 'POST'
-        });
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(payload.message || 'Failed to resolve notification');
-        }
-
-        showToast(payload.message || 'Notification resolved', 'success', 'Notifications');
-        await Promise.all([loadNotifications(), refreshPipelineOverview()]);
-      } catch (error) {
-        showToast(error.message || 'Failed to resolve notification', 'error', 'Notifications');
+    function getNotificationBadgeClass(notification) {
+      if (notification?.type === 'overdue') {
+        return 'badge-danger';
       }
-    }
-
-    async function retryPipelineJob(jobId) {
-      try {
-        const response = await fetch(`/api/payment-reminder/pipeline/retry/${encodeURIComponent(jobId)}`, {
-          method: 'POST'
-        });
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(payload.message || 'Failed to queue retry');
-        }
-
-        showToast(payload.message || 'Retry queued', 'success', 'Retry');
-        await Promise.all([loadNotifications(), refreshPipelineOverview()]);
-      } catch (error) {
-        showToast(error.message || 'Failed to queue retry', 'error', 'Retry');
+      if (notification?.type === 'due-soon') {
+        return 'badge-warning';
       }
+      if (notification?.type === 'paid') {
+        return 'badge-success';
+      }
+      return notification?.severity === 'error' ? 'badge-danger' : notification?.severity === 'warning' ? 'badge-warning' : 'badge-success';
     }
 
     async function loadNotifications() {
       const list = document.getElementById('notificationList');
       if (!list) return;
 
-      list.innerHTML = '<div class="notification-item">Loading notifications...</div>';
+      const notifications = generatePaymentStatusNotifications();
+      updateNotificationBadge(notifications.length);
 
-      try {
-        const response = await fetch('/api/payment-reminder/pipeline/notifications?status=open');
-        const notifications = await response.json().catch(() => []);
-        if (!response.ok) {
-          throw new Error('Failed to load notifications');
-        }
-
-        const items = Array.isArray(notifications) ? notifications : [];
-        updateNotificationBadge(items.length);
-
-        if (!items.length) {
-          list.innerHTML = '<div class="notification-item">No open pipeline notifications.</div>';
-          return;
-        }
-
-        list.innerHTML = items.map((notif) => `
-          <div class="notification-item">
-            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
-              <div>
-                <div style="font-weight: 700; color: #0d2d43;">${notif.title || 'Notification'}</div>
-                <div style="font-size: 0.85rem; color: #496a81; margin-top: 4px;">${notif.message || '-'}</div>
-              </div>
-              <span class="badge ${notif.severity === 'error' ? 'badge-danger' : notif.severity === 'warning' ? 'badge-warning' : 'badge-primary'}">${String(notif.severity || 'info').toUpperCase()}</span>
-            </div>
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px;">
-              <div class="notification-time">${formatNotificationTime(notif.createdAt)}</div>
-              ${getNotificationActionButton(notif)}
-            </div>
-          </div>
-        `).join('');
-      } catch (error) {
-        list.innerHTML = `<div class="notification-item">${error.message || 'Unable to load notifications.'}</div>`;
+      if (!notifications.length) {
+        list.innerHTML = '<div class="notification-item">No payment notifications.</div>';
+        return;
       }
+
+      list.innerHTML = notifications.map((notif) => `
+        <div class="notification-item">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
+            <div>
+              <div style="font-weight: 700; color: #0d2d43;">${notif.title || 'Notification'}</div>
+              <div style="font-size: 0.85rem; color: #496a81; margin-top: 4px;">${notif.message || '-'}</div>
+            </div>
+            <span class="badge ${getNotificationBadgeClass(notif)}">${getNotificationBadgeLabel(notif)}</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px;">
+            <div class="notification-time">${formatNotificationTime(notif.createdAt)}</div>
+          </div>
+        </div>
+      `).join('');
     }
 
     function openAuditModal() {
@@ -6882,6 +6929,7 @@
     async function fetchPaymentsWithAnalytics() {
       await originalFetchPayments.call(this);
       updateAnalyticsDashboard();
+      loadNotifications();
     }
     fetchPayments = fetchPaymentsWithAnalytics;
 
@@ -7433,20 +7481,20 @@
     let premiumStatusChart = null;
 
     function updateKPICards() {
-      const payments = getAdminPaymentsOnly(getPaidPayments());
+      const { active, paid, grouped } = getReminderBuckets();
       let totalDue = 0;
       let collectedAmount = 0;
-      let totalReminders = payments.length;
 
-      payments.forEach(p => {
-        const principal = Number(p.reminderAmount) || 0;
-        const interest = Number(p.reminderInterest) || 0;
-        const amount = principal + (principal * interest / 100);
-        if (p.reminderStatus === 'pending') totalDue += amount;
-        if (p.reminderStatus === 'paid') collectedAmount += amount;
+      active.forEach((payment) => {
+        totalDue += totalPayable(payment);
       });
 
-      const collectionRate = totalReminders > 0 ? ((payments.filter(p => p.reminderStatus === 'paid').length / totalReminders) * 100).toFixed(1) : 0;
+      paid.forEach((payment) => {
+        collectedAmount += totalPayable(payment);
+      });
+
+      const totalValue = totalDue + collectedAmount;
+      const collectionRate = totalValue > 0 ? ((collectedAmount / totalValue) * 100).toFixed(1) : 0;
       
       if (document.getElementById('kpiTotalDue')) {
         document.getElementById('kpiTotalDue').textContent = '₹' + formatAmount(totalDue);
@@ -7456,15 +7504,14 @@
         document.getElementById('kpiCollectionRate').textContent = collectionRate + '%';
       }
       if (document.getElementById('kpiPendingAction')) {
-        document.getElementById('kpiPendingAction').textContent = payments.filter(p => p.reminderStatus === 'pending').length;
+        document.getElementById('kpiPendingAction').textContent = grouped.overdue.length + grouped.thisMonth.length + grouped.nextMonth.length + grouped.later.length;
       }
       
       updateContextualAlerts();
     }
 
     function renderPremiumCharts() {
-      const payments = getAdminPaymentsOnly(getPaidPayments());
-      const paidPayments = getPaidPayments();
+      const { active, paid, grouped } = getReminderBuckets();
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -7477,12 +7524,12 @@
         day.setDate(today.getDate() - offset);
         labels.push(day.toLocaleDateString('en-IN', { weekday: 'short' }));
 
-        dueData.push(payments.filter(payment => {
+        dueData.push(active.filter(payment => {
           const repaymentDate = toDateStart(payment.reminderRepaymentDate);
           return repaymentDate && repaymentDate.toDateString() === day.toDateString();
         }).length);
 
-        paidData.push(paidPayments.filter(payment => {
+        paidData.push(paid.filter(payment => {
           const paidDate = toDateStart(payment.reminderPaidAt || payment.created_at);
           return paidDate && paidDate.toDateString() === day.toDateString();
         }).length);
@@ -7524,18 +7571,9 @@
 
       const statusCanvas = document.getElementById('statusBreakdownChart');
       if (statusCanvas && window.Chart) {
-        const overdueCount = payments.filter(payment => {
-          const repayDate = toDateStart(payment.reminderRepaymentDate);
-          return payment.reminderStatus === 'pending' && repayDate && repayDate < today;
-        }).length;
-
-        const dueSoonCount = payments.filter(payment => {
-          const repayDate = toDateStart(payment.reminderRepaymentDate);
-          const daysRemaining = repayDate ? Math.ceil((repayDate - today) / (1000 * 3600 * 24)) : 999;
-          return daysRemaining >= 0 && daysRemaining <= 7;
-        }).length;
-
-        const paidCount = paidPayments.length;
+        const overdueCount = grouped.overdue.length;
+        const dueSoonCount = grouped.thisMonth.length;
+        const paidCount = paid.length;
 
         if (premiumStatusChart) premiumStatusChart.destroy();
         premiumStatusChart = new Chart(statusCanvas, {
