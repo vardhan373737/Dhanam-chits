@@ -207,6 +207,34 @@
       justify-content: flex-end;
     }
 
+    .theme-badge {
+      margin-top: 8px;
+      border: 1px solid rgba(13, 124, 145, 0.2);
+      border-radius: 999px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.8);
+      color: #0d2d43;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .theme-badge:hover {
+      transform: translateY(-1px);
+      border-color: rgba(13, 124, 145, 0.35);
+    }
+
+    body.dark-mode .theme-badge {
+      background: rgba(8, 25, 39, 0.85);
+      color: #d4e4f2;
+      border-color: rgba(162, 196, 225, 0.3);
+    }
+
     .premium-summary {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2080,6 +2108,37 @@
       border-color: #0d7c91;
     }
 
+    .quick-filter-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .quick-filter-chip {
+      border: 1px solid rgba(184, 48, 78, 0.28);
+      background: rgba(184, 48, 78, 0.08);
+      color: #8f2540;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 7px 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .quick-filter-chip.active {
+      background: #b8304e;
+      color: #fff;
+      border-color: #b8304e;
+      box-shadow: 0 8px 20px rgba(184, 48, 78, 0.25);
+    }
+
+    .legacy-integration {
+      display: none !important;
+    }
+
     /* Checkbox for bulk select */
     .bulk-checkbox {
       width: 18px;
@@ -2633,6 +2692,10 @@
         margin-bottom: 12px;
       }
 
+      .page-head > div:first-child {
+        width: 100%;
+      }
+
       .page-head h1 {
         font-size: 1.35rem;
         margin: 0;
@@ -2649,7 +2712,20 @@
       }
 
       .toolbar-group {
+        width: 100%;
         justify-content: flex-start;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 4px;
+      }
+
+      .theme-badge {
+        margin-top: 6px;
+        font-size: 0.75rem;
+      }
+
+      .quick-filter-row {
+        flex-wrap: wrap;
       }
 
       .premium-summary {
@@ -3326,7 +3402,7 @@
     <a href="paymentA.html"><i class="fas fa-credit-card"></i> <span class="menu-text">Payments</span></a>
     <a href="payment-reminderA.html"><i class="fas fa-bell"></i> <span class="menu-text">Payment Reminder</span></a>
     <a href="lenderA.html"><i class="fas fa-landmark"></i> <span class="menu-text">Lender Center</span></a>
-    <a href="whatsapp-setup.html"><i class="fab fa-whatsapp"></i> <span class="menu-text">WhatsApp Setup</span></a>
+    <a href="whatsapp-setup.html" class="legacy-integration"><i class="fab fa-whatsapp"></i> <span class="menu-text">WhatsApp Setup</span></a>
     <a href="ContactA.html"><i class="fas fa-envelope"></i> <span class="menu-text">Contact Details</span></a>
     <a href="/Login.html" class="logout-btn" onclick="return logout(event)"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
   </div>
@@ -3336,6 +3412,7 @@
       <div>
         <h1>💰 Payment Reminder Center</h1>
         <p class="page-tagline">Manage payment reminders & track collections efficiently.</p>
+        <button type="button" id="themeModeBadge" class="theme-badge" onclick="toggleDarkMode()">🌞 Light Mode</button>
       </div>
       <div class="toolbar-group">
         <button class="toolbar-btn" onclick="fetchPayments()" title="Refresh all data">
@@ -3650,6 +3727,10 @@
           </button>
         </div>
 
+        <div class="quick-filter-row">
+          <button type="button" id="quickOverdueChip" class="quick-filter-chip" onclick="toggleOverdueQuickFilter()">⚡ Overdue Only</button>
+        </div>
+
         <!-- Advanced Filters (hidden by default) -->
         <div id="advancedFilters" style="display: none; padding: 12px; background: rgba(13, 124, 145, 0.05); border-radius: 10px; margin-bottom: 12px; border: 1px solid rgba(13, 124, 145, 0.1);">
           <div class="grid">
@@ -3822,6 +3903,7 @@
     let pendingUndoAction = null;
     let virtualListPageSize = 120;
     let selectedScheduleTime = '';
+    const ENABLE_LEGACY_WHATSAPP_UI = true;
     let reminderAuditFilters = {
       actor: '',
       actionType: '',
@@ -4303,46 +4385,45 @@
     function buildWhatsAppMessage(payment) {
       try {
         const name = payment.name || 'Customer';
+        const borrowDate = payment.reminderBorrowDate || '-';
+        const repaymentDate = payment.reminderRepaymentDate || '-';
+
+        const principal = Number(payment.reminderAmount);
+        const safePrincipal = Number.isFinite(principal) ? principal : 0;
+
+        const interestRateRaw = String(payment.reminderInterest ?? '').replace('%', '').trim();
+        const interestRateNumeric = Number(interestRateRaw);
+        const interestRate = Number.isFinite(interestRateNumeric) ? interestRateNumeric : 0;
+
+        const interestAmount = (safePrincipal * interestRate) / 100;
+        const computedTotal = safePrincipal + interestAmount;
+        const payable = Number.isFinite(computedTotal) && computedTotal > 0 ? computedTotal : Number(totalPayable(payment) || 0);
+
+        const daysInfo = repaymentDate !== '-' ? getDaysRemainingValue(repaymentDate) : null;
+        const daysLine = daysInfo ? daysInfo.display : '-';
+
+        const cleanNote = stripPlanTag(payment.reminderNote || '').trim();
+        const generatedNote = `Borrow Date: ${borrowDate}, Repayment Date: ${repaymentDate}, Amount: ${formatAmount(safePrincipal)}, Interest: ${interestRate}%`;
+        const noteLine = cleanNote || generatedNote;
+
         const lines = [
           `Dear ${name},`,
           'Payment reminder details:',
+          `Borrow Date: ${borrowDate}`,
+          `Repayment Date: ${repaymentDate}`,
+          `Days Remaining: ${daysLine}`,
+          `Principal Amount: ${formatAmount(safePrincipal)}`,
+          `Interest Rate: ${interestRate}%`,
+          `Interest Amount: ${formatAmount(interestAmount)}`,
+          `Total Payable: ${formatAmount(payable)}`,
+          `Note: ${noteLine}`,
+          'Please repay on time. Thank you.',
         ];
 
-        if (payment.reminderBorrowDate) {
-          lines.push(`Borrow Date: ${payment.reminderBorrowDate}`);
-        }
-        if (payment.reminderRepaymentDate) {
-          lines.push(`Repayment Date: ${payment.reminderRepaymentDate}`);
-          const daysInfo = getDaysRemainingValue(payment.reminderRepaymentDate);
-          if (daysInfo) {
-            lines.push(`Days Remaining: ${daysInfo.display}`);
-          }
-        }
-        if (payment.reminderAmount !== null && payment.reminderAmount !== undefined && String(payment.reminderAmount) !== '') {
-          const principal = parseFloat(payment.reminderAmount);
-          lines.push(`Principal Amount: ${formatAmount(principal)}`);
-          
-          if (payment.reminderInterest !== null && payment.reminderInterest !== undefined && String(payment.reminderInterest) !== '') {
-            const interestRate = parseFloat(payment.reminderInterest);
-            const interestAmount = (principal * interestRate) / 100;
-            const totalAmount = principal + interestAmount;
-            
-            lines.push(`Interest Rate: ${payment.reminderInterest}%`);
-            lines.push(`Interest Amount: ${formatAmount(interestAmount)}`);
-            lines.push(`Total Payable: ${formatAmount(totalAmount)}`);
-          }
-        }
-        const cleanNote = stripPlanTag(payment.reminderNote || '');
-        if (cleanNote) {
-          lines.push(`Note: ${cleanNote}`);
-        }
-
-          lines.push('');
-        lines.push('Please repay on time. Thank you.');
         return lines.join('\n');
       } catch (e) {
         console.error('Error building WhatsApp message:', e);
-        return `Dear ${payment.name || 'Customer'}, Please pay Rs. ${totalPayable(payment)} by ${payment.reminderRepaymentDate || 'the due date'}. Thank you.`;
+        return `Dear ${payment.name || 'Customer'},\nPayment reminder details:\nPlease repay on time. Thank you.`;
       }
     }
 
@@ -4705,7 +4786,17 @@
       document.querySelectorAll('.view-tab').forEach((button) => {
         button.classList.toggle('active', button.dataset.view === view);
       });
+      const quickChip = document.getElementById('quickOverdueChip');
+      if (quickChip) {
+        const isOverdueOnly = view === 'overdue';
+        quickChip.classList.toggle('active', isOverdueOnly);
+        quickChip.textContent = isOverdueOnly ? '✅ Overdue Only' : '⚡ Overdue Only';
+      }
       renderPayments();
+    }
+
+    function toggleOverdueQuickFilter() {
+      setPaymentView(paymentViewMode === 'overdue' ? 'all' : 'overdue');
     }
 
     function pdfSetDarkBackground(doc) {
@@ -5326,10 +5417,18 @@
       const isPaidEntry = Boolean(payment.paidMode);
       const dueInfo = isPaidEntry ? null : getDaysRemainingValue(payment.reminderRepaymentDate);
       const isOverdue = dueInfo && dueInfo.value < 0;
-      
-      item.className = `bill-item ${isOverdue ? 'bill-item-overdue' : ''}`.trim();
+      const status = normalizeText(payment.status);
+      const isPaidReminder = status === 'paid-reminder' || normalizeText(payment.reminderStatus) === 'paid';
+      const isSettled = isPaidEntry || isPaidReminder;
+      const isDueSoon = !isSettled && dueInfo && dueInfo.value >= 0 && dueInfo.value <= 7;
+
+      item.className = `bill-item ${isOverdue ? 'bill-item-overdue' : ''} ${isDueSoon ? 'bill-item-due-soon' : ''} ${isSettled ? 'bill-item-paid' : ''}`.trim();
       if (isOverdue) {
         item.style.borderLeft = '4px solid #b8304e';
+      } else if (isDueSoon) {
+        item.style.borderLeft = '4px solid #d97e2a';
+      } else if (isSettled) {
+        item.style.borderLeft = '4px solid #0b7a75';
       }
 
       const dueLabel = isPaidEntry ? 'Settled' : (dueInfo ? dueInfo.display : 'No due date');
@@ -5337,8 +5436,6 @@
         ? `Paid on ${formatDisplayDate(payment.paidDate || payment.created_at)}`
         : (payment.reminderRepaymentDate || 'No due date');
       const amounts = getPaymentAmounts(payment);
-      const status = normalizeText(payment.status);
-      const isPaidReminder = status === 'paid-reminder' || normalizeText(payment.reminderStatus) === 'paid';
       const plan = parsePlanTag(payment.reminderNote || '');
       const showExtendAction = !isPaidEntry && !isPaidReminder && plan?.mode === 'extend';
       const extraMeta = plan?.mode === 'emi'
@@ -5347,7 +5444,21 @@
           ? `<span>Mode Extend</span><span>Interest-only this month</span>`
           : '';
       const cleanNote = stripPlanTag(payment.reminderNote || '');
-      const billIconStyle = isOverdue ? 'style="background-color: #b8304e; color: white; font-weight: bold;"' : '';
+      const dueLabelStyle = isOverdue
+        ? 'style="color: #b8304e; font-weight: 700;"'
+        : isDueSoon
+          ? 'style="color: #d97e2a; font-weight: 700;"'
+          : isSettled
+            ? 'style="color: #0b7a75; font-weight: 700;"'
+            : '';
+      const billIconStyle = isOverdue
+        ? 'style="background-color: #b8304e; color: white; font-weight: bold;"'
+        : isDueSoon
+          ? 'style="background-color: #d97e2a; color: white; font-weight: bold;"'
+          : isSettled
+            ? 'style="background-color: #0b7a75; color: white; font-weight: bold;"'
+            : '';
+      const shareAction = ENABLE_LEGACY_WHATSAPP_UI ? '<button type="button" class="btn btn-share">WhatsApp</button>' : '';
 
       item.innerHTML = `
         <input type="checkbox" class="bulk-checkbox" style="margin-right: 12px; cursor: pointer;">
@@ -5356,7 +5467,7 @@
           <div class="bill-name">${payment.name || 'Manual Reminder'}</div>
           <div class="bill-meta">
             <span>${repaymentText}</span>
-            <span ${isOverdue ? 'style="color: #b8304e; font-weight: 600;"' : ''}>${dueLabel}</span>
+            <span ${dueLabelStyle}>${dueLabel}</span>
             <span>${payment.mobile || ''}</span>
             ${extraMeta}
             ${isPaidEntry ? `<span>Principal ${formatCurrency(amounts.principal)}</span><span>Interest ${formatCurrency(amounts.interestAmount)}</span>` : ''}
@@ -5366,7 +5477,7 @@
         <div class="bill-amount">${formatCurrency(isPaidEntry ? amounts.totalAmount : totalPayable(payment))}</div>
         <div class="bill-actions">
           <button type="button" class="btn btn-edit">Manage</button>
-          <button type="button" class="btn btn-share">WhatsApp</button>
+          ${shareAction}
           ${isPaidEntry || isPaidReminder ? '<button type="button" class="btn btn-reset btn-unpaid">Unpaid</button>' : '<button type="button" class="btn btn-save btn-paid">Paid</button>'}
           ${showExtendAction ? '<button type="button" class="btn btn-reset btn-extend">Extend</button>' : ''}
           <button type="button" class="btn btn-clear">Clear</button>
@@ -5390,11 +5501,13 @@
         event.stopPropagation();
         populateReminderForm(payment);
       };
-      shareBtn.onclick = (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        shareToWhatsApp(payment);
-      };
+      if (shareBtn) {
+        shareBtn.onclick = (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          shareToWhatsApp(payment);
+        };
+      }
       if (paidBtn) {
         paidBtn.onclick = async (event) => {
           event.preventDefault();
@@ -6803,10 +6916,22 @@
       toggle.classList.toggle('active', active);
     }
 
+    function updateThemeModeBadge() {
+      const badge = document.getElementById('themeModeBadge');
+      if (!badge) {
+        return;
+      }
+
+      const isDark = document.body.classList.contains('dark-mode');
+      badge.textContent = isDark ? '🌙 Dark Mode' : '🌞 Light Mode';
+      badge.setAttribute('aria-label', `Current theme: ${isDark ? 'Dark Mode' : 'Light Mode'}`);
+    }
+
     function toggleDarkMode() {
       const isDark = document.body.classList.toggle('dark-mode');
       localStorage.setItem('darkMode', isDark);
       updateToggleState('darkModeToggle', isDark);
+      updateThemeModeBadge();
       showToast('Dark mode ' + (isDark ? 'enabled' : 'disabled'), 'success');
     }
 
@@ -6875,6 +7000,7 @@
     if (localStorage.getItem('darkMode') === 'true') {
       document.body.classList.add('dark-mode');
     }
+    updateThemeModeBadge();
 
     // Update notification badge
     function updateNotificationBadge(count) {
@@ -6920,6 +7046,7 @@
       if (localStorage.getItem('darkMode') === 'true') {
         document.body.classList.add('dark-mode');
       }
+      updateThemeModeBadge();
       startAutoRefresh();
       logActivity('Page loaded', 'Payment Reminder Center accessed');
     }
