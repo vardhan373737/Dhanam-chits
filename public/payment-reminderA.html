@@ -4521,6 +4521,63 @@
       return { principal, interestRate, interestAmount, totalAmount };
     }
 
+    function normalizePaidReminderAmounts(payment) {
+      const totalAmount = Number(
+        payment.totalAmount
+        ?? payment.reminderTotalAmount
+        ?? payment.reminder_total_amount
+        ?? payment.paidAmount
+        ?? payment.amount
+        ?? 0,
+      ) || 0;
+
+      const rate = Number(payment.reminderInterest ?? payment.interest ?? payment.interestRate ?? payment.reminderRate ?? 0) || 0;
+      const explicitPrincipal = Number(payment.reminderAmount ?? payment.principalAmount ?? payment.baseAmount ?? 0);
+
+      let principal = Number.isFinite(explicitPrincipal) && explicitPrincipal > 0 ? explicitPrincipal : 0;
+      if (!principal && totalAmount > 0 && rate > 0) {
+        principal = totalAmount / (1 + (rate / 100));
+      }
+      if (!principal) {
+        principal = Number(payment.reminderAmount ?? payment.amount ?? 0) || 0;
+      }
+
+      if (!Number.isFinite(principal) || principal < 0) {
+        principal = 0;
+      }
+
+      return {
+        reminderAmount: Math.round((principal + Number.EPSILON) * 100) / 100,
+        totalAmount,
+        reminderInterest: Number.isFinite(rate) && rate >= 0 ? rate : 0,
+      };
+    }
+
+    function buildExtendPaidViewItem(payment) {
+      const plan = parsePlanTag(payment.reminderNote || '');
+      if (plan?.mode !== 'extend') {
+        return null;
+      }
+
+      const interestOnly = Number(plan.interestOnly ?? 0) || 0;
+      const currentAmounts = getPaymentAmounts(payment);
+      const paidAmount = normalizeMoney(interestOnly || currentAmounts.interestAmount, { snapNearInteger: true }) || 0;
+
+      if (paidAmount <= 0) {
+        return null;
+      }
+
+      return {
+        ...payment,
+        paidMode: true,
+        reminderStatus: 'paid-reminder',
+        paidDate: payment.paidAt || payment.updated_at || payment.updatedAt || new Date().toISOString(),
+        reminderAmount: 0,
+        reminderInterest: 0,
+        totalAmount: paidAmount,
+      };
+    }
+
     function dedupePaymentsBySignature(items) {
       const seen = new Set();
       return items.filter((item) => {
@@ -5593,10 +5650,13 @@
       const list = document.createElement('div');
       list.className = 'bill-list';
       renderVirtualizedBillList(list, items, (payment) => {
+        const paidAmounts = normalizePaidReminderAmounts(payment);
         const paidItem = {
           ...payment,
           paidMode: true,
-          reminderAmount: payment.reminderAmount ?? payment.amount ?? 0,
+          reminderAmount: paidAmounts.reminderAmount,
+          totalAmount: paidAmounts.totalAmount,
+          reminderInterest: paidAmounts.reminderInterest,
         };
         return buildBillItem(paidItem);
       });
@@ -5653,10 +5713,14 @@
         reminderRepaymentDate: item.reminderRepaymentDate || null,
         paidDate: item.created_at || null,
         paidMode: true,
-        reminderAmount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : (item.reminderAmount || 0),
-        reminderInterest: item.reminderInterest ?? item.interest ?? item.interestRate ?? item.reminderRate ?? '',
+        ...normalizePaidReminderAmounts(item),
       }));
-      renderPaidSection(paidSection, 'Paid', paidItems);
+      const extendPaidItems = filtered
+        .map((item) => buildExtendPaidViewItem(item))
+        .filter(Boolean)
+        .filter((item) => !paidItems.some((existing) => getReminderSignature(existing) === getReminderSignature(item)));
+
+      renderPaidSection(paidSection, 'Paid', [...paidItems, ...extendPaidItems]);
 
       const visibility = {
         all: ['overdueSummary', 'overdueSection', 'thisMonthSection', 'nextMonthSection', 'laterSection', 'paidSection'],
@@ -6175,7 +6239,7 @@
             repaymentDate: nextRepaymentDate,
             reminderAmount: payment.reminderAmount ?? '',
             reminderInterest: payment.reminderInterest ?? '',
-            totalAmount: payment.totalAmount ?? payment.amount ?? '',
+            totalAmount: payment.totalAmount ?? totalPayable(payment) ?? payment.amount ?? '',
             reminderNote: nextNote,
             reminderStatus: 'manual',
             paidAt: '',
@@ -6202,6 +6266,7 @@
         reminderNote: payment.reminderNote || '',
         reminderStatus: 'paid',
         paidAt: new Date().toISOString(),
+        totalAmount: payment.totalAmount ?? totalPayable(payment) ?? payment.amount ?? '',
       };
 
       await saveReminder(payment.paymentId || payment._id || payment.id || payment.mobile, payload);
