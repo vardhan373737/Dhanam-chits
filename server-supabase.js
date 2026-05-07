@@ -8,6 +8,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const pdf = require("pdfkit");
+const { generatePdfFromUrl } = require("./pdfGenerator");
 const multer = require("multer");
 const rateLimit = require("express-rate-limit");
 const supabase = require("./supabaseClient");
@@ -66,6 +67,31 @@ app.use(express.json({
   },
 }));
 app.use(express.static(path.join(__dirname, "public"), { index: false }));
+
+// Directory for invoices (PDFs)
+// invoicesDir is already defined below using storageBaseDir, so do not redeclare here
+
+// Generate EMI breakdown PDF from an HTML page (query `source` optional)
+app.get("/emi-breakdown.pdf", async (req, res) => {
+  try {
+    const source = String(req.query.source || "/payment-reminderA.html").trim();
+    const absoluteUrl = source.match(/^https?:\/\//i)
+      ? source
+      : `${req.protocol}://${req.get("host")}${source.startsWith("/") ? "" : "/"}${source}`;
+    const filename = `emi-breakdown-${Date.now()}.pdf`;
+    const outputPath = path.join(invoicesDir, filename);
+    await generatePdfFromUrl(absoluteUrl, outputPath);
+    res.download(outputPath, "emi-breakdown.pdf", (err) => {
+      if (err) {
+        console.error("Error sending PDF:", err);
+        res.status(500).send("Failed to generate PDF");
+      }
+    });
+  } catch (err) {
+    console.error("Error generating PDF:", err);
+    res.status(500).send("Error generating PDF");
+  }
+});
 
 if (isProduction) {
   app.set("trust proxy", 1);
@@ -947,6 +973,7 @@ const borrowDocsIndexPath = path.join(storageBaseDir, "uploads", "borrow-docs-in
 const paymentScreenshotsDir = path.join(storageBaseDir, "uploads", "payment-screenshots");
 const paymentScreenshotsIndexPath = path.join(storageBaseDir, "uploads", "payment-screenshots-index.json");
 const reminderPipelineStatePath = path.join(storageBaseDir, "uploads", "reminder-pipeline-state.json");
+const paymentRemindersCachePath = path.join(storageBaseDir, "uploads", "payment-reminders.json");
 const lenderStatePath = path.join(storageBaseDir, "uploads", "lenders-state.json");
 const paymentScreenshotBucket = String(process.env.PAYMENT_SCREENSHOT_BUCKET || "payment-screenshots").trim();
 const auctionChatFallbackPath = path.join(storageBaseDir, "uploads", "auction-chat-fallback.json");
@@ -1085,6 +1112,68 @@ function writeReminderPipelineState(state) {
     fs.writeFileSync(reminderPipelineStatePath, JSON.stringify(state, null, 2), "utf8");
   } catch (error) {
     console.error("Failed to save reminder pipeline state:", error);
+  }
+}
+
+function readPaymentRemindersCache() {
+  try {
+    if (!fs.existsSync(paymentRemindersCachePath)) {
+      return [];
+    }
+
+    const raw = fs.readFileSync(paymentRemindersCachePath, "utf8");
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") {
+      return [];
+    }
+
+    const rows = [];
+    const seen = new Set();
+
+    const addItem = (item, mobileHint = "") => {
+      if (!item || typeof item !== "object") {
+        return;
+      }
+
+      const mobile = normalizeMobile(item.mobile || mobileHint || item.payment_mobile || "");
+      const signature = [
+        item.reminderId || item.id || "",
+        mobile,
+        String(item.repaymentDate || item.reminderRepaymentDate || ""),
+        String(item.note || item.reminderNote || ""),
+      ].join("|");
+
+      if (seen.has(signature)) {
+        return;
+      }
+
+      seen.add(signature);
+      rows.push({
+        id: item.reminderId || item.id || item.reminder_id || null,
+        payment_id: item.paymentId || item.payment_id || null,
+        payment_name: item.name || item.payment_name || null,
+        payment_mobile: mobile,
+        reminder_note: item.note || item.reminderNote || "",
+        reminder_borrow_date: item.borrowDate || item.reminderBorrowDate || null,
+        reminder_repayment_date: item.repaymentDate || item.reminderRepaymentDate || null,
+        reminder_amount: item.reminderAmount ?? null,
+        reminder_interest: item.reminderInterest ?? null,
+        reminder_status: item.reminderStatus || (item.paidAt ? "paid" : "manual"),
+        paid_at: item.paidAt || null,
+        created_at: item.createdAt || item.created_at || item.updatedAt || null,
+        updated_at: item.updatedAt || item.updated_at || item.createdAt || item.created_at || null,
+      });
+    };
+
+    Object.values(parsed.byId || {}).forEach((item) => addItem(item));
+    Object.entries(parsed.byMobile || {}).forEach(([mobile, items]) => {
+      (Array.isArray(items) ? items : []).forEach((item) => addItem(item, mobile));
+    });
+
+    return rows;
+  } catch (error) {
+    console.error("Failed to read payment reminders cache:", error);
+    return [];
   }
 }
 
@@ -3628,20 +3717,33 @@ app.get("/api/payments", requireAdmin, async (_req, res) => {
   return res.json([...mappedPayments, ...manualOnlyReminders]);
 });
 
-app.get("/api/payment-reminders", requireAdmin, async (_req, res) => {
-  const { data, error } = await supabase
-    .from(paymentRemindersTable)
-    .select("*")
-    .order("created_at", { ascending: false });
+app.get("/api/payment-reminders", async (req, res) => {
+  let reminders = [];
 
-  if (error) {
+  try {
+    const { data, error } = await supabase
+      .from(paymentRemindersTable)
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    reminders = (data || [])
+      .map(normalizeReminderRow)
+      .filter(Boolean);
+  } catch (error) {
     console.error("list payment reminders error", error);
-    return res.status(500).json({ error: "Failed to fetch payment reminders" });
+    reminders = readPaymentRemindersCache()
+      .map(normalizeReminderRow)
+      .filter(Boolean);
   }
 
-  const reminders = (data || [])
-    .map(normalizeReminderRow)
-    .filter(Boolean);
+  if (req.session?.user && !isRequesterAdmin(req)) {
+    const requesterMobile = normalizeMobile(req.session?.user?.mobile || "");
+    reminders = reminders.filter((item) => normalizeMobile(item?.mobile) === requesterMobile);
+  }
 
   return res.json(reminders);
 });
@@ -4286,23 +4388,37 @@ app.put("/api/payments/:id/reminder", requireAdmin, paymentAdminActionLimiter, a
     return res.status(400).json({ message: "Total amount must be a valid number." });
   }
 
-  // Try to find existing payment record
+  // Try to find existing payment record.
+  // The incoming :id can be payment id, reminder id, mobile, or synthetic id.
   const paymentQuery = supabase
     .from("payments")
     .select("*");
+  const rawId = String(id || "").trim();
+  const normalizedMobileFromInput = normalizeMobile(rawMobile || rawId || "");
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(rawId);
 
-  const record = String(id || "").trim().length === 36
-    ? await paymentQuery.eq("id", id).maybeSingle()
-    : await paymentQuery.eq("mobile", normalizeMobile(rawMobile || id)).order("created_at", { ascending: false }).limit(1).maybeSingle();
+  let record;
+  if (isUuid) {
+    record = await paymentQuery.eq("id", rawId).maybeSingle();
+  } else if (normalizedMobileFromInput) {
+    record = await paymentQuery
+      .eq("mobile", normalizedMobileFromInput)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+  } else {
+    record = { data: null, error: null };
+  }
 
-  if (record.error) {
+  // If primary lookup fails with an error, continue in manual mode instead of hard-failing.
+  if (record?.error) {
     console.error("resolve payment reminder target error", record.error);
-    return res.status(500).json({ message: "Failed to load payment record" });
+    record = { data: null, error: null };
   }
 
   // If payment exists, use it; otherwise allow manual-only reminder
   const paymentRecord = record.data;
-  const targetMobile = normalizeMobile(rawMobile || paymentRecord?.mobile || "");
+  const targetMobile = normalizeMobile(rawMobile || paymentRecord?.mobile || normalizedMobileFromInput || "");
   const targetId = paymentRecord?.id || null;
 
   if (!targetMobile) {

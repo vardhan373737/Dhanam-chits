@@ -804,6 +804,10 @@
       background: #37556a;
     }
 
+    .btn-info {
+      background: #0e8b9c;
+    }
+
     .actions {
       margin-top: 10px;
       display: flex;
@@ -1647,6 +1651,109 @@
 
     .help-icon:hover .help-tooltip {
       opacity: 1;
+    }
+
+    /* Monthly Breakdown Modal */
+    .monthly-breakdown-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .monthly-breakdown-modal.show {
+      display: flex;
+    }
+
+    .monthly-breakdown-content {
+      background: #fff;
+      border-radius: 12px;
+      max-width: 700px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 24px;
+    }
+
+    .monthly-breakdown-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #f0f5fa;
+    }
+
+    .monthly-breakdown-header h2 {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #0d2d43;
+    }
+
+    .monthly-breakdown-table-container {
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+
+    .monthly-breakdown-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .monthly-breakdown-table thead {
+      background: #f0f5fa;
+    }
+
+    .monthly-breakdown-table th {
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: #0d2d43;
+      border-bottom: 2px solid #e0eaf5;
+    }
+
+    .monthly-breakdown-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #e0eaf5;
+      color: #496a81;
+    }
+
+    .monthly-breakdown-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .monthly-breakdown-summary {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 14px;
+    }
+
+    .summary-label {
+      font-weight: 600;
+      color: #496a81;
+    }
+
+    .summary-value {
+      font-weight: 700;
+      color: #0d2d43;
     }
 
     /* Keyboard Shortcuts Panel */
@@ -3356,6 +3463,56 @@
     </div>
   </div>
 
+  <!-- Monthly Breakdown Modal -->
+  <div class="monthly-breakdown-modal" id="monthlyBreakdownModal">
+    <div class="monthly-breakdown-content">
+      <div class="monthly-breakdown-header">
+        <h2 id="breakdownTitle"></h2>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="btn btn-pdf" type="button" onclick="downloadEmiBreakdownPdf()" title="Download EMI Breakdown PDF"><i class="fas fa-file-pdf"></i></button>
+          <button onclick="closeMonthlyBreakdownModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">×</button>
+        </div>
+      </div>
+      <div class="monthly-breakdown-table-container">
+        <table class="monthly-breakdown-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Payment Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="monthlyBreakdownTableBody">
+          </tbody>
+        </table>
+      </div>
+      <div class="monthly-breakdown-summary">
+        <div class="summary-row">
+          <span class="summary-label">Total EMI Months:</span>
+          <span class="summary-value" id="summaryMonths">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Monthly Amount:</span>
+          <span class="summary-value" id="summaryMonthly">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Total Amount:</span>
+          <span class="summary-value" id="summaryTotal">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Amount Paid:</span>
+          <span class="summary-value" id="summaryPaid">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Remaining:</span>
+          <span class="summary-value" id="summaryRemaining">-</span>
+        </div>
+      </div>
+      <button onclick="closeMonthlyBreakdownModal()" style="width: 100%; padding: 12px; background: #0d7c91; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 16px;">Close</button>
+    </div>
+  </div>
+
   <!-- Keyboard Shortcuts Panel -->
   <div class="shortcuts-panel" id="shortcutsPanel">
     <h2 class="shortcuts-title">⌨️ Keyboard Shortcuts</h2>
@@ -3713,6 +3870,7 @@
           <button class="btn btn-save" onclick="saveReminderFromForm()"><i class="fas fa-save"></i> Save Reminder</button>
           <button class="btn btn-share" onclick="shareSelectedToWhatsApp()"><i class="fas fa-whatsapp"></i> WhatsApp</button>
           <button class="btn btn-share" onclick="downloadReminderTemplateExcel()"><i class="fas fa-download"></i> Excel Template</button>
+                    <button class="btn btn-pdf" type="button" onclick="downloadEmiBreakdownPdf()"><i class="fas fa-file-pdf"></i> EMI Breakdown PDF</button>
           <button class="btn btn-edit" onclick="triggerReminderExcelUpload()"><i class="fas fa-upload"></i> Upload Excel</button>
           <button class="btn btn-reset" onclick="resetReminderForm()"><i class="fas fa-redo"></i> Reset</button>
           <input type="file" id="reminderExcelFileInput" accept=".xlsx,.xls" style="display: none;" onchange="handleReminderExcelUpload(event)">
@@ -4285,9 +4443,24 @@
       return d.toISOString().slice(0, 10);
     }
 
+    function estimateEmiPaidCountFromDates(payment) {
+      const borrowDate = toDateStart(payment?.reminderBorrowDate);
+      const currentDueDate = toDateStart(payment?.reminderRepaymentDate);
+      if (!borrowDate || !currentDueDate || currentDueDate <= borrowDate) {
+        return 0;
+      }
+
+      const monthDiff = (currentDueDate.getFullYear() - borrowDate.getFullYear()) * 12
+        + (currentDueDate.getMonth() - borrowDate.getMonth());
+
+      // EMI schedule starts roughly one month after borrow date, so paid installments are monthDiff - 1.
+      const estimated = monthDiff - 1;
+      return Number.isFinite(estimated) && estimated > 0 ? estimated : 0;
+    }
+
     function parsePlanTag(note) {
       const raw = String(note || '');
-      const match = raw.match(/\[PLAN\]\s*mode=(\w+)(?:;\s*months=(\d+))?(?:;\s*monthly=([\d.]+))?(?:;\s*interestOnly=([\d.]+))?(?:;\s*rolledPrincipal=([\d.]+))?/i);
+      const match = raw.match(/\[PLAN\]\s*mode=(\w+)(?:;\s*months=(\d+))?(?:;\s*monthly=([\d.]+))?(?:;\s*interestOnly=([\d.]+))?(?:;\s*rolledPrincipal=([\d.]+))?(?:;\s*initialMonths=(\d+))?(?:;\s*paidCount=(\d+))?/i);
       if (!match) {
         return null;
       }
@@ -4298,6 +4471,8 @@
         monthly: match[3] ? Number(match[3]) : null,
         interestOnly: match[4] ? Number(match[4]) : null,
         rolledPrincipal: match[5] ? Number(match[5]) : null,
+        initialMonths: match[6] ? Number(match[6]) : null,
+        paidCount: match[7] ? Number(match[7]) : null,
       };
     }
 
@@ -4316,6 +4491,8 @@
       if (Number.isFinite(plan.monthly) && plan.monthly > 0) parts.push(`monthly=${Number(plan.monthly.toFixed(2))}`);
       if (Number.isFinite(plan.interestOnly) && plan.interestOnly > 0) parts.push(`interestOnly=${Number(plan.interestOnly.toFixed(2))}`);
       if (Number.isFinite(plan.rolledPrincipal) && plan.rolledPrincipal > 0) parts.push(`rolledPrincipal=${Number(plan.rolledPrincipal.toFixed(2))}`);
+      if (Number.isFinite(plan.initialMonths) && plan.initialMonths > 0) parts.push(`initialMonths=${plan.initialMonths}`);
+      if (Number.isFinite(plan.paidCount) && plan.paidCount > 0) parts.push(`paidCount=${plan.paidCount}`);
 
       const tag = `[PLAN] ${parts.join('; ')}`;
       return cleaned ? `${cleaned}\n${tag}` : tag;
@@ -4403,8 +4580,9 @@
         const daysLine = daysInfo ? daysInfo.display : '-';
 
         const cleanNote = stripPlanTag(payment.reminderNote || '').trim();
-        const generatedNote = `Borrow Date: ${borrowDate}, Repayment Date: ${repaymentDate}, Amount: ${formatAmount(safePrincipal)}, Interest: ${interestRate}%`;
-        const noteLine = cleanNote || generatedNote;
+        // Check if the note is auto-generated (starts with "Borrow Date:") and skip it to avoid duplication
+        const isAutoGeneratedNote = /^Borrow Date:/.test(cleanNote);
+        const noteLine = (cleanNote && !isAutoGeneratedNote) ? cleanNote : '';
 
         const lines = [
           `Dear ${name},`,
@@ -4416,10 +4594,14 @@
           `Interest Rate: ${interestRate}%`,
           `Interest Amount: ${formatAmount(interestAmount)}`,
           `Total Payable: ${formatAmount(payable)}`,
-          `Note: ${noteLine}`,
-          'Please repay on time. Thank you.',
         ];
 
+        // Only add Note line if there's custom content
+        if (noteLine) {
+          lines.push(`Note: ${noteLine}`);
+        }
+
+        lines.push('Please repay on time. Thank you.');
         return lines.join('\n');
       } catch (e) {
         console.error('Error building WhatsApp message:', e);
@@ -4573,6 +4755,49 @@
         reminderStatus: 'paid-reminder',
         paidDate: payment.paidAt || payment.updated_at || payment.updatedAt || new Date().toISOString(),
         reminderAmount: 0,
+        reminderInterest: 0,
+        totalAmount: paidAmount,
+      };
+    }
+
+    function buildEmiPaidViewItem(payment) {
+      const plan = parsePlanTag(payment.reminderNote || '');
+      if (plan?.mode !== 'emi') {
+        return null;
+      }
+
+      const monthsRemaining = Number(plan.months ?? 0) || 0;
+      const initialMonths = Number(plan.initialMonths ?? 0) || 0;
+      const trackedPaidCount = Number(plan.paidCount ?? 0) || 0;
+      let paidInstallments = trackedPaidCount;
+
+      if (!paidInstallments && initialMonths > 0 && initialMonths >= monthsRemaining) {
+        paidInstallments = initialMonths - monthsRemaining;
+      }
+      if (!paidInstallments) {
+        paidInstallments = estimateEmiPaidCountFromDates(payment);
+      }
+
+      if (!Number.isFinite(paidInstallments) || paidInstallments <= 0) {
+        return null;
+      }
+
+      const monthlyAmount = Number(plan.monthly ?? 0) || Number(totalPayable(payment) || 0);
+      if (!Number.isFinite(monthlyAmount) || monthlyAmount <= 0) {
+        return null;
+      }
+
+      const paidAmount = normalizeMoney(monthlyAmount * paidInstallments, { snapNearInteger: true }) || 0;
+      if (paidAmount <= 0) {
+        return null;
+      }
+
+      return {
+        ...payment,
+        paidMode: true,
+        reminderStatus: 'paid-reminder',
+        paidDate: payment.updated_at || payment.updatedAt || new Date().toISOString(),
+        reminderAmount: paidAmount,
         reminderInterest: 0,
         totalAmount: paidAmount,
       };
@@ -4747,6 +4972,27 @@
       });
     }
 
+    function getMonthNameFromPayments(paymentGroup, baseDate = new Date()) {
+      if (!paymentGroup || paymentGroup.length === 0) {
+        return '';
+      }
+      
+      // Get the month from the first payment in the group
+      const firstPayment = paymentGroup[0];
+      const dueDate = toDateStart(firstPayment.reminderRepaymentDate);
+      
+      if (!dueDate) {
+        return '';
+      }
+
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+      const month = monthNames[dueDate.getMonth()];
+      const year = dueDate.getFullYear();
+      
+      return `${month} ${year}`;
+    }
+
     function getSectionKey(payment, today) {
       const repaymentDate = toDateStart(payment.reminderRepaymentDate);
       if (!repaymentDate) {
@@ -4882,6 +5128,15 @@
       doc.setFontSize(8.5);
       doc.text(brandTagline, 18, 25);
 
+      // render small cached logo at header right if available
+      try {
+        if (pdfCachedLogoData) {
+          doc.addImage(pdfCachedLogoData, 'JPEG', width - 90, 12, 16, 16, undefined, 'FAST');
+        }
+      } catch (e) {
+        // ignore image errors
+      }
+
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.text(title, width - 42, 22, { align: 'center' });
@@ -4913,6 +5168,11 @@
         return null;
       }
     }
+
+    // cached logo data (base64) for PDF headers
+    let pdfCachedLogoData = null;
+    // currently shown breakdown payment for modal actions
+    let currentBreakdownPayment = null;
 
     function pdfStatusLabel(payment, mode) {
       if (mode === 'paid') {
@@ -5012,6 +5272,8 @@
       const brandName = localStorage.getItem('brandName') || 'Dhanam Chits Pvt. Ltd';
       const brandTagline = localStorage.getItem('brandTagline') || 'Trusted Chit Services';
       const logoData = await pdfLoadImageData('/logo.jpeg');
+      // store in cache for header rendering on subsequent pages
+      pdfCachedLogoData = logoData;
 
       doc.setFillColor(9, 18, 34);
       doc.rect(0, 0, width, height, 'F');
@@ -5328,11 +5590,19 @@
       return doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 4 : y + 10;
     }
 
-    function downloadSingleSectionPdf(title, items, mode = 'reminder') {
+    async function downloadSingleSectionPdf(title, items, mode = 'reminder') {
       const jspdfApi = window.jspdf;
       if (!jspdfApi || !jspdfApi.jsPDF) {
         alert('PDF library is still loading. Please try again in a moment.');
         return;
+      }
+
+      // preload logo for header rendering
+      try {
+        const logo = await pdfLoadImageData('/logo.jpeg');
+        pdfCachedLogoData = logo;
+      } catch (e) {
+        // ignore
       }
 
       const doc = new jspdfApi.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -5467,6 +5737,161 @@
 
       doc.save('all-payment-records.pdf');
     }
+    // Build EMI rows and summary for a given payment
+    function buildEmiBreakdown(payment) {
+      const plan = parsePlanTag(payment.reminderNote || '');
+      const monthsRemaining = Number(plan.months) || 0;
+      const initialMonths = Number(plan.initialMonths) || monthsRemaining;
+      const trackedPaidCount = Number(plan.paidCount) || 0;
+      const derivedPaidCount = initialMonths > 0 && initialMonths >= monthsRemaining ? (initialMonths - monthsRemaining) : 0;
+      const estimatedPaidCount = estimateEmiPaidCountFromDates(payment);
+      const paidInstallments = Math.max(trackedPaidCount, derivedPaidCount, estimatedPaidCount, 0);
+      const totalMonths = Math.max(initialMonths, monthsRemaining, paidInstallments);
+      const monthlyAmount = Number(plan.monthly) || 0;
+
+      const currentDueDate = new Date(payment.reminderRepaymentDate);
+      const startDate = new Date(currentDueDate);
+      if (!Number.isNaN(startDate.getTime()) && paidInstallments > 0) {
+        startDate.setMonth(startDate.getMonth() - paidInstallments);
+      }
+
+      const rows = [];
+      let paidAmount = 0;
+      for (let i = 1; i <= totalMonths; i++) {
+        const monthDate = new Date(startDate);
+        monthDate.setMonth(monthDate.getMonth() + (i - 1));
+        const isPaid = i <= paidInstallments;
+        if (isPaid) paidAmount += monthlyAmount;
+        rows.push([
+          monthDate.toLocaleString('en-IN', { month: 'long', year: 'numeric' }),
+          formatDisplayDate(monthDate),
+          formatCurrency(monthlyAmount),
+          isPaid ? 'Paid' : 'Pending',
+        ]);
+      }
+
+      return {
+        rows,
+        summary: {
+          totalMonths,
+          monthlyAmount,
+          totalEMIAmount: monthlyAmount * totalMonths,
+          paidAmount,
+          remaining: (monthlyAmount * totalMonths) - paidAmount,
+        },
+      };
+    }
+
+    async function downloadEmiBreakdownPdf() {
+      if (!currentBreakdownPayment) {
+        showToast('No EMI selected for export', 'error');
+        return;
+      }
+      const payment = currentBreakdownPayment;
+      const jspdfApi = window.jspdf;
+      if (!jspdfApi || !jspdfApi.jsPDF) {
+        alert('PDF library not loaded yet. Try again in a moment.');
+        return;
+      }
+
+      // preload logo into cache
+      try {
+        const logo = await pdfLoadImageData('/logo.jpeg');
+        pdfCachedLogoData = logo;
+      } catch (e) {
+        // ignore
+      }
+
+      const doc = new jspdfApi.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const title = `EMI Breakdown - ${payment.name || 'Customer'}`;
+      const subtitle = `Generated on ${new Date().toLocaleString('en-IN')}`;
+      pdfSetDarkBackground(doc);
+      pdfAddHeader(doc, title, subtitle);
+
+      let { rows, summary } = buildEmiBreakdown(payment);
+      // For PDF export, use pdfCurrency for table values
+      rows = rows.map(row => [row[0], row[1], pdfCurrency(Number(payment.planMonthly || row[2].replace(/[^\d.]/g, ''))), row[3]]);
+      let y = 50;
+      // draw summary
+      pdfDrawSummaryCard(doc, 18, y, 60, 18, 'Months', String(Number(summary.totalMonths)), [15, 100, 136]);
+      pdfDrawSummaryCard(doc, 86, y, 60, 18, 'Monthly', pdfCurrency(Number(summary.monthlyAmount)), [102, 16, 242]);
+      pdfDrawSummaryCard(doc, 154, y, 60, 18, 'Total', pdfCurrency(Number(summary.totalEMIAmount)), [15, 154, 95]);
+      y += 26;
+
+      // table
+      doc.autoTable({
+        startY: y,
+        head: [['Month', 'Payment Date', 'Amount', 'Status']],
+        body: rows,
+        theme: 'grid',
+        margin: { left: 14, right: 14, bottom: 16 },
+        styles: { font: 'helvetica', fontSize: 9 },
+        headStyles: { fillColor: [15, 100, 136], textColor: [255, 255, 255] },
+      });
+
+      const exportId = pdfBuildExportId();
+      pdfAddFooter(doc, { exportId });
+      pdfAddPageNumber(doc);
+      doc.save(`${title.replace(/\s+/g, '-')}.pdf`);
+    }
+
+    async function shareEmiBreakdownPdf() {
+      if (!currentBreakdownPayment) {
+        showToast('No EMI selected to share', 'error');
+        return;
+      }
+      const payment = currentBreakdownPayment;
+      const jspdfApi = window.jspdf;
+      if (!jspdfApi || !jspdfApi.jsPDF) {
+        alert('PDF library not ready. Try again.');
+        return;
+      }
+
+      try {
+        const logo = await pdfLoadImageData('/logo.jpeg');
+        pdfCachedLogoData = logo;
+      } catch (e) {
+        // ignore
+      }
+
+      const doc = new jspdfApi.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const title = `EMI Breakdown - ${payment.name || 'Customer'}`;
+      const subtitle = `Generated on ${new Date().toLocaleString('en-IN')}`;
+      pdfSetDarkBackground(doc);
+      pdfAddHeader(doc, title, subtitle);
+
+      const { rows, summary } = buildEmiBreakdown(payment);
+      let y = 50;
+      pdfDrawSummaryCard(doc, 18, y, 60, 18, 'Months', String(summary.totalMonths), [15, 100, 136]);
+      pdfDrawSummaryCard(doc, 86, y, 60, 18, 'Monthly', formatCurrency(summary.monthlyAmount), [102, 16, 242]);
+      pdfDrawSummaryCard(doc, 154, y, 60, 18, 'Total', formatCurrency(summary.totalEMIAmount), [15, 154, 95]);
+      y += 26;
+
+      doc.autoTable({ startY: y, head: [['Month', 'Payment Date', 'Amount', 'Status']], body: rows, theme: 'grid', margin: { left: 14, right: 14, bottom: 16 }, styles: { font: 'helvetica', fontSize: 9 }, headStyles: { fillColor: [15, 100, 136], textColor: [255, 255, 255] } });
+
+      const blob = doc.output('blob');
+      const file = new File([blob], `${title.replace(/\s+/g, '-')}.pdf`, { type: 'application/pdf' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title, text: subtitle });
+          showToast('PDF shared', 'success');
+          return;
+        } catch (err) {
+          // share failed, fallback to download
+        }
+      }
+
+      // fallback: download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title.replace(/\s+/g, '-')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('Downloaded PDF (share not supported)', 'info');
+    }
 
     function buildBillItem(payment) {
       const item = document.createElement('div');
@@ -5535,6 +5960,7 @@
         <div class="bill-actions">
           <button type="button" class="btn btn-edit">Manage</button>
           ${shareAction}
+          ${plan?.mode === 'emi' && !isPaidEntry ? '<button type="button" class="btn btn-info btn-breakdown" title="View monthly breakdown">📊 Breakdown</button>' : ''}
           ${isPaidEntry || isPaidReminder ? '<button type="button" class="btn btn-reset btn-unpaid">Unpaid</button>' : '<button type="button" class="btn btn-save btn-paid">Paid</button>'}
           ${showExtendAction ? '<button type="button" class="btn btn-reset btn-extend">Extend</button>' : ''}
           <button type="button" class="btn btn-clear">Clear</button>
@@ -5549,6 +5975,7 @@
 
       const editBtn = item.querySelector('.btn-edit');
       const shareBtn = item.querySelector('.btn-share');
+      const breakdownBtn = item.querySelector('.btn-breakdown');
       const paidBtn = item.querySelector('.btn-paid');
       const unpaidBtn = item.querySelector('.btn-unpaid');
       const extendBtn = item.querySelector('.btn-extend');
@@ -5563,6 +5990,13 @@
           event.preventDefault();
           event.stopPropagation();
           shareToWhatsApp(payment);
+        };
+      }
+      if (breakdownBtn) {
+        breakdownBtn.onclick = (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          showMonthlyBreakdownModal(payment);
         };
       }
       if (paidBtn) {
@@ -5704,8 +6138,8 @@
           : 'No manual reminder records to show.';
       }
 
-      renderBillSection(thisMonthSection, 'This month', grouped.thisMonth);
-      renderBillSection(nextMonthSection, 'Next month', grouped.nextMonth);
+      renderBillSection(thisMonthSection, `This month (${getMonthNameFromPayments(grouped.thisMonth) || 'Current'})`, grouped.thisMonth);
+      renderBillSection(nextMonthSection, getMonthNameFromPayments(grouped.nextMonth) || 'Later', grouped.nextMonth);
       renderBillSection(laterSection, 'Later', grouped.later);
 
       const paidItems = dedupePaymentsBySignature(paidRecords).map((item) => ({
@@ -5719,8 +6153,12 @@
         .map((item) => buildExtendPaidViewItem(item))
         .filter(Boolean)
         .filter((item) => !paidItems.some((existing) => getReminderSignature(existing) === getReminderSignature(item)));
+      const emiPaidItems = filtered
+        .map((item) => buildEmiPaidViewItem(item))
+        .filter(Boolean)
+        .filter((item) => !paidItems.some((existing) => getReminderSignature(existing) === getReminderSignature(item)));
 
-      renderPaidSection(paidSection, 'Paid', [...paidItems, ...extendPaidItems]);
+      renderPaidSection(paidSection, 'Paid', [...paidItems, ...extendPaidItems, ...emiPaidItems]);
 
       const visibility = {
         all: ['overdueSummary', 'overdueSection', 'thisMonthSection', 'nextMonthSection', 'laterSection', 'paidSection'],
@@ -5810,6 +6248,8 @@
         mode: repaymentMode,
         months: repaymentMode === 'emi' && emiMonths > 0 ? emiMonths : null,
         monthly: repaymentMode === 'emi' ? monthlyEmi : null,
+        initialMonths: repaymentMode === 'emi' && emiMonths > 0 ? emiMonths : null,
+        paidCount: repaymentMode === 'emi' ? 0 : null,
         interestOnly: repaymentMode === 'extend' ? interestOnly : null,
         rolledPrincipal: repaymentMode === 'extend' && Number.isFinite(principal)
           ? normalizeMoney(principal + (interestOnly || 0), { snapNearInteger: true })
@@ -6213,6 +6653,8 @@
         const monthsBefore = Number(plan.months);
         const monthsAfter = monthsBefore - 1;
         const monthlyAmount = Number(plan.monthly || totalPayable(payment) || 0);
+        const initialMonths = Number(plan.initialMonths || monthsBefore) || monthsBefore;
+        const nextPaidCount = (Number(plan.paidCount || 0) || 0) + 1;
 
         if (!confirm(`Record EMI payment of ${formatCurrency(monthlyAmount)}?\n\nMonths remaining: ${monthsBefore} -> ${Math.max(0, monthsAfter)}`)) {
           return;
@@ -6229,6 +6671,8 @@
             mode: 'emi',
             months: monthsAfter,
             monthly: monthlyAmount,
+            initialMonths,
+            paidCount: nextPaidCount,
           });
 
           const payload = {
@@ -6255,6 +6699,12 @@
         return;
       }
 
+      // For EMI or extend mode, use the monthly/interest-only amount; otherwise use the total
+      let paidAmount = totalPayable(payment) || 0;
+      if (!paidAmount) {
+        paidAmount = payment.totalAmount ?? payment.amount ?? '';
+      }
+
       const payload = {
         reminderId: payment.reminderId || payment.id || '',
         name: payment.name || '',
@@ -6266,7 +6716,7 @@
         reminderNote: payment.reminderNote || '',
         reminderStatus: 'paid',
         paidAt: new Date().toISOString(),
-        totalAmount: payment.totalAmount ?? totalPayable(payment) ?? payment.amount ?? '',
+        totalAmount: paidAmount,
       };
 
       await saveReminder(payment.paymentId || payment._id || payment.id || payment.mobile, payload);
@@ -6924,6 +7374,92 @@
       document.getElementById('settingsModal').classList.remove('show');
     }
 
+    function showMonthlyBreakdownModal(payment) {
+
+      // Set the current payment for PDF export
+      currentBreakdownPayment = payment;
+
+      const plan = parsePlanTag(payment.reminderNote || '');
+      if (!plan || plan.mode !== 'emi' || !plan.months || !plan.monthly) {
+        console.warn('Invalid EMI plan data');
+        return;
+      }
+
+      const modal = document.getElementById('monthlyBreakdownModal');
+      const title = document.getElementById('breakdownTitle');
+      const tableBody = document.getElementById('monthlyBreakdownTableBody');
+      const summaryMonths = document.getElementById('summaryMonths');
+      const summaryMonthly = document.getElementById('summaryMonthly');
+      const summaryTotal = document.getElementById('summaryTotal');
+      const summaryPaid = document.getElementById('summaryPaid');
+      const summaryRemaining = document.getElementById('summaryRemaining');
+
+      // Set title
+      title.textContent = `📊 EMI Breakdown - ${payment.name || 'Manual Reminder'}`;
+
+      // Build EMI timeline from plan metadata.
+      const monthsRemaining = Number(plan.months) || 0;
+      const initialMonths = Number(plan.initialMonths) || monthsRemaining;
+      const trackedPaidCount = Number(plan.paidCount) || 0;
+      const derivedPaidCount = initialMonths > 0 && initialMonths >= monthsRemaining
+        ? (initialMonths - monthsRemaining)
+        : 0;
+      const estimatedPaidCount = estimateEmiPaidCountFromDates(payment);
+      const paidInstallments = Math.max(trackedPaidCount, derivedPaidCount, estimatedPaidCount, 0);
+      const totalMonths = Math.max(initialMonths, monthsRemaining, paidInstallments);
+      const monthlyAmount = Number(plan.monthly) || 0;
+      const totalEMIAmount = monthlyAmount * totalMonths;
+
+      const currentDueDate = new Date(payment.reminderRepaymentDate);
+      const startDate = new Date(currentDueDate);
+      if (!Number.isNaN(startDate.getTime()) && paidInstallments > 0) {
+        startDate.setMonth(startDate.getMonth() - paidInstallments);
+      }
+
+      // Populate table rows
+      tableBody.innerHTML = '';
+      let paidAmount = 0;
+
+      for (let i = 1; i <= totalMonths; i++) {
+        const monthDate = new Date(startDate);
+        monthDate.setMonth(monthDate.getMonth() + (i - 1));
+        const isPaid = i <= paidInstallments;
+        if (isPaid) {
+          paidAmount += monthlyAmount;
+        }
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><strong>Month ${i}</strong></td>
+          <td>${formatDisplayDate(monthDate)}</td>
+          <td>${formatCurrency(monthlyAmount)}</td>
+          <td>
+            <span style="display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; 
+            background: ${isPaid ? '#d4edda' : '#fff3cd'}; 
+            color: ${isPaid ? '#155724' : '#856404'};
+            ">
+              ${isPaid ? '✓ Paid' : 'Pending'}
+            </span>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      }
+
+      // Update summary
+      summaryMonths.textContent = totalMonths;
+      summaryMonthly.textContent = formatCurrency(monthlyAmount);
+      summaryTotal.textContent = formatCurrency(totalEMIAmount);
+      summaryPaid.textContent = formatCurrency(paidAmount);
+      summaryRemaining.textContent = formatCurrency(totalEMIAmount - paidAmount);
+
+      // Show modal
+      modal.classList.add('show');
+    }
+
+    function closeMonthlyBreakdownModal() {
+      document.getElementById('monthlyBreakdownModal').classList.remove('show');
+    }
+
     function loadSettings() {
       const darkMode = localStorage.getItem('darkMode') === 'true';
       const emailNotif = localStorage.getItem('emailNotifications') !== 'false';
@@ -7150,6 +7686,10 @@
       const shortcutsPanel = document.getElementById('shortcutsPanel');
       if (e.target === shortcutsPanel) {
         closeShortcuts();
+      }
+      const monthlyBreakdownModal = document.getElementById('monthlyBreakdownModal');
+      if (e.target === monthlyBreakdownModal) {
+        closeMonthlyBreakdownModal();
       }
     });
 

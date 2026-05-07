@@ -11,6 +11,7 @@ const nodemailer = require('nodemailer');
 const fs = require('fs');
 const pdf = require('pdfkit');
 const whatsappConfig = require('./whatsapp-config');
+const { generatePdfFromUrl } = require('./pdfGenerator');
 
 
 const app = express();
@@ -147,6 +148,28 @@ app.use(bodyParser.json({
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Generate EMI breakdown PDF from an HTML page (query `source` optional)
+app.get('/emi-breakdown.pdf', async (req, res) => {
+    try {
+        const source = String(req.query.source || '/payment-reminderA.html').trim();
+        const absoluteUrl = source.match(/^https?:\/\//i)
+            ? source
+            : `${req.protocol}://${req.get('host')}${source.startsWith('/') ? '' : '/'}${source}`;
+        const filename = `emi-breakdown-${Date.now()}.pdf`;
+        const outputPath = path.join(invoicesDir, filename);
+        await generatePdfFromUrl(absoluteUrl, outputPath);
+        res.download(outputPath, 'emi-breakdown.pdf', (err) => {
+            if (err) {
+                console.error('Error sending PDF:', err);
+                res.status(500).send('Failed to generate PDF');
+            }
+        });
+    } catch (err) {
+        console.error('Error generating PDF:', err);
+        res.status(500).send('Error generating PDF');
+    }
+});
 
 // Connect to MongoDB
 connectDB();
