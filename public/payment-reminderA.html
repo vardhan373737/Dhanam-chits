@@ -3394,6 +3394,53 @@
       }
     }
   </style>
+  <style>
+    /* Mobile layout fixes: remove left margin and stack columns */
+    @media screen and (max-width: 900px) {
+      .content {
+        margin-left: 0 !important;
+        padding: 18px !important;
+      }
+
+      .layout {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+
+      .page-head {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+      }
+
+      /* Make toolbar occupy full width and wrap buttons on mobile */
+      .toolbar-group {
+        width: 100% !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+        flex-wrap: wrap !important;
+        margin-top: 8px !important;
+      }
+
+      .toolbar-group .toolbar-btn {
+        flex: 0 1 auto !important;
+        min-width: 110px !important;
+      }
+
+      .toolbar-group .toolbar-btn.icon-only {
+        min-width: 44px !important;
+        flex: 0 0 auto !important;
+      }
+
+      .premium-summary {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+
+      .panel, .form-card {
+        box-shadow: none !important;
+      }
+    }
+  </style>
   <link rel="stylesheet" href="premium-shared.css">
   <link rel="stylesheet" href="admin-sidebar.css">
   <link rel="stylesheet" href="index-theme.css">
@@ -3620,8 +3667,8 @@
       <div class="premium-summary-card">
         <div>
           <div class="premium-summary-label">Paid This Month</div>
-          <div class="premium-summary-value" id="summaryPaid">0</div>
-          <div class="premium-summary-meta">Healthy collections</div>
+          <div class="premium-summary-value" id="summaryPaidAmount">₹0</div>
+          <div class="premium-summary-meta" id="summaryPaidCount">0 payments</div>
         </div>
         <div class="premium-summary-icon"><i class="fas fa-circle-check"></i></div>
       </div>
@@ -4815,6 +4862,32 @@
       });
     }
 
+    function getVisiblePaidPaymentRecords(activeRecords = null, paidRecords = null) {
+      const buckets = activeRecords && paidRecords ? null : getReminderBuckets();
+      const active = activeRecords || buckets?.active || [];
+      const paid = paidRecords || buckets?.paid || [];
+
+      const paidItems = dedupePaymentsBySignature(paid).map((item) => ({
+        ...item,
+        reminderRepaymentDate: item.reminderRepaymentDate || null,
+        paidDate: item.paidDate || item.paidAt || item.reminderPaidAt || item.updated_at || item.updatedAt || item.created_at || null,
+        paidMode: true,
+        ...normalizePaidReminderAmounts(item),
+      }));
+
+      const extendPaidItems = active
+        .map((item) => buildExtendPaidViewItem(item))
+        .filter(Boolean)
+        .filter((item) => !paidItems.some((existing) => getReminderSignature(existing) === getReminderSignature(item)));
+
+      const emiPaidItems = active
+        .map((item) => buildEmiPaidViewItem(item))
+        .filter(Boolean)
+        .filter((item) => !paidItems.some((existing) => getReminderSignature(existing) === getReminderSignature(item)));
+
+      return [...paidItems, ...extendPaidItems, ...emiPaidItems];
+    }
+
     function getAdminPaymentsOnly(paidRecords = []) {
       // Show only manual reminder rows.
       const allReminders = [];
@@ -4891,6 +4964,11 @@
         );
 
         if (!hasReminderData) {
+          // Include records that are explicitly paid/approved even if reminder fields are missing
+          if (status === 'approved' || status === 'paid' || status === 'completed' || status === 'paid-reminder' || reminderStatus === 'paid' || reminderPaidAt) {
+            return true;
+          }
+
           return false;
         }
 
@@ -4927,6 +5005,38 @@
 
       d.setHours(0, 0, 0, 0);
       return d;
+    }
+
+    function getPaidDateValue(payment) {
+      return payment?.paidDate
+        || payment?.paidAt
+        || payment?.reminderPaidAt
+        || payment?.updated_at
+        || payment?.updatedAt
+        || payment?.created_at
+        || null;
+    }
+
+    function getResponseStartDateValue(payment) {
+      return payment?.reminderSentAt
+        || payment?.sentAt
+        || payment?.updated_at
+        || payment?.updatedAt
+        || payment?.created_at
+        || null;
+    }
+
+    function formatAverageResponse(daysValue) {
+      if (!Number.isFinite(daysValue) || daysValue < 0) {
+        return '-';
+      }
+
+      if (daysValue < 1) {
+        const hours = Math.max(1, Math.round(daysValue * 24));
+        return `${hours}h`;
+      }
+
+      return `${daysValue.toFixed(1)}d`;
     }
 
     function totalPayable(payment) {
@@ -5192,13 +5302,52 @@
       return dueInfo.days < 0 ? 'Overdue' : dueInfo.display;
     }
 
+    function pdfGetPaidRowBreakdown(payment) {
+      const note = String(payment?.reminderNote || '');
+      const amountMatch = note.match(/Amount\s*:\s*([0-9]+(?:\.[0-9]+)?)/i);
+      const interestMatch = note.match(/Interest\s*:\s*([0-9]+(?:\.[0-9]+)?)%/i);
+      const normalized = normalizePaidReminderAmounts(payment);
+      const originalAmount = Number(
+        amountMatch?.[1]
+        || normalized?.principal
+        || payment?.baseAmount
+        || payment?.principalAmount
+        || payment?.reminderAmount
+        || payment?.amount
+        || 0,
+      ) || 0;
+      const interestRate = Number(
+        interestMatch?.[1]
+        || normalized?.reminderInterest
+        || payment?.reminderInterest
+        || payment?.interest
+        || 0,
+      ) || 0;
+      const paidAmount = Number(
+        normalized?.totalAmount
+        || payment?.totalAmount
+        || payment?.paidAmount
+        || payment?.amount
+        || 0,
+      ) || 0;
+
+      return { originalAmount, interestRate, paidAmount };
+    }
+
     function pdfPaymentRows(items, mode) {
       return items.map((payment) => {
-        const principal = Number(payment.reminderAmount || payment.amount || 0);
-        const interest = Number(payment.reminderInterest || 0);
-        const total = mode === 'paid' ? Number(payment.amount || payment.reminderAmount || 0) : totalPayable(payment);
+        const paidBreakdown = mode === 'paid' ? pdfGetPaidRowBreakdown(payment) : null;
+        const principal = mode === 'paid'
+          ? Number(paidBreakdown?.originalAmount || payment.reminderAmount || payment.amount || 0)
+          : Number(payment.reminderAmount || payment.amount || 0);
+        const interest = mode === 'paid'
+          ? Number(paidBreakdown?.interestRate || payment.reminderInterest || payment.interest || 0)
+          : Number(payment.reminderInterest || 0);
+        const total = mode === 'paid'
+          ? Number(paidBreakdown?.paidAmount || payment.totalAmount || payment.amount || payment.reminderAmount || 0)
+          : totalPayable(payment);
         const repaymentDate = mode === 'paid'
-          ? formatDisplayDate(payment.paidAt || payment.created_at)
+          ? formatDisplayDate(payment.paidDate || payment.paidAt || payment.reminderPaidAt || payment.created_at)
           : (payment.reminderRepaymentDate || 'No due date');
 
         return [
@@ -5396,7 +5545,7 @@
     function pdfSectionTotal(items, mode) {
       return items.reduce((sum, payment) => {
         if (mode === 'paid') {
-          return sum + Number(payment.amount || payment.reminderAmount || 0);
+          return sum + Number(normalizePaidReminderAmounts(payment).totalAmount || payment.totalAmount || payment.amount || payment.reminderAmount || 0);
         }
 
         return sum + totalPayable(payment);
@@ -5429,10 +5578,32 @@
       const principal = Number(payment.reminderAmount || payment.amount || 0);
       const interestRate = Number(payment.reminderInterest || 0);
       const interestAmount = isPaid ? 0 : ((principal * interestRate) / 100);
-      const total = isPaid ? Number(payment.amount || payment.reminderAmount || 0) : totalPayable(payment);
+      const paidAmounts = isPaid ? normalizePaidReminderAmounts(payment) : null;
+      const total = isPaid
+        ? Number(paidAmounts?.totalAmount || payment.totalAmount || payment.amount || payment.reminderAmount || 0)
+        : totalPayable(payment);
       const note = stripPlanTag(String(payment.reminderNote || '').trim()) || 'No note';
       const noteText = doc.splitTextToSize(`Note: ${note}`, cardW - 18);
-      const cardH = isPaid ? 46 : 52;
+      const originalAmountMatch = String(payment.reminderNote || '').match(/Amount\s*:\s*([0-9]+(?:\.[0-9]+)?)/i);
+      const originalAmount = Number(
+        originalAmountMatch?.[1]
+        || payment.baseAmount
+        || payment.principalAmount
+        || payment.reminderAmount
+        || payment.amount
+        || 0,
+      ) || 0;
+      const paidInterestMatch = String(payment.reminderNote || '').match(/Interest\s*:\s*([0-9]+(?:\.[0-9]+)?)%/i);
+      const paidInterestRate = Number(
+        paidAmounts?.reminderInterest
+        || payment.reminderInterest
+        || payment.interest
+        || paidInterestMatch?.[1]
+        || 0,
+      ) || 0;
+      const paidInterestAmount = Math.max(0, total - originalAmount);
+      const paidDateText = formatDisplayDate(payment.paidDate || payment.paidAt || payment.reminderPaidAt || payment.created_at);
+      const cardH = isPaid ? 76 : 52;
 
       y = pdfEnsureSpace(doc, y, cardH + 4, headerTitle, headerSubtitle);
 
@@ -5465,14 +5636,21 @@
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(167, 182, 200);
       doc.setFontSize(8.5);
-      doc.text(`Principal ${pdfCurrency(principal)}`, cardX + 20, y + 30);
-      if (!isPaid) {
+      if (isPaid) {
+        doc.text(`Original Amount ${pdfCurrency(originalAmount)}`, cardX + 20, y + 31);
+        doc.text(`Paid Amount ${pdfCurrency(total)}`, cardX + 20, y + 36);
+        doc.text(`Interest ${paidInterestRate || 0}%  Amt ${pdfCurrency(paidInterestAmount)}`, cardX + 20, y + 41);
+        doc.text(`Paid Date ${paidDateText}`, cardX + 20, y + 46);
+        doc.setTextColor(200, 211, 224);
+        doc.setFontSize(7.8);
+        doc.text(noteText, cardX + 20, y + 53);
+      } else {
+        doc.text(`Principal ${pdfCurrency(principal)}`, cardX + 20, y + 30);
         doc.text(`Interest ${interestRate || 0}%  Amt ${pdfCurrency(interestAmount)}`, cardX + 20, y + 35);
+        doc.setTextColor(200, 211, 224);
+        doc.setFontSize(8);
+        doc.text(noteText, cardX + 20, y + 41);
       }
-
-      doc.setTextColor(200, 211, 224);
-      doc.setFontSize(8);
-      doc.text(noteText, cardX + 20, y + 41);
 
       return y + cardH + 4;
     }
@@ -5635,7 +5813,7 @@
       const exportId = pdfBuildExportId();
       const reportRange = pdfGetReportRange(paymentCache);
       const footerMeta = { exportId };
-      const paid = (paymentCache || []).filter((item) => {
+      const paidRaw = (paymentCache || []).filter((item) => {
         const status = normalizeText(item.status);
         const reminderStatus = normalizeText(item.reminderStatus);
         const reminderPaidAt = String(item.reminderPaidAt || item.paidAt || '').trim();
@@ -5668,6 +5846,7 @@
       grouped.thisMonth = sortByRemainingDays(grouped.thisMonth);
       grouped.nextMonth = sortByRemainingDays(grouped.nextMonth);
       grouped.later = sortByRemainingDays(grouped.later);
+      const visiblePaidRecords = getVisiblePaidPaymentRecords(active, paidRaw);
 
       if (type === 'overdue') {
         return downloadSingleSectionPdf('Overdue Payments', grouped.overdue, 'reminder');
@@ -5679,7 +5858,7 @@
       }
 
       if (type === 'paid') {
-        return downloadSingleSectionPdf('Paid Payments', paid, 'paid');
+        return downloadSingleSectionPdf('Paid Payments', visiblePaidRecords, 'paid');
       }
 
       const jspdfApi = window.jspdf;
@@ -5692,15 +5871,15 @@
       const sections = [
         { title: 'Overdue Payments', items: grouped.overdue, mode: 'reminder' },
         { title: 'Reminder Payments', items: [...grouped.overdue, ...grouped.thisMonth, ...grouped.nextMonth, ...grouped.later], mode: 'reminder' },
-        { title: 'Paid Payments', items: paid, mode: 'paid' },
+        { title: 'Paid Payments', items: visiblePaidRecords, mode: 'paid' },
       ];
 
       const headerSubtitle = `Generated on ${new Date().toLocaleString('en-IN')}`;
       const reminderItems = [...grouped.overdue, ...grouped.thisMonth, ...grouped.nextMonth, ...grouped.later];
       const stats = {
-        totalRecords: active.length + paid.length,
-        paidRecords: paid.length,
-        paidAmount: paid.reduce((sum, payment) => sum + Number(payment.amount || payment.reminderAmount || 0), 0),
+        totalRecords: active.length + visiblePaidRecords.length,
+        paidRecords: visiblePaidRecords.length,
+        paidAmount: visiblePaidRecords.reduce((sum, payment) => sum + Number(normalizePaidReminderAmounts(payment).totalAmount || payment.totalAmount || payment.amount || payment.reminderAmount || 0), 0),
         outstandingAmount: reminderItems.reduce((sum, payment) => sum + totalPayable(payment), 0),
       };
 
@@ -6062,6 +6241,8 @@
         return sum;
       }, { principal: 0, interest: 0, total: 0 });
 
+      sectionEl._paidSummary = { ...totals, count: items.length };
+
       sectionEl.innerHTML = `
         <div class="bill-section-head">
           <h3>${title}</h3>
@@ -6095,6 +6276,19 @@
         return buildBillItem(paidItem);
       });
       sectionEl.appendChild(list);
+      syncTopPaidKpiFromPaidSection(sectionEl);
+    }
+
+    function syncTopPaidKpiFromPaidSection(sectionEl) {
+      const summary = sectionEl?._paidSummary;
+      if (!summary) {
+        return;
+      }
+
+      const topPaidAmountEl = document.getElementById('summaryPaidAmount');
+      const topPaidCountEl = document.getElementById('summaryPaidCount');
+      if (topPaidAmountEl) topPaidAmountEl.textContent = formatCurrency(summary.total || 0);
+      if (topPaidCountEl) topPaidCountEl.textContent = `${summary.count || 0} payment${summary.count === 1 ? '' : 's'}`;
     }
 
     function renderPayments() {
@@ -6112,12 +6306,14 @@
       nextMonthSection.innerHTML = '';
       laterSection.innerHTML = '';
       paidSection.innerHTML = '';
+
+      const { active: filtered, paid: paidRecords, grouped } = getReminderBuckets();
+      const visiblePaidRecords = getVisiblePaidPaymentRecords(filtered, paidRecords);
+      paidSection._visiblePaidRecords = visiblePaidRecords;
       
       // Update analytics whenever payments are rendered
       updateAnalyticsDashboard();
       updateKPICards();
-
-      const { active: filtered, paid: paidRecords, grouped } = getReminderBuckets();
 
       renderBillSection(overdueSection, 'Overdue Payments', grouped.overdue);
       const overdueTotal = grouped.overdue.reduce((sum, p) => sum + totalPayable(p), 0);
@@ -6142,23 +6338,7 @@
       renderBillSection(nextMonthSection, getMonthNameFromPayments(grouped.nextMonth) || 'Later', grouped.nextMonth);
       renderBillSection(laterSection, 'Later', grouped.later);
 
-      const paidItems = dedupePaymentsBySignature(paidRecords).map((item) => ({
-        ...item,
-        reminderRepaymentDate: item.reminderRepaymentDate || null,
-        paidDate: item.created_at || null,
-        paidMode: true,
-        ...normalizePaidReminderAmounts(item),
-      }));
-      const extendPaidItems = filtered
-        .map((item) => buildExtendPaidViewItem(item))
-        .filter(Boolean)
-        .filter((item) => !paidItems.some((existing) => getReminderSignature(existing) === getReminderSignature(item)));
-      const emiPaidItems = filtered
-        .map((item) => buildEmiPaidViewItem(item))
-        .filter(Boolean)
-        .filter((item) => !paidItems.some((existing) => getReminderSignature(existing) === getReminderSignature(item)));
-
-      renderPaidSection(paidSection, 'Paid', [...paidItems, ...extendPaidItems, ...emiPaidItems]);
+      renderPaidSection(paidSection, 'Paid', visiblePaidRecords);
 
       const visibility = {
         all: ['overdueSummary', 'overdueSection', 'thisMonthSection', 'nextMonthSection', 'laterSection', 'paidSection'],
@@ -6177,16 +6357,17 @@
       const statusLabel = paymentViewMode === 'overdue'
         ? `Showing ${grouped.overdue.length} overdue reminders.`
         : paymentViewMode === 'paid'
-          ? `Showing ${paidRecords.length} paid payments.`
+          ? `Showing ${visiblePaidRecords.length} paid payments.`
           : paymentViewMode === 'reminders'
             ? `Showing ${filtered.length} manual reminders.`
-            : `Showing ${filtered.length} manual reminders and ${paidRecords.length} paid payments.`;
+            : `Showing ${filtered.length} manual reminders and ${visiblePaidRecords.length} paid payments.`;
 
       statusLine.textContent = statusLabel;
       
       // Update analytics dashboard
       updateAnalyticsDashboard();
       updateKPICards();
+      window.requestAnimationFrame(() => syncTopPaidKpiFromPaidSection(paidSection));
     }
 
     async function fetchPayments() {
@@ -6908,34 +7089,39 @@
     // Update analytics dashboard with real-time stats
     function updateAnalyticsDashboard() {
       const { active, paid, grouped } = getReminderBuckets();
+      const paidSection = document.getElementById('paidSection');
+      const visiblePaidRecords = Array.isArray(paidSection?._visiblePaidRecords)
+        ? paidSection._visiblePaidRecords
+        : getVisiblePaidPaymentRecords(active, paid);
+      const renderedPaidSummary = paidSection?._paidSummary || null;
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
       const overdueCount = grouped.overdue.length;
       const dueSoonCount = grouped.thisMonth.length;
       const pendingCount = active.length;
-      let paidThisMonthCount = 0;
-      
-      paid.forEach(payment => {
-        const paidDate = toDateStart(payment.reminderPaidAt || payment.created_at);
-        if (paidDate && paidDate.getMonth() === today.getMonth() && paidDate.getFullYear() === today.getFullYear()) {
-          paidThisMonthCount++;
-        }
-      });
+      const paidThisMonthCount = renderedPaidSummary?.count ?? visiblePaidRecords.length;
+      const paidThisMonthAmount = renderedPaidSummary?.total
+        ?? visiblePaidRecords.reduce((sum, payment) => sum + (Number(payment.totalAmount || payment.amount || payment.paidAmount || payment.reminderAmount || 0) || 0), 0);
+
+      // Debug logging to help diagnose why paid count may be zero
+      try {
+        console.debug('Analytics Debug: paid records count=', visiblePaidRecords.length);
+        console.debug('Analytics Debug: sample paid records=', visiblePaidRecords.slice(0,5));
+        console.debug('Analytics Debug: paidThisMonthCount=', paidThisMonthCount);
+      } catch (e) {
+        // ignore
+      }
       
       document.getElementById('overdueCount').textContent = overdueCount;
       document.getElementById('dueSoonCount').textContent = dueSoonCount;
       document.getElementById('pendingCount').textContent = pendingCount;
-      document.getElementById('paidThisMonthCount').textContent = paidThisMonthCount;
-
       const summaryOverdue = document.getElementById('summaryOverdue');
       const summaryDueSoon = document.getElementById('summaryDueSoon');
-      const summaryPaid = document.getElementById('summaryPaid');
       const summarySync = document.getElementById('summarySync');
 
       if (summaryOverdue) summaryOverdue.textContent = overdueCount;
       if (summaryDueSoon) summaryDueSoon.textContent = dueSoonCount;
-      if (summaryPaid) summaryPaid.textContent = paidThisMonthCount;
       if (summarySync) {
         summarySync.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       }
@@ -7173,7 +7359,7 @@
       });
 
       const paidThisMonth = paidPayments.filter((payment) => {
-        const paidDate = toDateStart(payment.reminderPaidAt || payment.created_at);
+        const paidDate = toDateStart(getPaidDateValue(payment));
         return paidDate && paidDate.getMonth() === today.getMonth() && paidDate.getFullYear() === today.getFullYear();
       });
 
@@ -7913,10 +8099,13 @@
 
     // Report Builder
     function generateReport() {
-      const payments = getAdminPaymentsOnly(getPaidPayments());
+      const { active, paid } = getReminderBuckets();
+      const visiblePaidRecords = getVisiblePaidPaymentRecords(active, paid);
+      const visiblePaidSignatures = new Set(visiblePaidRecords.map((item) => getReminderSignature(item)));
+      const reportPayments = active.filter((item) => !visiblePaidSignatures.has(getReminderSignature(item)));
       const campaign = getCampaignAnalytics();
-      const total = payments.length;
-      const overdue = payments.filter(p => {
+      const total = reportPayments.length;
+      const overdue = reportPayments.filter(p => {
         const repayDate = toDateStart(p.reminderRepaymentDate);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -7926,21 +8115,19 @@
       let totalAmount = 0;
       let collectedAmount = 0;
       
-      payments.forEach(p => {
+      reportPayments.forEach(p => {
         const principal = Number(p.reminderAmount) || 0;
         const interest = Number(p.reminderInterest) || 0;
         const amount = principal + (principal * interest / 100);
         totalAmount += amount;
       });
       
-      getPaidPayments().forEach(p => {
-        const principal = Number(p.reminderAmount) || 0;
-        const interest = Number(p.reminderInterest) || 0;
-        const amount = principal + (principal * interest / 100);
-        collectedAmount += amount;
+      visiblePaidRecords.forEach(p => {
+        const amounts = getPaymentAmounts(p);
+        collectedAmount += Number(amounts.totalAmount || p.totalAmount || p.amount || p.paidAmount || 0) || 0;
       });
       
-      const collectionRate = total > 0 ? ((collectedAmount / (totalAmount + collectedAmount)) * 100).toFixed(1) : 0;
+      const collectionRate = totalAmount > 0 ? ((collectedAmount / totalAmount) * 100).toFixed(1) : 0;
       
       document.getElementById('performanceMetrics').innerHTML = `
         <div class="report-item">
@@ -7955,7 +8142,7 @@
         </div>
         <div class="report-item">
           <div class="report-label">Total Amount</div>
-          <div class="report-value">₹${formatAmount(totalAmount + collectedAmount)}</div>
+          <div class="report-value">₹${formatAmount(totalAmount)}</div>
           <div class="report-trend">All time</div>
         </div>
         <div class="report-item">
@@ -8214,19 +8401,36 @@
 
     function updateKPICards() {
       const { active, paid, grouped } = getReminderBuckets();
+      const visiblePaidRecords = getVisiblePaidPaymentRecords(active, paid);
       let totalDue = 0;
       let collectedAmount = 0;
+      let responseDaysTotal = 0;
+      let responseSamples = 0;
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
 
       active.forEach((payment) => {
         totalDue += totalPayable(payment);
       });
 
-      paid.forEach((payment) => {
-        collectedAmount += totalPayable(payment);
+      visiblePaidRecords.forEach((payment) => {
+        collectedAmount += Number(payment.totalAmount || payment.amount || payment.paidAmount || payment.reminderAmount || 0) || 0;
+
+        const paidDate = toDateStart(getPaidDateValue(payment));
+        const responseStartDate = toDateStart(getResponseStartDateValue(payment));
+        if (paidDate && responseStartDate && paidDate >= responseStartDate) {
+          const diffDays = (paidDate - responseStartDate) / (1000 * 60 * 60 * 24);
+          if (Number.isFinite(diffDays) && diffDays >= 0) {
+            responseDaysTotal += diffDays;
+            responseSamples += 1;
+          }
+        }
       });
 
       const totalValue = totalDue + collectedAmount;
       const collectionRate = totalValue > 0 ? ((collectedAmount / totalValue) * 100).toFixed(1) : 0;
+      const avgResponseDays = responseSamples > 0 ? (responseDaysTotal / responseSamples) : null;
+      const avgResponseText = avgResponseDays === null ? '-' : formatAverageResponse(avgResponseDays);
       
       if (document.getElementById('kpiTotalDue')) {
         document.getElementById('kpiTotalDue').textContent = '₹' + formatAmount(totalDue);
@@ -8234,6 +8438,9 @@
       }
       if (document.getElementById('kpiCollectionRate')) {
         document.getElementById('kpiCollectionRate').textContent = collectionRate + '%';
+      }
+      if (document.getElementById('kpiAvgResponse')) {
+        document.getElementById('kpiAvgResponse').textContent = avgResponseText;
       }
       if (document.getElementById('kpiPendingAction')) {
         document.getElementById('kpiPendingAction').textContent = grouped.overdue.length + grouped.thisMonth.length + grouped.nextMonth.length + grouped.later.length;
@@ -8244,6 +8451,7 @@
 
     function renderPremiumCharts() {
       const { active, paid, grouped } = getReminderBuckets();
+      const visiblePaidRecords = getVisiblePaidPaymentRecords(active, paid);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -8261,8 +8469,8 @@
           return repaymentDate && repaymentDate.toDateString() === day.toDateString();
         }).length);
 
-        paidData.push(paid.filter(payment => {
-          const paidDate = toDateStart(payment.reminderPaidAt || payment.created_at);
+        paidData.push(visiblePaidRecords.filter(payment => {
+          const paidDate = toDateStart(getPaidDateValue(payment));
           return paidDate && paidDate.toDateString() === day.toDateString();
         }).length);
       }
@@ -8305,7 +8513,7 @@
       if (statusCanvas && window.Chart) {
         const overdueCount = grouped.overdue.length;
         const dueSoonCount = grouped.thisMonth.length;
-        const paidCount = paid.length;
+        const paidCount = visiblePaidRecords.length;
 
         if (premiumStatusChart) premiumStatusChart.destroy();
         premiumStatusChart = new Chart(statusCanvas, {
