@@ -3628,6 +3628,9 @@
         <button class="toolbar-btn" onclick="downloadPaymentsPdf('reminders')" title="Export pending reminders">
           <i class="fas fa-file-pdf"></i> Reminders PDF
         </button>
+        <button class="toolbar-btn" onclick="downloadPaymentsPdf('later')" title="Export Later payments">
+          <i class="fas fa-file-pdf"></i> Later PDF
+        </button>
         <button class="toolbar-btn" onclick="downloadPaymentsPdf('all')" title="Export all records">
           <i class="fas fa-download"></i> Export All
         </button>
@@ -5883,6 +5886,10 @@
       if (type === 'reminders') {
         const reminderItems = [...grouped.overdue, ...grouped.thisMonth, ...grouped.nextMonth, ...grouped.later];
         return downloadSingleSectionPdf('Reminder Payments', reminderItems, 'reminder');
+      }
+
+      if (type === 'later') {
+        return downloadSingleSectionPdf('Later Payments', grouped.later, 'reminder');
       }
 
       if (type === 'paid') {
