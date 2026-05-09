@@ -5306,25 +5306,33 @@
       const note = String(payment?.reminderNote || '');
       const amountMatch = note.match(/Amount\s*:\s*([0-9]+(?:\.[0-9]+)?)/i);
       const interestMatch = note.match(/Interest\s*:\s*([0-9]+(?:\.[0-9]+)?)%/i);
+      // Prefer computed amounts from stored fields but fall back to parsed/normalized values
       const normalized = normalizePaidReminderAmounts(payment);
+      const computed = getPaymentAmounts(payment);
+
       const originalAmount = Number(
         amountMatch?.[1]
-        || normalized?.principal
+        || computed?.principal
+        || normalized?.reminderAmount
         || payment?.baseAmount
         || payment?.principalAmount
         || payment?.reminderAmount
         || payment?.amount
         || 0,
       ) || 0;
+
       const interestRate = Number(
         interestMatch?.[1]
+        || computed?.interestRate
         || normalized?.reminderInterest
         || payment?.reminderInterest
         || payment?.interest
         || 0,
       ) || 0;
+
       const paidAmount = Number(
         normalized?.totalAmount
+        || computed?.totalAmount
         || payment?.totalAmount
         || payment?.paidAmount
         || payment?.amount
@@ -5335,20 +5343,31 @@
     }
 
     function pdfPaymentRows(items, mode) {
-      return items.map((payment) => {
-        const paidBreakdown = mode === 'paid' ? pdfGetPaidRowBreakdown(payment) : null;
-        const principal = mode === 'paid'
-          ? Number(paidBreakdown?.originalAmount || payment.reminderAmount || payment.amount || 0)
-          : Number(payment.reminderAmount || payment.amount || 0);
-        const interest = mode === 'paid'
-          ? Number(paidBreakdown?.interestRate || payment.reminderInterest || payment.interest || 0)
-          : Number(payment.reminderInterest || 0);
-        const total = mode === 'paid'
-          ? Number(paidBreakdown?.paidAmount || payment.totalAmount || payment.amount || payment.reminderAmount || 0)
-          : totalPayable(payment);
-        const repaymentDate = mode === 'paid'
-          ? formatDisplayDate(payment.paidDate || payment.paidAt || payment.reminderPaidAt || payment.created_at)
-          : (payment.reminderRepaymentDate || 'No due date');
+      const rows = items.map((payment) => {
+        if (mode === 'paid') {
+          const normalized = normalizePaidReminderAmounts(payment);
+          const noteBreakdown = (typeof pdfGetPaidRowBreakdown === 'function') ? pdfGetPaidRowBreakdown(payment) : null;
+          const storeBreakdown = getPaymentAmounts(payment);
+          const principal = Number(noteBreakdown?.originalAmount || storeBreakdown?.principal || normalized?.reminderAmount || payment.reminderAmount || payment.amount || 0) || 0;
+          const interest = Number(noteBreakdown?.interestRate || storeBreakdown?.interestRate || normalized?.reminderInterest || payment.reminderInterest || payment.interest || 0) || 0;
+          const total = Number(noteBreakdown?.paidAmount || normalized?.totalAmount || storeBreakdown?.totalAmount || payment.totalAmount || payment.paidAmount || payment.amount || 0) || 0;
+          const repaymentDate = formatDisplayDate(payment.paidDate || payment.paidAt || payment.reminderPaidAt || payment.created_at);
+
+          return [
+            payment.name || 'Manual Reminder',
+            payment.mobile || '-',
+            repaymentDate,
+            pdfStatusLabel(payment, mode),
+            pdfCurrency(principal),
+            `${interest || 0}%`,
+            pdfCurrency(total),
+          ];
+        }
+
+        const principal = Number(payment.reminderAmount || payment.amount || 0);
+        const interest = Number(payment.reminderInterest || 0);
+        const total = totalPayable(payment);
+        const repaymentDate = payment.reminderRepaymentDate || 'No due date';
 
         return [
           payment.name || 'Manual Reminder',
@@ -5360,6 +5379,8 @@
           pdfCurrency(total),
         ];
       });
+
+      return rows;
     }
 
     function pdfDrawSummaryCard(doc, x, y, w, h, label, value, accent) {
@@ -5696,6 +5717,7 @@
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.text(`Total ${pdfCurrency(sectionTotal)}   |   ${items.length} record(s)`, 18, y + 4);
+      // debug removed
       y += 8;
 
       if (!items.length) {
@@ -5709,17 +5731,21 @@
         return y + 15;
       }
 
+      const tableHead = mode === 'paid'
+        ? [["Customer", "Mobile", "Due / Paid", "Status", "Original Amount", "Interest", "Total"]]
+        : [["Customer", "Mobile", "Due / Paid", "Status", "Principal", "Interest", "Total"]];
+
       doc.autoTable({
         startY: y,
-        head: [["Customer", "Mobile", "Due / Paid", "Status", "Principal", "Interest", "Total"]],
+        head: tableHead,
         body: rows,
         theme: 'grid',
         margin: { left: 14, right: 14, bottom: 16 },
-        rowPageBreak: 'avoid',
+        rowPageBreak: 'auto',
         styles: {
           font: 'helvetica',
-          fontSize: 7.6,
-          cellPadding: 1.8,
+          fontSize: 7,
+          cellPadding: 1.2,
           overflow: 'linebreak',
           valign: 'middle',
           textColor: [20, 39, 57],
@@ -5744,6 +5770,8 @@
           5: { cellWidth: 16, halign: 'right' },
           6: { cellWidth: 24, halign: 'right' },
         },
+        tableWidth: 'auto',
+        showHead: 'everyPage',
         didDrawPage: () => {
           pdfAddHeader(doc, headerTitle, headerSubtitle);
           pdfAddFooter(doc, footerMeta);
