@@ -4339,7 +4339,7 @@ app.get("/api/payments/:mobile", requireAuthenticatedUser, requireOwnerOrAdminFo
   return res.json(data.map(mapPaymentRow));
 });
 
-app.put("/api/payments/:id/reminder", requireAdmin, paymentAdminActionLimiter, async (req, res) => {
+app.put("/api/payments/:id/reminder", requireAuthenticatedUser, paymentAdminActionLimiter, async (req, res) => {
   const { id } = req.params;
   const rawReminderId = String(req.body?.reminderId || "").trim();
   const rawReminder = String(req.body?.reminderNote || "").trim();
