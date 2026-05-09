@@ -7283,19 +7283,45 @@
       }
       
       const wb = XLSX.utils.book_new();
+      const brandName = localStorage.getItem('brandName') || 'Dhanam Chits Pvt. Ltd';
+      const brandTagline = localStorage.getItem('brandTagline') || 'Trusted Chit Services';
+      const generatedDate = new Date().toLocaleString('en-IN');
+      const reportDate = new Date().toLocaleDateString('en-IN');
+      
+      // Calculate summary totals
+      let totalPrincipal = 0;
+      let totalInterest = 0;
+      let totalPayable = 0;
+      
       const wsData = [
-        [localStorage.getItem('brandName') || 'Dhanam Chits Pvt. Ltd'],
-        [localStorage.getItem('brandTagline') || 'Trusted Chit Services'],
-        [`Generated: ${new Date().toLocaleString('en-IN')}`],
+        [brandName],
+        [brandTagline],
         [],
-        ['Name', 'Mobile', 'Borrow Date', 'Repayment Date', 'Principal', 'Interest %', 'Interest Amount', 'Total Amount', 'Note', 'Status']
+        ['PAYMENT REMINDERS REPORT'],
+        [],
+        ['Report Generated:', generatedDate],
+        ['Report Date:', reportDate],
+        ['Total Records:', payments.length],
+        [],
+        ['S.No', 'Customer Name', 'Mobile', 'Borrow Date', 'Repayment Date', 'Principal (₹)', 'Interest Rate (%)', 'Interest Amount (₹)', 'Total Payable (₹)', 'Notes', 'Status']
       ];
       
-      payments.forEach(p => {
-        const principal = Number(p.reminderAmount) || 0;
-        const interest = Number(p.reminderInterest) || 0;
-        const interestAmount = (principal * interest) / 100;
+      const dataStartRow = wsData.length;
+      
+      payments.forEach((p, idx) => {
+        const breakdown = typeof getPaymentAmounts === 'function' ? getPaymentAmounts(p) : null;
+        const principal = breakdown?.principal || Number(p.reminderAmount) || Number(p.amount) || 0;
+        const interest = breakdown?.interestRate || Number(p.reminderInterest) || 0;
+        const interestAmount = breakdown?.interestAmount || ((principal * interest) / 100);
+        const totalAmount = breakdown?.totalAmount || (principal + interestAmount);
+        const cleanNote = stripPlanTag(String(p.reminderNote || '')).trim() || 'No note';
+        
+        totalPrincipal += principal;
+        totalInterest += interestAmount;
+        totalPayable += totalAmount;
+        
         wsData.push([
+          idx + 1,
           p.name,
           p.mobile,
           p.reminderBorrowDate,
@@ -7303,13 +7329,223 @@
           principal,
           interest,
           interestAmount,
-          principal + interestAmount,
-          p.reminderNote,
+          totalAmount,
+          cleanNote,
           'Active'
         ]);
       });
       
+      // Add summary section with better formatting
+      wsData.push([]);
+      wsData.push(['SUMMARY & TOTALS']);
+      wsData.push([]);
+      wsData.push(['Metric', 'Value']);
+      wsData.push(['Total Records', payments.length]);
+      wsData.push(['Total Principal Amount', `₹ ${totalPrincipal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`]);
+      wsData.push(['Total Interest Amount', `₹ ${totalInterest.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`]);
+      wsData.push(['Total Amount Payable', `₹ ${totalPayable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`]);
+      wsData.push([]);
+      wsData.push(['Average Principal', `₹ ${(totalPrincipal / payments.length).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`]);
+      wsData.push(['Average Interest Rate', `${(totalInterest / payments.length).toFixed(2)}%`]);
+      
       const ws = XLSX.utils.aoa_to_sheet(wsData);
+      
+      // Column widths - adjusted for S.No column
+      ws['!cols'] = [
+        { wch: 6 },   // S.No
+        { wch: 22 },  // Customer Name
+        { wch: 14 },  // Mobile
+        { wch: 14 },  // Borrow Date
+        { wch: 15 },  // Repayment Date
+        { wch: 16 },  // Principal
+        { wch: 14 },  // Interest Rate
+        { wch: 16 },  // Interest Amount
+        { wch: 16 },  // Total Payable
+        { wch: 25 },  // Notes
+        { wch: 10 }   // Status
+      ];
+      
+      // Premium color palette
+      const colors = {
+        darkTeal: '0B5E5E',
+        teal: '0E8B9C',
+        lightTeal: 'E8F5F7',
+        lightGray: 'F8FBFD',
+        white: 'FFFFFF',
+        darkText: '0A2A2A',
+        mediumGray: '5A7A89',
+        gold: 'D4A574',
+        darkGold: 'B8860B'
+      };
+      
+      // Style: Brand Header (rows 0-1)
+      const brandHeaderStyle = {
+        font: { bold: true, size: 16, color: { rgb: colors.darkTeal } },
+        fill: { patternType: 'solid', fgColor: { rgb: colors.lightTeal } },
+        alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
+        border: { bottom: { style: 'medium', color: { rgb: colors.teal } } }
+      };
+      
+      const brandTaglineStyle = {
+        font: { italic: true, size: 11, color: { rgb: colors.mediumGray } },
+        fill: { patternType: 'solid', fgColor: { rgb: colors.lightTeal } },
+        alignment: { horizontal: 'left', vertical: 'center' },
+        border: { bottom: { style: 'thin', color: { rgb: colors.teal } } }
+      };
+      
+      // Style: Section Headers
+      const sectionHeaderStyle = {
+        font: { bold: true, size: 13, color: { rgb: colors.white } },
+        fill: { patternType: 'solid', fgColor: { rgb: colors.darkTeal } },
+        alignment: { horizontal: 'left', vertical: 'center' },
+        border: {
+          top: { style: 'medium', color: { rgb: colors.darkTeal } },
+          bottom: { style: 'medium', color: { rgb: colors.darkTeal } },
+          left: { style: 'medium', color: { rgb: colors.darkTeal } },
+          right: { style: 'medium', color: { rgb: colors.darkTeal } }
+        }
+      };
+      
+      // Style: Report Metadata
+      const metaLabelStyle = {
+        font: { bold: true, size: 10, color: { rgb: colors.darkTeal } },
+        fill: { patternType: 'solid', fgColor: { rgb: colors.lightTeal } },
+        alignment: { horizontal: 'left', vertical: 'center' }
+      };
+      
+      const metaValueStyle = {
+        font: { size: 10, color: { rgb: colors.darkText } },
+        fill: { patternType: 'solid', fgColor: { rgb: colors.lightGray } },
+        alignment: { horizontal: 'left', vertical: 'center' }
+      };
+      
+      // Style: Column Headers (data table)
+      const headerStyle = {
+        font: { bold: true, size: 11, color: { rgb: colors.white } },
+        fill: { patternType: 'solid', fgColor: { rgb: colors.teal } },
+        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+        border: {
+          top: { style: 'thin', color: { rgb: 'FFFFFF' } },
+          bottom: { style: 'medium', color: { rgb: colors.darkTeal } },
+          left: { style: 'thin', color: { rgb: 'FFFFFF' } },
+          right: { style: 'thin', color: { rgb: 'FFFFFF' } }
+        }
+      };
+      
+      // Style: Data rows (alternating)
+      const dataStyle = {
+        font: { size: 10, color: { rgb: colors.darkText } },
+        alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
+        border: {
+          top: { style: 'hair', color: { rgb: colors.lightGray } },
+          bottom: { style: 'hair', color: { rgb: colors.lightGray } },
+          left: { style: 'hair', color: { rgb: colors.lightGray } },
+          right: { style: 'hair', color: { rgb: colors.lightGray } }
+        }
+      };
+      
+      const dataStyleAlt = {
+        font: { size: 10, color: { rgb: colors.darkText } },
+        fill: { patternType: 'solid', fgColor: { rgb: colors.lightGray } },
+        alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
+        border: {
+          top: { style: 'hair', color: { rgb: colors.lightGray } },
+          bottom: { style: 'hair', color: { rgb: colors.lightGray } },
+          left: { style: 'hair', color: { rgb: colors.lightGray } },
+          right: { style: 'hair', color: { rgb: colors.lightGray } }
+        }
+      };
+      
+      // Style: Summary Section
+      const summaryHeaderStyle = {
+        font: { bold: true, size: 11, color: { rgb: colors.white } },
+        fill: { patternType: 'solid', fgColor: { rgb: colors.darkTeal } },
+        alignment: { horizontal: 'left', vertical: 'center' },
+        border: {
+          top: { style: 'medium', color: { rgb: colors.darkTeal } },
+          bottom: { style: 'medium', color: { rgb: colors.darkTeal } },
+          left: { style: 'medium', color: { rgb: colors.darkTeal } },
+          right: { style: 'medium', color: { rgb: colors.darkTeal } }
+        }
+      };
+      
+      const summaryMetricStyle = {
+        font: { bold: true, size: 10, color: { rgb: colors.darkTeal } },
+        fill: { patternType: 'solid', fgColor: { rgb: colors.lightTeal } },
+        alignment: { horizontal: 'left', vertical: 'center' },
+        border: {
+          top: { style: 'hair', color: { rgb: colors.teal } },
+          bottom: { style: 'hair', color: { rgb: colors.teal } },
+          left: { style: 'hair', color: { rgb: colors.teal } },
+          right: { style: 'hair', color: { rgb: colors.teal } }
+        }
+      };
+      
+      const summaryValueStyle = {
+        font: { bold: true, size: 10, color: { rgb: colors.darkGold } },
+        fill: { patternType: 'solid', fgColor: { rgb: '#FFF8E7' } },
+        alignment: { horizontal: 'right', vertical: 'center' },
+        numFmt: '#,##0.00',
+        border: {
+          top: { style: 'hair', color: { rgb: colors.teal } },
+          bottom: { style: 'hair', color: { rgb: colors.teal } },
+          left: { style: 'hair', color: { rgb: colors.teal } },
+          right: { style: 'hair', color: { rgb: colors.teal } }
+        }
+      };
+      
+      // Apply header styles - check if cell exists first
+      if (ws['A1']) ws['A1'].s = brandHeaderStyle;
+      if (ws['A2']) ws['A2'].s = brandTaglineStyle;
+      if (ws['A4']) ws['A4'].s = sectionHeaderStyle;
+      
+      // Apply report metadata styles
+      for (let row = 5; row <= 7; row++) {
+        if (ws[`A${row}`]) ws[`A${row}`].s = metaLabelStyle;
+        if (ws[`B${row}`]) ws[`B${row}`].s = metaValueStyle;
+      }
+      
+      // Apply data header row styles (row 9, 0-indexed = row with column names)
+      const headerRow = 9;
+      for (let col = 0; col < 11; col++) {
+        const cellRef = String.fromCharCode(65 + col) + headerRow;
+        if (ws[cellRef]) {
+          ws[cellRef].s = headerStyle;
+        }
+      }
+      
+      // Apply data rows with alternating colors
+      for (let row = dataStartRow; row < dataStartRow + payments.length; row++) {
+        for (let col = 0; col < 11; col++) {
+          const cellRef = String.fromCharCode(65 + col) + row;
+          if (ws[cellRef]) {
+            ws[cellRef].s = (row - dataStartRow) % 2 === 0 ? dataStyle : dataStyleAlt;
+            // Format currency columns (5, 7, 8 = Principal, Interest Amount, Total Payable)
+            if (col === 5 || col === 7 || col === 8) {
+              ws[cellRef].z = '₹ #,##0.00';
+            }
+          }
+        }
+      }
+      
+      // Apply summary section styles
+      const summaryStartRow = dataStartRow + payments.length + 2;
+      if (ws[`A${summaryStartRow}`]) ws[`A${summaryStartRow}`].s = summaryHeaderStyle;
+      
+      // Summary metric headers (row with "Metric" and "Value")
+      if (ws[`A${summaryStartRow + 2}`]) ws[`A${summaryStartRow + 2}`].s = summaryMetricStyle;
+      if (ws[`B${summaryStartRow + 2}`]) ws[`B${summaryStartRow + 2}`].s = summaryMetricStyle;
+      
+      // Summary data rows
+      for (let i = 0; i < 6; i++) {
+        const row = summaryStartRow + 3 + i;
+        if (ws[`A${row}`]) ws[`A${row}`].s = summaryMetricStyle;
+        if (ws[`B${row}`]) ws[`B${row}`].s = summaryValueStyle;
+      }
+      
+      // Freeze panes at header row
+      ws['!freeze'] = { xSplit: 0, ySplit: 9, topLeftCell: 'A10' };
+      
       XLSX.utils.book_append_sheet(wb, ws, 'Reminders');
       XLSX.writeFile(wb, `payment-reminders-${new Date().toISOString().split('T')[0]}.xlsx`);
     }
