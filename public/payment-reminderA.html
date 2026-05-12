@@ -631,6 +631,14 @@
       min-width: min(560px, 70vw);
     }
 
+    @media screen and (max-width: 768px) {
+      .bill-section-head .section-total.paid-kpis {
+        grid-template-columns: repeat(2, minmax(50px, 1fr)) !important;
+        min-width: 100% !important;
+        gap: 6px;
+      }
+    }
+
     .paid-kpi {
       border-radius: 10px;
       border: 1px solid rgba(102, 132, 160, 0.26);
@@ -710,8 +718,9 @@
       grid-template-columns: auto 48px 1fr auto;
       gap: 10px;
       align-items: center;
-      padding: 10px 96px 10px 11px;
+      padding: 10px 130px 10px 11px;
       border-bottom: 1px solid rgba(53, 68, 86, 0.75);
+      overflow: visible;
     }
 
     .bill-item:last-child {
@@ -828,6 +837,19 @@
       overflow: hidden;
       border: 1px solid #dce9f1;
       display: table;
+    }
+
+    @media screen and (max-width: 768px) {
+      table {
+        min-width: 100% !important;
+        font-size: 0.85rem;
+      }
+      
+      table th,
+      table td {
+        padding: 8px 6px !important;
+        white-space: nowrap;
+      }
     }
 
     .panel {
@@ -3596,39 +3618,66 @@
       align-items: center;
       gap: 8px;
     }
-    .paid-badge .icon { font-size: 0.9rem; opacity: 0.95; }
     /* Generic status badge for cards (Paid, Overdue, Due Soon, Pending, Later) */
     .status-badge {
       position: absolute;
-      top: auto;
-      right: 12px;
-      bottom: 12px;
+      top: 50%;
+      right: 8px;
+      transform: translateY(-50%);
       color: #fff;
-      padding: 4px 8px;
+      padding: 6px 10px;
       border-radius: 12px;
       font-weight: 700;
       font-size: 0.78rem;
-      box-shadow: none;
-      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      z-index: 100;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      pointer-events: none;
+      gap: 4px;
+      pointer-events: auto;
       opacity: 0.96;
       transition: transform 120ms ease, opacity 120ms ease;
+      white-space: nowrap;
     }
-    .status-badge .icon { font-size: 0.78rem; opacity: 0.9; }
-    .status-paid { background: linear-gradient(90deg, rgba(15,154,95,0.95), rgba(12,160,133,0.9)); border: 1px solid rgba(255,255,255,0.04); }
-    .status-overdue { background: linear-gradient(90deg, rgba(184,48,78,0.95), rgba(160,36,68,0.9)); border: 1px solid rgba(255,255,255,0.04); }
-    .status-duesoon { background: linear-gradient(90deg, rgba(217,126,42,0.95), rgba(196,102,34,0.9)); border: 1px solid rgba(255,255,255,0.04); }
-    .status-pending { background: linear-gradient(90deg, rgba(15,100,136,0.95), rgba(14,139,156,0.9)); border: 1px solid rgba(255,255,255,0.04); }
-    .status-later { background: linear-gradient(90deg, rgba(108,119,133,0.85), rgba(75,89,102,0.8)); border: 1px solid rgba(255,255,255,0.03); color: rgba(255,255,255,0.92); }
+    .status-badge:hover {
+      opacity: 1;
+      transform: translateY(-50%) scale(1.05);
+    }
+    .status-badge .icon { font-size: 0.9rem; opacity: 0.9; }
+    .status-paid { background: linear-gradient(90deg, rgba(15,154,95,0.95), rgba(12,160,133,0.9)); border: 1px solid rgba(255,255,255,0.1); }
+    .status-overdue { background: linear-gradient(90deg, rgba(184,48,78,0.95), rgba(160,36,68,0.9)); border: 1px solid rgba(255,255,255,0.1); }
+    .status-duesoon { background: linear-gradient(90deg, rgba(217,126,42,0.95), rgba(196,102,34,0.9)); border: 1px solid rgba(255,255,255,0.1); }
+    .status-pending { background: linear-gradient(90deg, rgba(15,100,136,0.95), rgba(14,139,156,0.9)); border: 1px solid rgba(255,255,255,0.1); }
+    .status-later { background: linear-gradient(90deg, rgba(108,119,133,0.85), rgba(75,89,102,0.8)); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.92); }
     /* Ensure badge text is highly readable on dark backgrounds */
     .status-badge { color: #ffffff !important; }
-    .status-badge span { color: inherit; font-weight: 800; -webkit-font-smoothing:antialiased; text-shadow: 0 1px 0 rgba(0,0,0,0.35); }
-    .status-badge .icon { opacity: 1; font-size: 0.85rem; }
+    .status-badge span { color: inherit; font-weight: 800; -webkit-font-smoothing:antialiased; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+    .status-badge .icon { opacity: 1; font-size: 0.9rem; }
     /* Tweak later badge to improve text contrast */
     .status-badge.status-later { color: #ffffff !important; }
+    
+    @media screen and (max-width: 768px) {
+      .bill-item {
+        padding: 10px 110px 10px 11px;
+      }
+      .status-badge {
+        right: 8px;
+        padding: 4px 8px;
+        font-size: 0.65rem;
+      }
+      .status-badge .icon { font-size: 0.75rem; }
+    }
+    @media screen and (max-width: 480px) {
+      .bill-item {
+        padding: 10px 100px 10px 11px;
+      }
+      .status-badge {
+        right: 8px;
+        padding: 3px 6px;
+        font-size: 0.6rem;
+      }
+      .status-badge .icon { font-size: 0.7rem; }
+    }
   </style>
   <style>
     /* Mobile layout fixes: remove left margin and stack columns */
