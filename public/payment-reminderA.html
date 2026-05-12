@@ -765,12 +765,24 @@
     }
 
     .bill-amount {
-      color: #f8fbff;
-      font-weight: 800;
-      font-size: 1.02rem;
+      color: #fff9ec;
+      font-weight: 900;
+      font-size: 1.05rem;
       white-space: nowrap;
       margin-left: 8px;
       justify-self: end;
+      align-self: start;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(255, 213, 122, 0.16), rgba(34, 197, 164, 0.14));
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+      letter-spacing: 0.01em;
+      font-variant-numeric: tabular-nums;
     }
 
     .bill-actions {
@@ -3256,7 +3268,12 @@
       .bill-amount,
       .bill-section-head .section-total,
       .bill-top-total .amount {
-        font-size: 0.9rem;
+        font-size: 0.88rem;
+      }
+
+      .bill-amount {
+        padding: 6px 10px;
+        margin-left: 6px;
       }
 
       .bill-section-head {
