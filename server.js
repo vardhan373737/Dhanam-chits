@@ -1978,7 +1978,7 @@ app.put('/api/payments/:id/reminder', async (req, res) => {
         if (rawReminderId) {
             manual = (state.manualReminders || []).find((item) => String(item.id) === rawReminderId);
         }
-        if (!manual) {
+        if (!manual && !rawReminderId) {
             manual = (state.manualReminders || []).find((item) => normalizeMobile(item.mobile) === mobile);
         }
 
@@ -2008,7 +2008,7 @@ app.put('/api/payments/:id/reminder', async (req, res) => {
 
         if (!manual) {
             manual = {
-                id: crypto.randomUUID(),
+                id: rawReminderId || crypto.randomUUID(),
                 createdAt: new Date().toISOString(),
             };
             state.manualReminders.unshift(manual);

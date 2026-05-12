@@ -9,6 +9,7 @@ const fs = require("fs");
 const path = require("path");
 const pdf = require("pdfkit");
 const { generatePdfFromUrl } = require("./pdfGenerator");
+const { generatePaymentReminderPptx } = require("./powerPointGenerator");
 const multer = require("multer");
 const rateLimit = require("express-rate-limit");
 const supabase = require("./supabaseClient");
@@ -92,6 +93,90 @@ app.get("/emi-breakdown.pdf", async (req, res) => {
     res.status(500).send("Error generating PDF");
   }
 });
+
+// Generate Payment Reminder PowerPoint
+app.get("/payment-reminders.pptx", async (req, res) => {
+  try {
+    // Fetch reminders data from your API or database
+    const reminders = await fetchPaymentReminders();
+    
+    const filename = `payment-reminders-${Date.now()}.pptx`;
+    const outputPath = path.join(invoicesDir, filename);
+    
+    await generatePaymentReminderPptx(reminders, outputPath);
+    
+    res.download(outputPath, "payment-reminders.pptx", (err) => {
+      if (err) {
+        console.error("Error sending PPTX:", err);
+        res.status(500).send("Failed to generate PowerPoint");
+      }
+      // Clean up file after download
+      fs.unlink(outputPath, (unlinkErr) => {
+        if (unlinkErr) console.error("Error deleting file:", unlinkErr);
+      });
+    });
+  } catch (err) {
+    console.error("Error generating PowerPoint:", err);
+    res.status(500).send("Error generating PowerPoint");
+  }
+});
+
+// Helper function to fetch payment reminders
+const fetchPaymentReminders = async () => {
+  try {
+    // Try to read from cache file first
+    const cachePath = path.join(storageBaseDir, "uploads", "payment-reminders.json");
+    if (fs.existsSync(cachePath)) {
+      const data = fs.readFileSync(cachePath, "utf8");
+      const parsedData = JSON.parse(data);
+      
+      // Extract reminders from the nested structure
+      const reminders = [];
+      
+      // Handle byId structure
+      if (parsedData.byId && typeof parsedData.byId === 'object') {
+        Object.values(parsedData.byId).forEach((reminderArray) => {
+          if (Array.isArray(reminderArray)) {
+            reminderArray.forEach((reminder) => {
+              reminders.push({
+                userName: reminder.name || 'Unknown',
+                amount: reminder.reminderAmount || reminder.amount || 0,
+                status: reminder.status || 'Pending',
+                dueDate: reminder.repaymentDate || reminder.dueDate || null,
+                note: reminder.note || '',
+                createdAt: reminder.createdAt || null
+              });
+            });
+          }
+        });
+      }
+      
+      // Handle byMobile structure
+      if (parsedData.byMobile && typeof parsedData.byMobile === 'object') {
+        Object.entries(parsedData.byMobile).forEach(([mobile, reminderArray]) => {
+          if (Array.isArray(reminderArray)) {
+            reminderArray.forEach((reminder) => {
+              reminders.push({
+                userName: reminder.name || `User (${mobile})` || 'Unknown',
+                amount: reminder.reminderAmount || reminder.amount || 0,
+                status: reminder.status || 'Pending',
+                dueDate: reminder.repaymentDate || reminder.dueDate || null,
+                note: reminder.note || '',
+                createdAt: reminder.createdAt || null
+              });
+            });
+          }
+        });
+      }
+      
+      return reminders.length > 0 ? reminders : [];
+    }
+    return [];
+  } catch (err) {
+    console.error("Error fetching reminders:", err);
+    return [];
+  }
+};
 
 if (isProduction) {
   app.set("trust proxy", 1);
@@ -1988,7 +2073,8 @@ async function upsertPaymentReminderRow({ paymentId = null, mobile, name = null,
   if (paymentId) {
     existingFilters.push({ column: "payment_id", value: paymentId });
   }
-  if (mobile) {
+  // Only search by mobile if no reminderId was provided (allow creating new manual reminders with same mobile)
+  if (mobile && !reminderId) {
     existingFilters.push({ column: "payment_mobile", value: normalizeMobile(mobile) });
   }
 
@@ -2023,9 +2109,12 @@ async function upsertPaymentReminderRow({ paymentId = null, mobile, name = null,
     return data;
   }
 
+  // When inserting a new row with a specific reminderId, include it in the insert
+  const insertRow = reminderId ? { ...reminderRow, id: reminderId } : reminderRow;
+
   const { data, error } = await supabase
     .from(paymentRemindersTable)
-    .insert(reminderRow)
+    .insert(insertRow)
     .select("*")
     .single();
 
@@ -4390,24 +4479,30 @@ app.put("/api/payments/:id/reminder", requireAuthenticatedUser, paymentAdminActi
 
   // Try to find existing payment record.
   // The incoming :id can be payment id, reminder id, mobile, or synthetic id.
-  const paymentQuery = supabase
-    .from("payments")
-    .select("*");
+  // SKIP payment lookup if reminderId is provided (it's a manual reminder)
   const rawId = String(id || "").trim();
   const normalizedMobileFromInput = normalizeMobile(rawMobile || rawId || "");
-  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(rawId);
-
+  
   let record;
-  if (isUuid) {
-    record = await paymentQuery.eq("id", rawId).maybeSingle();
-  } else if (normalizedMobileFromInput) {
-    record = await paymentQuery
-      .eq("mobile", normalizedMobileFromInput)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+  if (rawReminderId) {
+    record = { data: null, error: null }; // Skip payment lookup for manual reminders
   } else {
-    record = { data: null, error: null };
+    const paymentQuery = supabase
+      .from("payments")
+      .select("*");
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(rawId);
+
+    if (isUuid) {
+      record = await paymentQuery.eq("id", rawId).maybeSingle();
+    } else if (normalizedMobileFromInput) {
+      record = await paymentQuery
+        .eq("mobile", normalizedMobileFromInput)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+    } else {
+      record = { data: null, error: null };
+    }
   }
 
   // If primary lookup fails with an error, continue in manual mode instead of hard-failing.

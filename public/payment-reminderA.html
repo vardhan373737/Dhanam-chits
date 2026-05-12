@@ -564,10 +564,119 @@
       letter-spacing: 0.01em;
     }
 
+    .section-title-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: #f7fcff;
+      letter-spacing: 0.02em;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      background: linear-gradient(120deg, rgba(26, 49, 75, 0.95), rgba(15, 32, 52, 0.9));
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+    }
+
+    .section-title-pill .icon {
+      font-size: 0.88rem;
+      opacity: 0.95;
+    }
+
+    .section-title-pill .title-text {
+      color: #ffffff !important;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .section-title-overdue {
+      background: linear-gradient(120deg, rgba(170, 39, 70, 0.95), rgba(124, 24, 52, 0.9));
+      border-color: rgba(255, 143, 165, 0.38);
+    }
+
+    .section-title-thismonth {
+      background: linear-gradient(120deg, rgba(41, 125, 189, 0.95), rgba(23, 80, 129, 0.9));
+      border-color: rgba(140, 199, 245, 0.36);
+    }
+
+    .section-title-nextmonth {
+      background: linear-gradient(120deg, rgba(74, 104, 186, 0.95), rgba(44, 64, 128, 0.9));
+      border-color: rgba(155, 173, 245, 0.34);
+    }
+
+    .section-title-later {
+      background: linear-gradient(120deg, rgba(99, 113, 132, 0.92), rgba(63, 77, 96, 0.88));
+      border-color: rgba(191, 204, 218, 0.26);
+    }
+
+    .section-title-paid {
+      background: linear-gradient(120deg, rgba(16, 153, 112, 0.95), rgba(12, 116, 105, 0.9));
+      border-color: rgba(137, 242, 206, 0.38);
+    }
+
     .bill-section-head .section-total {
       color: #f3f7ff;
       font-size: 1.02rem;
       font-weight: 800;
+    }
+
+    .bill-section-head .section-total.paid-kpis {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(84px, 1fr));
+      gap: 8px;
+      align-items: stretch;
+      min-width: min(560px, 70vw);
+    }
+
+    .paid-kpi {
+      border-radius: 10px;
+      border: 1px solid rgba(102, 132, 160, 0.26);
+      background: linear-gradient(160deg, rgba(8, 20, 33, 0.96), rgba(7, 16, 25, 0.9));
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .paid-kpi-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #93b0c8;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .paid-kpi-head {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .paid-kpi-head i {
+      font-size: 0.72rem;
+      opacity: 0.85;
+    }
+
+    .paid-kpi-value {
+      font-size: 1.03rem;
+      color: #ffffff;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: 0.01em;
+    }
+
+    .paid-kpi-principal .paid-kpi-value { color: #9cd6ff; }
+    .paid-kpi-interest .paid-kpi-value { color: #ffd27f; }
+    .paid-kpi-total .paid-kpi-value { color: #7ef0ca; }
+    .paid-kpi-count .paid-kpi-value { color: #d3ddff; }
+    .paid-kpi-total {
+      background: linear-gradient(160deg, rgba(8, 28, 30, 0.98), rgba(7, 19, 21, 0.92));
+      border-color: rgba(126, 240, 202, 0.32);
     }
 
     .bill-list {
@@ -596,11 +705,12 @@
     }
 
     .bill-item {
+      position: relative;
       display: grid;
       grid-template-columns: auto 48px 1fr auto;
       gap: 10px;
       align-items: center;
-      padding: 10px 11px;
+      padding: 10px 96px 10px 11px;
       border-bottom: 1px solid rgba(53, 68, 86, 0.75);
     }
 
@@ -651,6 +761,7 @@
       font-size: 1.02rem;
       white-space: nowrap;
       margin-left: 8px;
+      justify-self: end;
     }
 
     .bill-actions {
@@ -1612,21 +1723,23 @@
     /* Help & Shortcuts */
     .help-icon {
       position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 50px;
-      height: 50px;
+      bottom: 14px;
+      left: 14px;
+      right: auto;
+      width: 42px;
+      height: 42px;
       background: linear-gradient(135deg, #0d7c91, #0b7a75);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
-      font-size: 1.5rem;
+      font-size: 1.1rem;
       cursor: pointer;
-      box-shadow: 0 8px 20px rgba(13, 124, 145, 0.3);
+      box-shadow: 0 8px 18px rgba(13, 124, 145, 0.28);
       transition: all 0.3s ease;
-      z-index: 999;
+      z-index: 120;
+      opacity: 0.92;
     }
 
     .help-icon:hover {
@@ -1636,8 +1749,9 @@
 
     .help-tooltip {
       position: absolute;
-      bottom: 70px;
-      right: 0;
+      bottom: 56px;
+      left: 0;
+      right: auto;
       background: #0d2d43;
       color: white;
       padding: 12px 16px;
@@ -1651,6 +1765,23 @@
 
     .help-icon:hover .help-tooltip {
       opacity: 1;
+    }
+
+    @media screen and (max-width: 900px) {
+      .help-icon {
+        bottom: 12px;
+        left: 12px;
+        width: 38px;
+        height: 38px;
+        font-size: 1rem;
+      }
+
+      .help-tooltip {
+        bottom: 50px;
+        left: 0;
+        font-size: 0.78rem;
+        padding: 8px 10px;
+      }
     }
 
     /* Monthly Breakdown Modal */
@@ -3081,6 +3212,7 @@
       }
 
       .bill-item {
+        position: relative;
         grid-template-columns: auto 42px 1fr auto;
         padding: 9px;
       }
@@ -3103,6 +3235,25 @@
       .bill-section-head .section-total,
       .bill-top-total .amount {
         font-size: 0.9rem;
+      }
+
+      .bill-section-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .bill-section-head .section-total.paid-kpis {
+        width: 100%;
+        min-width: 0;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .paid-kpi {
+        padding: 7px 8px;
+      }
+
+      .paid-kpi-value {
+        font-size: 0.93rem;
       }
 
       .bill-actions .btn {
@@ -3395,6 +3546,91 @@
     }
   </style>
   <style>
+    /* Highlight EMI meta badges in the reminder cards */
+    .emi-meta { display: inline-flex; gap: 8px; align-items: center; margin-left: 8px; }
+    .emi-meta .emi-months, .emi-meta .emi-monthly {
+      background: linear-gradient(90deg, #0f9a5f, #0d6f85);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      box-shadow: 0 2px 6px rgba(13, 111, 133, 0.12);
+    }
+    .emi-meta .emi-months { background: linear-gradient(90deg, #146a86, #0d6f85); }
+    .emi-meta .emi-monthly { background: linear-gradient(90deg, #0f9a5f, #0ca085); }
+  </style>
+  <style>
+    /* Premium styling for paid list cards */
+    .bill-item-paid {
+      background: linear-gradient(180deg, rgba(10,30,34,0.6), rgba(6,18,22,0.8));
+      border: 1px solid rgba(15,154,95,0.12);
+      box-shadow: 0 18px 40px rgba(2,10,12,0.5);
+      border-radius: 14px;
+      padding: 18px;
+      color: #e6fbf6;
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+    .bill-item-paid:hover { transform: translateY(-4px); box-shadow: 0 26px 60px rgba(2,10,12,0.6); }
+    .bill-item-paid .bill-name { color: #f1fff9; font-weight: 800; font-size: 1.02rem; }
+    .bill-item-paid .bill-meta { color: rgba(235, 249, 245, 0.85); }
+    .bill-item-paid .bill-amount { color: #fff; font-weight: 900; font-size: 1.18rem; }
+    .bill-item-paid .bill-actions .btn { background: linear-gradient(90deg,#0f9a5f,#0d6f85); color:#fff; border: none; box-shadow: 0 8px 20px rgba(13,111,133,0.18); }
+    .bill-item-paid .bill-actions .btn:hover { opacity: 0.95; }
+    /* Emphasize small meta chips inside paid cards */
+    .bill-item-paid .emi-meta .emi-months, .bill-item-paid .emi-meta .emi-monthly { box-shadow: 0 6px 18px rgba(3,38,33,0.35); }
+    /* Small paid badge positioned top-right of paid cards */
+    .paid-badge {
+      position: absolute;
+      top: 10px;
+      right: 14px;
+      background: linear-gradient(90deg,#0f9a5f,#0ca085);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      box-shadow: 0 8px 20px rgba(6,45,40,0.28);
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .paid-badge .icon { font-size: 0.9rem; opacity: 0.95; }
+    /* Generic status badge for cards (Paid, Overdue, Due Soon, Pending, Later) */
+    .status-badge {
+      position: absolute;
+      top: auto;
+      right: 12px;
+      bottom: 12px;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.78rem;
+      box-shadow: none;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+      opacity: 0.96;
+      transition: transform 120ms ease, opacity 120ms ease;
+    }
+    .status-badge .icon { font-size: 0.78rem; opacity: 0.9; }
+    .status-paid { background: linear-gradient(90deg, rgba(15,154,95,0.95), rgba(12,160,133,0.9)); border: 1px solid rgba(255,255,255,0.04); }
+    .status-overdue { background: linear-gradient(90deg, rgba(184,48,78,0.95), rgba(160,36,68,0.9)); border: 1px solid rgba(255,255,255,0.04); }
+    .status-duesoon { background: linear-gradient(90deg, rgba(217,126,42,0.95), rgba(196,102,34,0.9)); border: 1px solid rgba(255,255,255,0.04); }
+    .status-pending { background: linear-gradient(90deg, rgba(15,100,136,0.95), rgba(14,139,156,0.9)); border: 1px solid rgba(255,255,255,0.04); }
+    .status-later { background: linear-gradient(90deg, rgba(108,119,133,0.85), rgba(75,89,102,0.8)); border: 1px solid rgba(255,255,255,0.03); color: rgba(255,255,255,0.92); }
+    /* Ensure badge text is highly readable on dark backgrounds */
+    .status-badge { color: #ffffff !important; }
+    .status-badge span { color: inherit; font-weight: 800; -webkit-font-smoothing:antialiased; text-shadow: 0 1px 0 rgba(0,0,0,0.35); }
+    .status-badge .icon { opacity: 1; font-size: 0.85rem; }
+    /* Tweak later badge to improve text contrast */
+    .status-badge.status-later { color: #ffffff !important; }
+  </style>
+  <style>
     /* Mobile layout fixes: remove left margin and stack columns */
     @media screen and (max-width: 900px) {
       .content {
@@ -3634,6 +3870,9 @@
         <button class="toolbar-btn" onclick="downloadPaymentsPdf('all')" title="Export all records">
           <i class="fas fa-download"></i> Export All
         </button>
+        <button class="toolbar-btn" onclick="downloadPaymentsPptx()" title="Export to PowerPoint">
+          <i class="fas fa-file-powerpoint"></i> PowerPoint
+        </button>
         <button class="toolbar-btn icon-only" onclick="openNotificationPanel()" title="View notifications" aria-label="View notifications">
           <span class="btn-fallback" aria-hidden="true">
             <span class="btn-fallback-emoji">🔔</span>
@@ -3847,17 +4086,22 @@
             <label for="totalAmount">🎯 Total Amount (Principal + Interest)</label>
             <input type="number" id="totalAmount" min="0" step="1" placeholder="Enter total amount" oninput="calculateAmounts('total')" onchange="calculateAmounts('total')">
           </div>
+          <div class="field" id="partialAmountField" style="display:none;">
+            <label for="partialAmount">🧾 Partial Amount</label>
+            <input type="number" id="partialAmount" min="0" step="1" placeholder="Enter partial amount" oninput="calculateAmounts('partial')" onchange="calculateAmounts('partial')">
+          </div>
           <div class="field">
             <label for="repaymentMode">🧾 Repayment Option</label>
             <select id="repaymentMode" onchange="onRepaymentModeChange()">
               <option value="full">Full Payment</option>
+              <option value="partial">Partial Payment</option>
               <option value="emi">EMI</option>
               <option value="extend">Extend (Interest Only)</option>
             </select>
           </div>
           <div class="field" id="emiMonthsField" style="display:none;">
             <label for="emiMonths">📆 EMI Months</label>
-            <input type="number" id="emiMonths" min="1" step="1" placeholder="e.g. 6" oninput="calculateAmounts('emi')">
+            <input type="number" id="emiMonths" min="0.1" step="0.1" placeholder="e.g. 14.4" oninput="calculateAmounts('emi')">
           </div>
           <div class="field" id="monthlyEmiField" style="display:none;">
             <label for="monthlyEmi">💳 Monthly EMI</label>
@@ -4345,12 +4589,36 @@
     function calculateAmounts(source = 'sync') {
       const principalInput = document.getElementById('reminderAmount');
       const totalInput = document.getElementById('totalAmount');
+      const partialInput = document.getElementById('partialAmount');
       const interestRateInput = document.getElementById('reminderInterest');
       const interestAmountInput = document.getElementById('interestAmount');
 
       const principal = normalizeMoney(principalInput.value, { snapNearInteger: true });
       let totalAmount = normalizeMoney(totalInput.value, { snapNearInteger: true });
+      let partialAmount = partialInput ? normalizeMoney(partialInput.value, { snapNearInteger: true }) : null;
       let interestRate = Number(interestRateInput.value);
+      const mode = getRepaymentModeValue();
+      const allowBelowPrincipal = mode === 'partial';
+
+      if (mode === 'partial') {
+        const effectivePartial = Number.isFinite(partialAmount) && partialAmount > 0
+          ? partialAmount
+          : (Number.isFinite(totalAmount) && totalAmount > 0 ? totalAmount : 0);
+
+        if (partialInput && effectivePartial > 0) {
+          partialInput.value = String(effectivePartial);
+        }
+
+        // For partial mode, do not overwrite the Total Amount field (keep it as full principal+interest).
+        // Only set interest fields to 0 for clarity when partial is present.
+        if (effectivePartial > 0) {
+          interestAmountInput.value = '0';
+          interestRateInput.value = '0';
+        }
+
+        updateRepaymentPlanPreview();
+        return;
+      }
 
       if (!Number.isFinite(principal) || principal < 0) {
         interestRateInput.value = '';
@@ -4379,7 +4647,7 @@
 
         // If total is present, keep total fixed and auto-calculate interest.
         if (hasTypedTotal) {
-          if (totalAmount < principal) {
+          if (!allowBelowPrincipal && totalAmount < principal) {
             totalAmount = principal;
             totalInput.value = String(totalAmount);
           }
@@ -4407,7 +4675,7 @@
         totalInput.value = String(principal);
       }
 
-      if (principal > 0 && totalAmount < principal) {
+      if (!allowBelowPrincipal && principal > 0 && totalAmount < principal) {
         totalAmount = principal;
         totalInput.value = String(totalAmount);
       }
@@ -4424,6 +4692,7 @@
     }
 
     function onRepaymentModeChange() {
+      calculateAmounts('sync');
       updateRepaymentPlanPreview();
     }
 
@@ -4447,15 +4716,17 @@
       const emiMonthsField = document.getElementById('emiMonthsField');
       const monthlyEmiField = document.getElementById('monthlyEmiField');
       const monthsRemainingField = document.getElementById('monthsRemainingField');
+      const partialAmountField = document.getElementById('partialAmountField');
       const emiMonthsInput = document.getElementById('emiMonths');
       const monthlyEmiInput = document.getElementById('monthlyEmi');
       const monthsRemainingInput = document.getElementById('monthsRemaining');
 
-      if (!emiMonthsField || !monthlyEmiField || !monthsRemainingField || !emiMonthsInput || !monthlyEmiInput || !monthsRemainingInput) {
+      if (!emiMonthsField || !monthlyEmiField || !monthsRemainingField || !partialAmountField || !emiMonthsInput || !monthlyEmiInput || !monthsRemainingInput) {
         return;
       }
 
       if (mode === 'emi') {
+        partialAmountField.style.display = 'none';
         emiMonthsField.style.display = '';
         monthlyEmiField.style.display = '';
         monthsRemainingField.style.display = '';
@@ -4473,6 +4744,16 @@
         return;
       }
 
+      if (mode === 'partial') {
+        partialAmountField.style.display = '';
+        emiMonthsField.style.display = 'none';
+        monthlyEmiField.style.display = 'none';
+        monthsRemainingField.style.display = 'none';
+        partialAmountField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      partialAmountField.style.display = 'none';
       emiMonthsField.style.display = 'none';
       monthlyEmiField.style.display = 'none';
       monthsRemainingField.style.display = 'none';
@@ -4510,7 +4791,7 @@
 
     function parsePlanTag(note) {
       const raw = String(note || '');
-      const match = raw.match(/\[PLAN\]\s*mode=(\w+)(?:;\s*months=(\d+))?(?:;\s*monthly=([\d.]+))?(?:;\s*interestOnly=([\d.]+))?(?:;\s*rolledPrincipal=([\d.]+))?(?:;\s*initialMonths=(\d+))?(?:;\s*paidCount=(\d+))?/i);
+      const match = raw.match(/\[PLAN\]\s*mode=(\w+)(?:;\s*months=([\d.]+))?(?:;\s*monthly=([\d.]+))?(?:;\s*interestOnly=([\d.]+))?(?:;\s*rolledPrincipal=([\d.]+))?(?:;\s*initialMonths=([\d.]+))?(?:;\s*paidCount=(\d+))?(?:;\s*partialAmount=([\d.]+))?(?:;\s*paidOf=([A-Za-z0-9_-]+))?/i);
       if (!match) {
         return null;
       }
@@ -4523,6 +4804,8 @@
         rolledPrincipal: match[5] ? Number(match[5]) : null,
         initialMonths: match[6] ? Number(match[6]) : null,
         paidCount: match[7] ? Number(match[7]) : null,
+        partialAmount: match[8] ? Number(match[8]) : null,
+        paidOf: match[9] ? String(match[9]).trim() : null,
       };
     }
 
@@ -4543,6 +4826,8 @@
       if (Number.isFinite(plan.rolledPrincipal) && plan.rolledPrincipal > 0) parts.push(`rolledPrincipal=${Number(plan.rolledPrincipal.toFixed(2))}`);
       if (Number.isFinite(plan.initialMonths) && plan.initialMonths > 0) parts.push(`initialMonths=${plan.initialMonths}`);
       if (Number.isFinite(plan.paidCount) && plan.paidCount > 0) parts.push(`paidCount=${plan.paidCount}`);
+      if (Number.isFinite(plan.partialAmount) && plan.partialAmount > 0) parts.push(`partialAmount=${Number(plan.partialAmount.toFixed(2))}`);
+      if (String(plan?.paidOf || '').trim()) parts.push(`paidOf=${String(plan.paidOf).trim()}`);
 
       const tag = `[PLAN] ${parts.join('; ')}`;
       return cleaned ? `${cleaned}\n${tag}` : tag;
@@ -4689,6 +4974,10 @@
     }
 
     function getReminderSignature(item) {
+      // For paid entries (including partial-paid), include the unique database ID to distinguish multiple payments from the same reminder
+      const uniqueId = item.paymentId || item._id || item.id || '';
+      const isPaidEntry = item.paidMode || item.reminderStatus === 'paid';
+      
       return [
         normalizeText(item.name),
         normalizeText(item.mobile),
@@ -4697,6 +4986,7 @@
         normalizeText(item.reminderAmount),
         normalizeText(item.reminderInterest),
         normalizeText(item.reminderNote),
+        isPaidEntry ? uniqueId : '', // Include ID for paid entries to preserve all partial payments
       ].join('|');
     }
 
@@ -4713,6 +5003,12 @@
       }
 
       const note = String(payment?.reminderNote || '');
+      const plan = parsePlanTag(note);
+      const planPartial = Number(plan?.partialAmount || 0);
+      if (Number.isFinite(planPartial) && planPartial > 0) {
+        return planPartial;
+      }
+
       const noteMatch = note.match(/total\s*amount\s*[:=]\s*([0-9]+(?:\.[0-9]+)?)/i);
       if (noteMatch && noteMatch[1]) {
         const noteTotal = Number(noteMatch[1]);
@@ -4726,6 +5022,8 @@
 
     function getPaymentAmounts(payment) {
       const principal = Number(payment.reminderAmount ?? payment.amount ?? 0) || 0;
+      const plan = parsePlanTag(payment.reminderNote || '');
+
       let interestRate = Number(payment.reminderInterest ?? 0) || 0;
       let interestAmount = (principal * interestRate) / 100;
 
@@ -4746,11 +5044,42 @@
         interestRate = 0;
       }
 
-      const totalAmount = principal >= 0 && storedTotal >= principal && storedTotal > 0
+      const totalAmount = storedTotal > 0
         ? storedTotal
         : (principal + interestAmount);
 
       return { principal, interestRate, interestAmount, totalAmount };
+    }
+
+    function getEmiMonthlyAmount(payment, plan, fallbackMonths = 0) {
+      const directCandidates = [
+        plan?.monthly,
+        payment?.planMonthly,
+        payment?.monthlyEmi,
+        payment?.monthly,
+        payment?.emiMonthly,
+      ];
+
+      for (const candidate of directCandidates) {
+        const value = Number(String(candidate ?? '').replace(/[^\d.-]/g, ''));
+        if (Number.isFinite(value) && value > 0) {
+          return value;
+        }
+      }
+
+      const monthsBase = Number(plan?.initialMonths) || Number(plan?.months) || Number(fallbackMonths) || 0;
+      if (monthsBase <= 0) {
+        return 0;
+      }
+
+      const principal = Number(payment?.reminderAmount ?? payment?.amount ?? 0) || 0;
+      if (principal > 0) {
+        return principal / monthsBase;
+      }
+
+      const totals = getPaymentAmounts(payment);
+      const totalAmount = Number(totals?.totalAmount) || 0;
+      return totalAmount > 0 ? (totalAmount / monthsBase) : 0;
     }
 
     function normalizePaidReminderAmounts(payment) {
@@ -4810,6 +5139,28 @@
       };
     }
 
+    function buildPartialPaidViewItem(payment) {
+      const plan = parsePlanTag(payment.reminderNote || '');
+      if (plan?.mode !== 'partial') {
+        return null;
+      }
+
+      const partialAmount = Number(plan.partialAmount ?? 0) || 0;
+      if (!Number.isFinite(partialAmount) || partialAmount <= 0) {
+        return null;
+      }
+
+      return {
+        ...payment,
+        paidMode: true,
+        reminderStatus: 'paid-reminder',
+        paidDate: payment.paidAt || payment.updated_at || payment.updatedAt || new Date().toISOString(),
+        reminderAmount: partialAmount,
+        reminderInterest: 0,
+        totalAmount: partialAmount,
+      };
+    }
+
     function buildEmiPaidViewItem(payment) {
       const plan = parsePlanTag(payment.reminderNote || '');
       if (plan?.mode !== 'emi') {
@@ -4823,9 +5174,6 @@
 
       if (!paidInstallments && initialMonths > 0 && initialMonths >= monthsRemaining) {
         paidInstallments = initialMonths - monthsRemaining;
-      }
-      if (!paidInstallments) {
-        paidInstallments = estimateEmiPaidCountFromDates(payment);
       }
 
       if (!Number.isFinite(paidInstallments) || paidInstallments <= 0) {
@@ -4878,6 +5226,11 @@
         ...normalizePaidReminderAmounts(item),
       }));
 
+      const partialPaidItems = active
+        .map((item) => buildPartialPaidViewItem(item))
+        .filter(Boolean)
+        .filter((item) => !paidItems.some((existing) => getReminderSignature(existing) === getReminderSignature(item)));
+
       const extendPaidItems = active
         .map((item) => buildExtendPaidViewItem(item))
         .filter(Boolean)
@@ -4888,8 +5241,55 @@
         .filter(Boolean)
         .filter((item) => !paidItems.some((existing) => getReminderSignature(existing) === getReminderSignature(item)));
 
-      return [...paidItems, ...extendPaidItems, ...emiPaidItems];
+      return [...paidItems, ...partialPaidItems, ...extendPaidItems, ...emiPaidItems];
     }
+
+    function resolvePaymentId(payment) {
+      const direct = String(payment.paymentId || payment._id || payment.id || '').trim();
+      if (direct) return direct;
+
+      const signature = getReminderSignature(payment);
+      for (const item of paymentCache || []) {
+        try {
+          if (getReminderSignature(item) === signature) {
+            const found = String(item.paymentId || item._id || item.id || '').trim();
+            if (found) return found;
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      // Try matching by mobile + name
+      const mobile = String(payment.mobile || '').trim();
+      const name = String(payment.name || '').trim().toLowerCase();
+      const repaymentDate = String(payment.reminderRepaymentDate || payment.paidDate || payment.repaymentDate || '').trim();
+      if (mobile) {
+        for (const item of paymentCache || []) {
+          try {
+            if (String(item.mobile || '').trim() === mobile) {
+              const itemName = String(item.name || '').trim().toLowerCase();
+              const itemRepayment = String(item.reminderRepaymentDate || item.repaymentDate || '').trim();
+              if (itemName && name && itemName === name) {
+                const found = String(item.paymentId || item._id || item.id || '').trim();
+                if (found) return found;
+              }
+              if (repaymentDate && itemRepayment && itemRepayment === repaymentDate) {
+                const found = String(item.paymentId || item._id || item.id || '').trim();
+                if (found) return found;
+              }
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
+      }
+
+      // fallback to mobile if nothing else (server may accept mobile as identifier)
+      return mobile;
+    }
+
+    
 
     function getAdminPaymentsOnly(paidRecords = []) {
       // Show only manual reminder rows.
@@ -5044,12 +5444,20 @@
 
     function totalPayable(payment) {
       const plan = parsePlanTag(payment?.reminderNote || '');
+      if (plan?.mode === 'partial') {
+        const storedTotal = getStoredTotalAmount(payment);
+        const partialAmount = Number(plan.partialAmount ?? 0) || 0;
+        if (Number.isFinite(storedTotal) && storedTotal > 0) {
+          const remaining = storedTotal - partialAmount;
+          return remaining > 0 ? remaining : storedTotal;
+        }
+      }
       if (plan?.mode === 'emi' && Number.isFinite(plan.monthly) && plan.monthly > 0) {
         return plan.monthly;
       }
       const principal = parseFloat(payment.reminderAmount) || 0;
       const storedTotal = getStoredTotalAmount(payment);
-      if (storedTotal >= principal && storedTotal > 0) {
+      if (storedTotal > 0) {
         return storedTotal;
       }
       const interestRate = parseFloat(payment.reminderInterest) || 0;
@@ -5958,10 +6366,9 @@
       const initialMonths = Number(plan.initialMonths) || monthsRemaining;
       const trackedPaidCount = Number(plan.paidCount) || 0;
       const derivedPaidCount = initialMonths > 0 && initialMonths >= monthsRemaining ? (initialMonths - monthsRemaining) : 0;
-      const estimatedPaidCount = estimateEmiPaidCountFromDates(payment);
-      const paidInstallments = Math.max(trackedPaidCount, derivedPaidCount, estimatedPaidCount, 0);
+      const paidInstallments = Math.max(trackedPaidCount, derivedPaidCount, 0);
       const totalMonths = Math.max(initialMonths, monthsRemaining, paidInstallments);
-      const monthlyAmount = Number(plan.monthly) || 0;
+      const monthlyAmount = getEmiMonthlyAmount(payment, plan, totalMonths);
 
       const currentDueDate = new Date(payment.reminderRepaymentDate);
       const startDate = new Date(currentDueDate);
@@ -5970,19 +6377,42 @@
       }
 
       const rows = [];
-      let paidAmount = 0;
-      for (let i = 1; i <= totalMonths; i++) {
-        const monthDate = new Date(startDate);
-        monthDate.setMonth(monthDate.getMonth() + (i - 1));
-        const isPaid = i <= paidInstallments;
-        if (isPaid) paidAmount += monthlyAmount;
-        rows.push([
-          monthDate.toLocaleString('en-IN', { month: 'long', year: 'numeric' }),
-          formatDisplayDate(monthDate),
-          formatCurrency(monthlyAmount),
-          isPaid ? 'Paid' : 'Pending',
-        ]);
+      const normalizedTotalMonths = Math.max(0, normalizeMoney(totalMonths) || 0);
+      const fullMonths = Math.floor(normalizedTotalMonths);
+      const partialMonth = normalizeMoney(normalizedTotalMonths - fullMonths) || 0;
+      const monthSlices = Array.from({ length: fullMonths }, () => 1);
+      if (partialMonth > 0) {
+        monthSlices.push(partialMonth);
       }
+
+      const paidCoverage = Math.min(normalizedTotalMonths, Math.max(0, normalizeMoney(paidInstallments) || 0));
+      let paidAmount = 0;
+
+      monthSlices.forEach((fraction, index) => {
+        const monthIndex = index + 1;
+        const monthDate = new Date(startDate);
+        monthDate.setMonth(monthDate.getMonth() + index);
+        const sliceAmount = (normalizeMoney(monthlyAmount * fraction) || 0);
+
+        const coverageBefore = index;
+        const coverageAfter = index + fraction;
+        const isPaid = paidCoverage >= coverageAfter;
+
+        if (isPaid) {
+          paidAmount += sliceAmount;
+        }
+
+        const monthLabel = fraction < 1
+          ? `Month ${monthIndex} (${formatAmount(fraction)} EMI)`
+          : `Month ${monthIndex}`;
+
+        rows.push([
+          monthLabel,
+          formatDisplayDate(monthDate),
+          formatCurrency(sliceAmount),
+          isPaid ? 'Paid' : (paidCoverage > coverageBefore ? 'Partially Paid' : 'Pending'),
+        ]);
+      });
 
       return {
         rows,
@@ -5994,6 +6424,30 @@
           remaining: (monthlyAmount * totalMonths) - paidAmount,
         },
       };
+    }
+
+    async function downloadPaymentsPptx() {
+      try {
+        // Show a loading indicator
+        showToast('Generating PowerPoint presentation...', 'info');
+        
+        // Trigger the download from the server
+        const link = document.createElement('a');
+        link.href = '/payment-reminders.pptx';
+        link.download = `payment-reminders-${new Date().toLocaleDateString()}.pptx`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        
+        // Force download
+        setTimeout(() => {
+          link.click();
+          document.body.removeChild(link);
+          showToast('PowerPoint presentation downloaded successfully!', 'success');
+        }, 100);
+      } catch (err) {
+        console.error('Error downloading PowerPoint:', err);
+        showToast('Failed to generate PowerPoint presentation', 'error');
+      }
     }
 
     async function downloadEmiBreakdownPdf() {
@@ -6134,8 +6588,9 @@
       const amounts = getPaymentAmounts(payment);
       const plan = parsePlanTag(payment.reminderNote || '');
       const showExtendAction = !isPaidEntry && !isPaidReminder && plan?.mode === 'extend';
+      const emiMonthlyAmount = plan?.mode === 'emi' ? getEmiMonthlyAmount(payment, plan, Number(plan?.months) || 0) : 0;
       const extraMeta = plan?.mode === 'emi'
-        ? `<span>Months Remaining ${Number(plan.months || 0) || '-'}</span><span>Monthly ${formatCurrency(plan.monthly || 0)}</span>`
+        ? `<span class="emi-meta"><span class="emi-months">Months Remaining ${formatAmount(plan.months || 0)}</span><span class="emi-monthly">Monthly ${formatCurrency(emiMonthlyAmount)}</span></span>`
         : plan?.mode === 'extend'
           ? `<span>Mode Extend</span><span>Interest-only this month</span>`
           : '';
@@ -6166,7 +6621,7 @@
             <span ${dueLabelStyle}>${dueLabel}</span>
             <span>${payment.mobile || ''}</span>
             ${extraMeta}
-            ${isPaidEntry ? `<span>Principal ${formatCurrency(amounts.principal)}</span><span>Interest ${formatCurrency(amounts.interestAmount)}</span>` : ''}
+            ${isPaidEntry ? `<span>Principal ${formatCurrency(amounts.principal)}</span><span>Interest ${formatCurrency(amounts.interestAmount)}</span>${plan?.mode === 'partial' && Number.isFinite(plan?.partialAmount) ? `<span style="color: #f59e0b; font-weight: 700;">Partial ${formatCurrency(plan.partialAmount)}</span>` : ''}` : ''}
           </div>
           ${cleanNote ? `<div class="bill-note">${cleanNote}</div>` : ''}
         </div>
@@ -6180,6 +6635,46 @@
           <button type="button" class="btn btn-clear">Clear</button>
         </div>
       `;
+      // Append paid badge element for all settled items (ensure badge shows for all paid views)
+      // Add a status badge for all cards (Paid / Overdue / Due soon / Pending / Later)
+      try {
+        let statusType = 'pending';
+        let label = 'Pending';
+        let icon = '🔔';
+
+        if (isOverdue) {
+          statusType = 'overdue';
+          label = 'Overdue';
+          icon = '⚠️';
+        } else if (isDueSoon) {
+          statusType = 'duesoon';
+          label = 'Due Soon';
+          icon = '⏰';
+        } else if (isSettled && (String(payment.reminderStatus || '').toLowerCase() === 'paid' || payment.paidAt || payment.reminderPaidAt || payment.paymentId || payment._id || payment.id)) {
+          statusType = 'paid';
+          label = 'Paid';
+          icon = '✓';
+        } else {
+          // categorize later vs pending by days
+          const days = dueInfo && typeof dueInfo.value === 'number' ? dueInfo.value : null;
+          if (Number.isFinite(days) && days > 30) {
+            statusType = 'later';
+            label = 'Later';
+            icon = '⋯';
+          } else {
+            statusType = 'pending';
+            label = 'Pending';
+            icon = '🔔';
+          }
+        }
+
+        const badge = document.createElement('div');
+        badge.className = `status-badge status-${statusType}`;
+        badge.innerHTML = `<span class="icon">${icon}</span><span>${label}</span>`;
+        item.appendChild(badge);
+      } catch (e) {
+        // ignore
+      }
 
       const checkbox = item.querySelector('.bulk-checkbox');
       checkbox.onchange = (event) => {
@@ -6243,12 +6738,38 @@
       return item;
     }
 
+    function renderPremiumSectionTitle(title) {
+      const rawTitle = String(title || 'Section');
+      const normalized = normalizeText(rawTitle);
+      let variant = 'thismonth';
+      let icon = '📌';
+
+      if (normalized.includes('overdue')) {
+        variant = 'overdue';
+        icon = '⚠️';
+      } else if (normalized.includes('this month')) {
+        variant = 'thismonth';
+        icon = '📅';
+      } else if (normalized === 'later' || normalized.includes('later')) {
+        variant = 'later';
+        icon = '🕒';
+      } else if (normalized === 'paid' || normalized.includes('paid')) {
+        variant = 'paid';
+        icon = '✅';
+      } else if (/(january|february|march|april|may|june|july|august|september|october|november|december)/i.test(rawTitle)) {
+        variant = 'nextmonth';
+        icon = '🗓️';
+      }
+
+      return `<span class="section-title-pill section-title-${variant}"><span class="icon">${icon}</span><span class="title-text">${escapeHtml(rawTitle)}</span></span>`;
+    }
+
     function renderBillSection(sectionEl, title, items) {
       const total = items.reduce((sum, payment) => sum + totalPayable(payment), 0);
 
       sectionEl.innerHTML = `
         <div class="bill-section-head">
-          <h3>${title}</h3>
+          <h3>${renderPremiumSectionTitle(title)}</h3>
           <div class="section-total">${formatCurrency(total)}</div>
         </div>
       `;
@@ -6280,11 +6801,24 @@
 
       sectionEl.innerHTML = `
         <div class="bill-section-head">
-          <h3>${title}</h3>
-          <div class="section-total">
-            <div>Principal ${formatCurrency(totals.principal)}</div>
-            <div>Interest ${formatCurrency(totals.interest)}</div>
-            <div>Total ${formatCurrency(totals.total)}</div>
+          <h3>${renderPremiumSectionTitle(title)}</h3>
+          <div class="section-total paid-kpis">
+            <div class="paid-kpi paid-kpi-principal">
+              <span class="paid-kpi-label paid-kpi-head"><i class="fas fa-landmark"></i>Principal</span>
+              <span class="paid-kpi-value">${formatCurrency(totals.principal)}</span>
+            </div>
+            <div class="paid-kpi paid-kpi-interest">
+              <span class="paid-kpi-label paid-kpi-head"><i class="fas fa-percent"></i>Interest</span>
+              <span class="paid-kpi-value">${formatCurrency(totals.interest)}</span>
+            </div>
+            <div class="paid-kpi paid-kpi-total">
+              <span class="paid-kpi-label paid-kpi-head"><i class="fas fa-gem"></i>Total</span>
+              <span class="paid-kpi-value">${formatCurrency(totals.total)}</span>
+            </div>
+            <div class="paid-kpi paid-kpi-count">
+              <span class="paid-kpi-label paid-kpi-head"><i class="fas fa-receipt"></i>Records</span>
+              <span class="paid-kpi-value">${items.length}</span>
+            </div>
           </div>
         </div>
       `;
@@ -6454,18 +6988,21 @@
       const normalizedTotal = Number.isFinite(total) ? String(total) : totalRaw;
       const repaymentMode = getRepaymentModeValue();
       const emiMonths = Number(document.getElementById('emiMonths').value || 0);
+      const partialAmount = normalizeMoney(document.getElementById('partialAmount')?.value, { snapNearInteger: true }) || 0;
       const monthlyEmi = repaymentMode === 'emi' && emiMonths > 0 && Number.isFinite(total)
         ? normalizeMoney(total / emiMonths, { snapNearInteger: true })
         : null;
       const interestOnly = repaymentMode === 'extend' && Number.isFinite(principal) && Number.isFinite(Number(computedInterest))
         ? normalizeMoney((principal * Number(computedInterest)) / 100, { snapNearInteger: true })
         : null;
+      const effectivePartial = repaymentMode === 'partial' && partialAmount > 0 ? partialAmount : null;
       const planNote = buildPlanTaggedNote(document.getElementById('reminderNote').value.trim(), {
         mode: repaymentMode,
         months: repaymentMode === 'emi' && emiMonths > 0 ? emiMonths : null,
         monthly: repaymentMode === 'emi' ? monthlyEmi : null,
         initialMonths: repaymentMode === 'emi' && emiMonths > 0 ? emiMonths : null,
         paidCount: repaymentMode === 'emi' ? 0 : null,
+        partialAmount: repaymentMode === 'partial' && Number.isFinite(effectivePartial) && effectivePartial > 0 ? effectivePartial : null,
         interestOnly: repaymentMode === 'extend' ? interestOnly : null,
         rolledPrincipal: repaymentMode === 'extend' && Number.isFinite(principal)
           ? normalizeMoney(principal + (interestOnly || 0), { snapNearInteger: true })
@@ -6482,6 +7019,7 @@
         repaymentDate: document.getElementById('repaymentDate').value,
         reminderAmount: normalizedPrincipal,
         reminderInterest: computedInterest,
+        // Keep `totalAmount` as the full total; store partial amount in plan tag only.
         totalAmount: normalizedTotal,
         reminderNote: planNote,
       };
@@ -6772,7 +7310,27 @@
       document.getElementById('repaymentDate').value = payment.reminderRepaymentDate || '';
       const principal = payment.reminderAmount ?? '';
       const storedRate = payment.reminderInterest ?? '';
-      const storedTotal = Number(payment.totalAmount ?? payment.amount ?? 0);
+      const storedTotal = getStoredTotalAmount(payment);
+      const plan = parsePlanTag(payment.reminderNote || '');
+      console.log('populateReminderForm called', { id: payment.id || payment._id || payment.paymentId || payment.mobile, principal, storedRate, storedTotal, plan });
+
+      // If this is a partial payment plan, populate total and partial fields immediately
+      if (plan?.mode === 'partial' && Number.isFinite(Number(storedTotal)) && storedTotal > 0) {
+        console.log('populateReminderForm (partial): plan=', plan, 'storedTotal=', storedTotal);
+        document.getElementById('totalAmount').value = String(storedTotal);
+        const partialVal = plan?.partialAmount ? String(plan.partialAmount) : '';
+        document.getElementById('partialAmount').value = partialVal;
+        console.log('populateReminderForm (partial): set totalAmount=' + document.getElementById('totalAmount').value + ', partialAmount=' + partialVal);
+        document.getElementById('interestAmount').value = '0';
+        document.getElementById('reminderInterest').value = '0';
+        updateRepaymentPlanPreview();
+        calculateAmounts();
+        if (plan?.mode === 'partial') {
+          document.getElementById('partialAmount')?.focus();
+        }
+        return;
+      }
+
       document.getElementById('reminderAmount').value = principal;
       document.getElementById('reminderInterest').value = storedRate;
       if (principal !== '' && Number.isFinite(Number(principal))) {
@@ -6782,7 +7340,7 @@
           const total = p + ((p * r) / 100);
           document.getElementById('totalAmount').value = String(Number(total.toFixed(2)));
           document.getElementById('interestAmount').value = formatAmount(total - p);
-        } else if (Number.isFinite(storedTotal) && storedTotal >= p) {
+        } else if (Number.isFinite(storedTotal) && (storedTotal >= p || (plan?.mode === 'partial' && storedTotal > 0))) {
           const interestAmount = storedTotal - p;
           const rate = p > 0 ? (interestAmount / p) * 100 : 0;
           document.getElementById('reminderInterest').value = Number.isFinite(rate) ? String(Number(rate.toFixed(2))) : '';
@@ -6793,15 +7351,20 @@
           document.getElementById('interestAmount').value = '';
         }
       }
-      const plan = parsePlanTag(payment.reminderNote || '');
       document.getElementById('repaymentMode').value = plan?.mode || 'full';
       document.getElementById('emiMonths').value = plan?.months || '';
       document.getElementById('monthlyEmi').value = plan?.monthly ? formatAmount(plan.monthly) : '';
+      document.getElementById('partialAmount').value = plan?.mode === 'partial'
+        ? (plan?.partialAmount || storedTotal || '')
+        : '';
       document.getElementById('monthsRemaining').value = plan?.mode === 'emi' && plan?.months ? `${plan.months} month(s) remaining` : '';
       document.getElementById('reminderNote').value = stripPlanTag(payment.reminderNote || '');
       calculateAmounts();
       calculateDaysRemaining();
       updateRepaymentPlanPreview();
+      if (plan?.mode === 'partial') {
+        document.getElementById('partialAmount')?.focus();
+      }
 
       const formCard = document.getElementById('reminderFormCard');
       if (formCard) {
@@ -6827,6 +7390,7 @@
       document.getElementById('repaymentMode').value = 'full';
       document.getElementById('emiMonths').value = '';
       document.getElementById('monthlyEmi').value = '';
+      document.getElementById('partialAmount').value = '';
       document.getElementById('monthsRemaining').value = '';
       updateRepaymentPlanPreview();
     }
@@ -6865,14 +7429,78 @@
 
     async function markReminderPaid(payment) {
       const plan = parsePlanTag(payment.reminderNote || '');
-      if (plan?.mode === 'emi' && Number.isFinite(plan.months) && plan.months > 0) {
-        const monthsBefore = Number(plan.months);
-        const monthsAfter = monthsBefore - 1;
-        const monthlyAmount = Number(plan.monthly || totalPayable(payment) || 0);
-        const initialMonths = Number(plan.initialMonths || monthsBefore) || monthsBefore;
-        const nextPaidCount = (Number(plan.paidCount || 0) || 0) + 1;
+      const basePaymentId = resolvePaymentId(payment) || payment.paymentId || payment._id || payment.id || payment.mobile;
+      const storedTotal = getStoredTotalAmount(payment) || Number(payment.totalAmount ?? payment.amount ?? payment.reminderAmount ?? 0) || 0;
+      
+      // Handle partial payments: keep a paid-history entry and update the live reminder to the remaining balance.
+      if (plan?.mode === 'partial' && Number.isFinite(plan?.partialAmount) && plan.partialAmount > 0) {
+        const partialPaid = normalizeMoney(plan.partialAmount) || 0;
+        const remaining = normalizeMoney(Math.max(0, storedTotal - partialPaid)) || 0;
 
-        if (!confirm(`Record EMI payment of ${formatCurrency(monthlyAmount)}?\n\nMonths remaining: ${monthsBefore} -> ${Math.max(0, monthsAfter)}`)) {
+        const confirmMsg = remaining > 0
+          ? `Record partial payment of ${formatCurrency(partialPaid)}?\n\nRemaining balance: ${formatCurrency(remaining)}`
+          : `Record full payment of ${formatCurrency(partialPaid)}?`;
+
+        if (!confirm(confirmMsg)) {
+          return;
+        }
+
+        const paidEntryId = `partial-${basePaymentId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const partialPaidNote = buildPlanTaggedNote(stripPlanTag(payment.reminderNote || ''), {
+          mode: 'partial',
+          partialAmount: partialPaid,
+          paidOf: basePaymentId,
+        });
+
+        const paidHistoryPayload = {
+          reminderId: paidEntryId,
+          name: payment.name || '',
+          mobile: payment.mobile || '',
+          borrowDate: payment.reminderBorrowDate || '',
+          repaymentDate: payment.reminderRepaymentDate || '',
+          reminderAmount: payment.reminderAmount ?? '',
+          reminderInterest: 0,
+          reminderNote: partialPaidNote,
+          reminderStatus: 'paid',
+          paidAt: new Date().toISOString(),
+          totalAmount: String(partialPaid),
+        };
+
+        const remainingNote = buildPlanTaggedNote(stripPlanTag(payment.reminderNote || ''), {
+          mode: 'partial',
+          paidOf: basePaymentId,
+        });
+
+        const remainingPayload = {
+          reminderId: payment.reminderId || payment.id || '',
+          name: payment.name || '',
+          mobile: payment.mobile || '',
+          borrowDate: payment.reminderBorrowDate || '',
+          repaymentDate: payment.reminderRepaymentDate || '',
+          reminderAmount: remaining,
+          reminderInterest: 0,
+          reminderNote: remainingNote,
+          reminderStatus: 'manual',
+          paidAt: '',
+          totalAmount: String(remaining),
+        };
+
+        await saveReminder(paidEntryId, paidHistoryPayload);
+        await saveReminder(basePaymentId, remainingPayload);
+        document.getElementById('statusLine').textContent = `Partial payment ${formatCurrency(partialPaid)} recorded. Remaining due: ${formatCurrency(remaining)}.`;
+        return;
+      }
+
+      if (plan?.mode === 'emi' && Number.isFinite(plan.months) && plan.months > 0) {
+        const monthsBefore = normalizeMoney(plan.months) || 0;
+        const monthsAfter = Math.max(0, normalizeMoney(monthsBefore - 1) || 0);
+        const monthlyAmount = Number(plan.monthly || totalPayable(payment) || 0);
+        const initialMonths = normalizeMoney(plan.initialMonths || monthsBefore) || monthsBefore;
+        const nextPaidCount = (Number(plan.paidCount || 0) || 0) + 1;
+        const beforeLabel = formatAmount(monthsBefore);
+        const afterLabel = formatAmount(monthsAfter);
+
+        if (!confirm(`Record EMI payment of ${formatCurrency(monthlyAmount)}?\n\nMonths remaining: ${beforeLabel} -> ${afterLabel}`)) {
           return;
         }
 
@@ -6906,7 +7534,7 @@
           };
 
           await saveReminder(payment.paymentId || payment._id || payment.id || payment.mobile, payload);
-          document.getElementById('statusLine').textContent = `EMI payment recorded. Months remaining: ${monthsAfter}. Next due date: ${nextRepaymentDate}.`;
+          document.getElementById('statusLine').textContent = `EMI payment recorded. Months remaining: ${afterLabel}. Next due date: ${nextRepaymentDate}.`;
           return;
         }
       }
@@ -6939,8 +7567,31 @@
     }
 
     async function markReminderUnpaid(payment) {
+      const idCandidate = resolvePaymentId(payment);
+      console.log('markReminderUnpaid called', { idCandidateResolved: idCandidate, payment });
+      
+
       if (!confirm('Move this paid reminder back to reminder list?')) {
         return;
+      }
+
+      // If this was an EMI-derived paid view, adjust the plan tag to remove one paid installment
+      let nextNote = payment.reminderNote || '';
+      try {
+        const plan = parsePlanTag(payment.reminderNote || '') || {};
+        if (plan.mode === 'emi' && Number(plan.paidCount || 0) > 0) {
+          const newPaidCount = Math.max(0, Number(plan.paidCount || 0) - 1);
+          const newMonths = (Number(plan.months || 0) || 0) + 1;
+          const repaired = {
+            ...plan,
+            paidCount: newPaidCount,
+            months: newMonths,
+          };
+          // buildPlanTaggedNote omits paidCount if 0
+          nextNote = buildPlanTaggedNote(stripPlanTag(payment.reminderNote || ''), repaired);
+        }
+      } catch (e) {
+        console.error('Failed to adjust plan tag for unpaid:', e);
       }
 
       const payload = {
@@ -6951,12 +7602,17 @@
         repaymentDate: payment.reminderRepaymentDate || '',
         reminderAmount: payment.reminderAmount ?? '',
         reminderInterest: payment.reminderInterest ?? '',
-        reminderNote: payment.reminderNote || '',
+        reminderNote: nextNote || payment.reminderNote || '',
         reminderStatus: 'manual',
         paidAt: '',
       };
 
-      await saveReminder(payment.paymentId || payment._id || payment.id || payment.mobile, payload);
+      try {
+        await saveReminder(idCandidate, payload);
+      } catch (err) {
+        console.error('markReminderUnpaid: saveReminder failed', err);
+        throw err;
+      }
     }
 
     async function extendReminder(payment) {
@@ -7008,6 +7664,8 @@
           ...payload,
           mobile: String(payload.mobile || selectedPaymentMobile || '').trim(),
         };
+        console.log('saveReminder called', { paymentId, requestBody });
+        
 
         if (!requestBody.reminderId && selectedReminderId) {
           requestBody.reminderId = selectedReminderId;
@@ -7022,13 +7680,28 @@
         });
 
         const result = await response.json().catch(() => ({}));
+        console.log('saveReminder response', { status: response.status, ok: response.ok, result });
+        try {
+          console.log('saveReminder: requestBody.reminderNote', requestBody.reminderNote);
+          console.log('saveReminder: parsed request plan', parsePlanTag(requestBody.reminderNote || ''));
+          if (result && result.payment) {
+            console.log('saveReminder: result.payment.reminderNote', result.payment.reminderNote);
+            console.log('saveReminder: parsed result plan', parsePlanTag(result.payment.reminderNote || ''));
+            console.log('saveReminder: result.payment.reminderTotalAmount, totalAmount', result.payment.reminderTotalAmount, result.payment.totalAmount);
+            console.log('saveReminder: getStoredTotalAmount(result.payment)', getStoredTotalAmount(result.payment));
+          }
+        } catch (e) {
+          console.log('saveReminder: debug logging failed', e);
+        }
+
         if (!response.ok) {
-          throw new Error(result.message || 'Failed to save reminder');
+          throw new Error(result.message || `Failed to save reminder (status ${response.status})`);
         }
 
         document.getElementById('statusLine').textContent = result.message || 'Reminder updated successfully.';
         await fetchPayments();
         if (result.payment) {
+          // remove temporary alert and rely on console logs
           populateReminderForm(result.payment);
         }
       } catch (error) {
@@ -7837,8 +8510,9 @@
       currentBreakdownPayment = payment;
 
       const plan = parsePlanTag(payment.reminderNote || '');
-      if (!plan || plan.mode !== 'emi' || !plan.months || !plan.monthly) {
+      if (!plan || plan.mode !== 'emi') {
         console.warn('Invalid EMI plan data');
+        showToast('This reminder is not in EMI mode.', 'error');
         return;
       }
 
@@ -7854,60 +8528,44 @@
       // Set title
       title.textContent = `📊 EMI Breakdown - ${payment.name || 'Manual Reminder'}`;
 
-      // Build EMI timeline from plan metadata.
-      const monthsRemaining = Number(plan.months) || 0;
-      const initialMonths = Number(plan.initialMonths) || monthsRemaining;
-      const trackedPaidCount = Number(plan.paidCount) || 0;
-      const derivedPaidCount = initialMonths > 0 && initialMonths >= monthsRemaining
-        ? (initialMonths - monthsRemaining)
-        : 0;
-      const estimatedPaidCount = estimateEmiPaidCountFromDates(payment);
-      const paidInstallments = Math.max(trackedPaidCount, derivedPaidCount, estimatedPaidCount, 0);
-      const totalMonths = Math.max(initialMonths, monthsRemaining, paidInstallments);
-      const monthlyAmount = Number(plan.monthly) || 0;
-      const totalEMIAmount = monthlyAmount * totalMonths;
-
-      const currentDueDate = new Date(payment.reminderRepaymentDate);
-      const startDate = new Date(currentDueDate);
-      if (!Number.isNaN(startDate.getTime()) && paidInstallments > 0) {
-        startDate.setMonth(startDate.getMonth() - paidInstallments);
+      const { rows, summary } = buildEmiBreakdown(payment);
+      if (!rows.length || summary.totalMonths <= 0 || summary.monthlyAmount <= 0) {
+        showToast('Unable to build EMI breakdown. Please update months/monthly EMI in this reminder.', 'error');
+        return;
       }
 
       // Populate table rows
       tableBody.innerHTML = '';
-      let paidAmount = 0;
-
-      for (let i = 1; i <= totalMonths; i++) {
-        const monthDate = new Date(startDate);
-        monthDate.setMonth(monthDate.getMonth() + (i - 1));
-        const isPaid = i <= paidInstallments;
-        if (isPaid) {
-          paidAmount += monthlyAmount;
-        }
-
+      rows.forEach((rowData) => {
         const row = document.createElement('tr');
+        const statusText = String(rowData[3] || 'Pending');
+        const statusLower = statusText.toLowerCase();
+        const isPaid = statusLower.includes('paid') && !statusLower.includes('partial');
+        const isPartial = statusLower.includes('partial');
+        const statusBackground = isPaid ? '#d4edda' : (isPartial ? '#d1ecf1' : '#fff3cd');
+        const statusColor = isPaid ? '#155724' : (isPartial ? '#0c5460' : '#856404');
         row.innerHTML = `
-          <td><strong>Month ${i}</strong></td>
-          <td>${formatDisplayDate(monthDate)}</td>
-          <td>${formatCurrency(monthlyAmount)}</td>
+          <td><strong>${rowData[0]}</strong></td>
+          <td>${rowData[1]}</td>
+          <td>${rowData[2]}</td>
           <td>
             <span style="display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; 
-            background: ${isPaid ? '#d4edda' : '#fff3cd'}; 
-            color: ${isPaid ? '#155724' : '#856404'};
+            background: ${statusBackground}; 
+            color: ${statusColor};
             ">
-              ${isPaid ? '✓ Paid' : 'Pending'}
+              ${isPaid ? '✓ Paid' : statusText}
             </span>
           </td>
         `;
         tableBody.appendChild(row);
-      }
+      });
 
       // Update summary
-      summaryMonths.textContent = totalMonths;
-      summaryMonthly.textContent = formatCurrency(monthlyAmount);
-      summaryTotal.textContent = formatCurrency(totalEMIAmount);
-      summaryPaid.textContent = formatCurrency(paidAmount);
-      summaryRemaining.textContent = formatCurrency(totalEMIAmount - paidAmount);
+      summaryMonths.textContent = formatAmount(summary.totalMonths);
+      summaryMonthly.textContent = formatCurrency(summary.monthlyAmount);
+      summaryTotal.textContent = formatCurrency(summary.totalEMIAmount);
+      summaryPaid.textContent = formatCurrency(summary.paidAmount);
+      summaryRemaining.textContent = formatCurrency(summary.remaining);
 
       // Show modal
       modal.classList.add('show');

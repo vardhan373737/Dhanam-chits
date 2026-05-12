@@ -131,7 +131,7 @@ body:has(a[href='contactA.html'][class*='active']) .sidebar a[href$='contactA.ht
 
 .menu-toggle {
     display: none;
-    position: fixed;
+    position: absolute;
     top: 12px;
     left: 12px;
     z-index: 1200;
@@ -186,6 +186,7 @@ body:has(a[href='contactA.html'][class*='active']) .sidebar a[href$='contactA.ht
     .menu-toggle {
         top: 14px;
         left: 12px;
+        position: absolute;
     }
 
     .content {
