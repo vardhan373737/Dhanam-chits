@@ -197,6 +197,39 @@
         flex-direction: column;
         align-items: center;
       }
+      /* hide the menu text on small screens by default */
+      .menu-text {
+        display: none;
+      }
+
+      /* when sidebar is opened via the burger, expand it */
+      body.sidebar-open .sidebar {
+        width: 250px;
+        padding: 20px;
+      }
+
+      body.sidebar-open .content {
+        margin-left: 250px;
+        width: calc(100% - 250px);
+      }
+
+      body.sidebar-open .sidebar h2 {
+        display: block;
+      }
+
+      body.sidebar-open .sidebar a {
+        justify-content: flex-start;
+        padding: 12px;
+      }
+
+      body.sidebar-open .sidebar a i {
+        margin-right: 10px;
+      }
+
+      /* move the toggle button slightly when sidebar opened */
+      body.sidebar-open .menu-toggle {
+        left: 220px;
+      }
     }
   </style>
     <link rel="stylesheet" href="admin-sidebar.css">
@@ -368,6 +401,7 @@
 
     document.addEventListener('DOMContentLoaded', fetchData);
   </script>
-
+</script>
+<script src="admin-sidebar.js"></script>
 </body>
 </html>
