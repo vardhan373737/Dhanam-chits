@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -291,109 +291,6 @@
       flex: 0 0 auto;
     }
 
-    .feature-highlights {
-      margin: 0 0 18px;
-      padding: 16px;
-      border: 1px solid rgba(13, 124, 145, 0.12);
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.7);
-      box-shadow: 0 12px 26px rgba(13, 124, 145, 0.08);
-      backdrop-filter: blur(10px);
-    }
-
-    .feature-highlights-head {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-
-    .feature-highlights-head p {
-      margin: 0;
-      color: #5a7388;
-      font-size: 0.92rem;
-      line-height: 1.5;
-      max-width: 760px;
-    }
-
-    .feature-highlights-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .feature-highlight-card {
-      border-radius: 16px;
-      padding: 14px;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(244, 251, 254, 0.86));
-      border: 1px solid rgba(13, 124, 145, 0.12);
-      box-shadow: 0 10px 20px rgba(11, 41, 64, 0.08);
-      min-height: 100%;
-    }
-
-    .feature-highlight-top {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .feature-highlight-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, rgba(14, 139, 156, 0.16), rgba(15, 154, 95, 0.16));
-      font-size: 1.15rem;
-      flex: 0 0 auto;
-    }
-
-    .feature-highlight-card h3 {
-      margin: 0;
-      font-size: 1rem;
-      font-weight: 800;
-      color: #0d2d43;
-    }
-
-    .feature-highlight-card p {
-      margin: 0 0 10px;
-      color: #5a7388;
-      font-size: 0.9rem;
-      line-height: 1.5;
-    }
-
-    .feature-highlight-card ul {
-      margin: 0;
-      padding-left: 18px;
-      color: #345066;
-    }
-
-    .feature-highlight-card li {
-      margin-bottom: 6px;
-      line-height: 1.45;
-    }
-
-    body.dark-mode .feature-highlights,
-    body.dark-mode .feature-highlight-card {
-      background: rgba(8, 25, 39, 0.82);
-      border-color: rgba(162, 196, 225, 0.14);
-    }
-
-    body.dark-mode .feature-highlights-head p,
-    body.dark-mode .feature-highlight-card p,
-    body.dark-mode .feature-highlight-card ul,
-    body.dark-mode .feature-highlights-head {
-      color: #b8cce0;
-    }
-
-    body.dark-mode .feature-highlight-card h3 {
-      color: #f3f8fd;
-    }
-
     .layout {
       display: grid;
       grid-template-columns: minmax(290px, 360px) 1fr;
@@ -453,53 +350,6 @@
       font-size: 1.15rem;
       font-weight: 800;
       color: #10344d;
-    }
-
-    .mobile-input-row {
-      display: flex;
-      gap: 8px;
-      align-items: stretch;
-    }
-
-    .mobile-input-row input {
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-
-    .mobile-picker-btn {
-      border: 1px solid rgba(13, 124, 145, 0.18);
-      border-radius: 10px;
-      padding: 0 12px;
-      font-size: 0.84rem;
-      font-weight: 800;
-      color: #0d7c91;
-      background: rgba(236, 248, 250, 0.95);
-      cursor: pointer;
-      white-space: nowrap;
-      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-      min-height: 42px;
-    }
-
-    .mobile-picker-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 8px 16px rgba(13, 124, 145, 0.12);
-      background: rgba(227, 244, 247, 1);
-    }
-
-    .mobile-hint {
-      font-size: 0.76rem;
-      color: #6a8499;
-      line-height: 1.4;
-    }
-
-    body.dark-mode .mobile-picker-btn {
-      color: #e6f6fa;
-      background: rgba(13, 124, 145, 0.16);
-      border-color: rgba(162, 196, 225, 0.18);
-    }
-
-    body.dark-mode .mobile-hint {
-      color: #b8cce0;
     }
 
     .grid {
@@ -4157,48 +4007,6 @@
       </div>
     </div>
 
-    <div class="feature-highlights" aria-labelledby="featureHighlightsTitle">
-      <div class="feature-highlights-head">
-        <span class="section-title-pill" id="featureHighlightsTitle"><span class="icon">✨</span><span class="title-text">High-level features</span></span>
-        <p>Review the dashboard, prepare a reminder, then send, schedule, or export it from the same workflow.</p>
-      </div>
-      <div class="feature-highlights-grid">
-        <article class="feature-highlight-card">
-          <div class="feature-highlight-top">
-            <div class="feature-highlight-icon">📊</div>
-            <h3>Dashboard & tracking</h3>
-          </div>
-          <p>Monitor overdue, due-soon, paid, and synced collections at a glance.</p>
-          <ul>
-            <li>Analytics cards, charts, and KPI snapshots</li>
-            <li>Search, filters, tabs, and calendar view</li>
-          </ul>
-        </article>
-        <article class="feature-highlight-card">
-          <div class="feature-highlight-top">
-            <div class="feature-highlight-icon">🛠️</div>
-            <h3>Reminder workflows</h3>
-          </div>
-          <p>Create or update reminders with payment mode, amount, interest, and notes.</p>
-          <ul>
-            <li>Full, partial, EMI, and extend repayment flows</li>
-            <li>Message templates, bulk send, and scheduled reminders</li>
-          </ul>
-        </article>
-        <article class="feature-highlight-card">
-          <div class="feature-highlight-top">
-            <div class="feature-highlight-icon">📤</div>
-            <h3>Exports & sharing</h3>
-          </div>
-          <p>Share reminders and reports without leaving the page.</p>
-          <ul>
-            <li>WhatsApp sharing plus PDF, Excel, and PowerPoint exports</li>
-            <li>EMI breakdown PDF and audit trail for traceability</li>
-          </ul>
-        </article>
-      </div>
-    </div>
-
     <div class="charts-grid" id="premiumCharts">
       <div class="chart-card">
         <div class="chart-card-title">📈 Payment Trend</div>
@@ -4328,11 +4136,7 @@
           </div>
           <div class="field full">
             <label for="manualMobile">📱 Mobile Number</label>
-            <div class="mobile-input-row">
-              <input type="tel" id="manualMobile" maxlength="10" placeholder="Enter or pick mobile number" inputmode="numeric" autocomplete="tel" enterkeyhint="done">
-              <button type="button" class="mobile-picker-btn" onclick="pickMobileNumberFromPhone()">From phone</button>
-            </div>
-            <div class="mobile-hint">On supported mobile browsers, use the phone contact picker to choose a number from saved contacts.</div>
+            <input type="text" id="manualMobile" maxlength="10" placeholder="Enter mobile number manually">
           </div>
         </div>
 
@@ -5273,10 +5077,8 @@
         const fallbackPaid = payment.paidEmis ?? payment.emisPaid ?? null;
         const fallbackPaidAmount = payment.paidEmiAmount ?? payment.paidAmount ?? null;
         const fallbackBalance = payment.balance ?? payment.remainingBalance ?? null;
-        const isEmiFallback = Boolean(fallbackEmi) || Boolean(fallbackPending) || Boolean(fallbackPaid) || Boolean(fallbackPendingAmount) || Boolean(fallbackPaidAmount);
-        const fallbackHeading = isEmiFallback ? '🔔 *EMI Payment Reminder*' : '🔔 *Payment Reminder*';
         const fallbackLines = [
-          fallbackHeading,
+          '🔔 *EMI Payment Reminder*',
           '',
           `*Dear ${safeName},*`,
           '',
@@ -5333,8 +5135,8 @@
     }
 
     function getReminderSignature(item) {
-      // For paid entries, prefer the reminder row ID so multiple paid-history rows on the same payment stay distinct.
-      const uniqueId = item.id || item._id || item.paymentId || '';
+      // For paid entries (including partial-paid), include the unique database ID to distinguish multiple payments from the same reminder
+      const uniqueId = item.paymentId || item._id || item.id || '';
       const isPaidEntry = item.paidMode || item.reminderStatus === 'paid';
       
       return [
@@ -5470,33 +5272,6 @@
         reminderAmount: Math.round((principal + Number.EPSILON) * 100) / 100,
         totalAmount,
         reminderInterest: Number.isFinite(rate) && rate >= 0 ? rate : 0,
-      };
-    }
-
-    function getPaidHistoryAmounts(payment) {
-      const plan = parsePlanTag(payment.reminderNote || '');
-      const paidAmount = normalizeMoney(
-        payment.totalAmount
-        ?? payment.paidAmount
-        ?? payment.reminderTotalAmount
-        ?? payment.amount
-        ?? 0,
-        { snapNearInteger: true }
-      ) || 0;
-      const normalized = getPaymentAmounts(payment);
-      const partialAmount = plan?.mode === 'partial'
-        ? (normalizeMoney(plan.partialAmount, { snapNearInteger: true }) || paidAmount)
-        : 0;
-      const interestAmount = plan?.mode === 'extend'
-        ? (normalizeMoney(plan.interestOnly, { snapNearInteger: true }) || normalized.interestAmount || 0)
-        : (plan?.mode === 'partial' ? 0 : (normalized.interestAmount || 0));
-
-      return {
-        paidAmount,
-        principal: normalized.principal || 0,
-        interestAmount,
-        partialAmount,
-        originalTotal: normalized.totalAmount || 0,
       };
     }
 
@@ -6965,7 +6740,6 @@
       const plan = parsePlanTag(payment.reminderNote || '');
       const showExtendAction = !isPaidEntry && !isPaidReminder && plan?.mode === 'extend';
       const emiMonthlyAmount = plan?.mode === 'emi' ? getEmiMonthlyAmount(payment, plan, Number(plan?.months) || 0) : 0;
-      const paidAmounts = isPaidEntry ? getPaidHistoryAmounts(payment) : null;
       const extraMeta = plan?.mode === 'emi'
         ? `<span class="emi-meta"><span class="emi-months">Months Remaining ${formatAmount(plan.months || 0)}</span><span class="emi-monthly">Monthly ${formatCurrency(emiMonthlyAmount)}</span></span>`
         : plan?.mode === 'extend'
@@ -6998,7 +6772,7 @@
             <span ${dueLabelStyle}>${dueLabel}</span>
             <span>${payment.mobile || ''}</span>
             ${extraMeta}
-            ${isPaidEntry ? `<span>Paid ${formatCurrency(paidAmounts?.paidAmount ?? amounts.totalAmount)}</span><span>Principal ${formatCurrency(paidAmounts?.principal ?? amounts.principal)}</span><span>Interest ${formatCurrency(paidAmounts?.interestAmount ?? amounts.interestAmount)}</span>${Number.isFinite(paidAmounts?.partialAmount) && paidAmounts.partialAmount > 0 ? `<span style="color: #f59e0b; font-weight: 700;">Partial ${formatCurrency(paidAmounts.partialAmount)}</span>` : ''}${Number.isFinite(paidAmounts?.originalTotal) && paidAmounts.originalTotal > 0 && paidAmounts.originalTotal !== (paidAmounts?.paidAmount ?? amounts.totalAmount) ? `<span style="color: #9cd6ff; font-weight: 700;">Expected ${formatCurrency(paidAmounts.originalTotal)}</span>` : ''}` : ''}
+            ${isPaidEntry ? `<span>Principal ${formatCurrency(amounts.principal)}</span><span>Interest ${formatCurrency(amounts.interestAmount)}</span>${plan?.mode === 'partial' && Number.isFinite(plan?.partialAmount) ? `<span style="color: #f59e0b; font-weight: 700;">Partial ${formatCurrency(plan.partialAmount)}</span>` : ''}` : ''}
           </div>
           ${cleanNote ? `<div class="bill-note">${cleanNote}</div>` : ''}
         </div>
@@ -7167,14 +6941,12 @@
 
     function renderPaidSection(sectionEl, title, items) {
       const totals = items.reduce((sum, payment) => {
-        const amounts = getPaidHistoryAmounts(payment);
-        sum.paid += amounts.paidAmount;
+        const amounts = getPaymentAmounts(payment);
         sum.principal += amounts.principal;
         sum.interest += amounts.interestAmount;
-        sum.partial += amounts.partialAmount;
-        sum.expected += amounts.originalTotal;
+        sum.total += amounts.totalAmount;
         return sum;
-      }, { paid: 0, principal: 0, interest: 0, partial: 0, expected: 0 });
+      }, { principal: 0, interest: 0, total: 0 });
 
       sectionEl._paidSummary = { ...totals, count: items.length };
 
@@ -7183,16 +6955,16 @@
           <h3>${renderPremiumSectionTitle(title)}</h3>
           <div class="section-total paid-kpis">
             <div class="paid-kpi paid-kpi-principal">
-              <span class="paid-kpi-label paid-kpi-head"><i class="fas fa-wallet"></i>Paid</span>
-              <span class="paid-kpi-value">${formatCurrency(totals.paid)}</span>
+              <span class="paid-kpi-label paid-kpi-head"><i class="fas fa-landmark"></i>Principal</span>
+              <span class="paid-kpi-value">${formatCurrency(totals.principal)}</span>
             </div>
             <div class="paid-kpi paid-kpi-interest">
               <span class="paid-kpi-label paid-kpi-head"><i class="fas fa-percent"></i>Interest</span>
               <span class="paid-kpi-value">${formatCurrency(totals.interest)}</span>
             </div>
             <div class="paid-kpi paid-kpi-total">
-              <span class="paid-kpi-label paid-kpi-head"><i class="fas fa-hand-holding-dollar"></i>Partial</span>
-              <span class="paid-kpi-value">${formatCurrency(totals.partial)}</span>
+              <span class="paid-kpi-label paid-kpi-head"><i class="fas fa-gem"></i>Total</span>
+              <span class="paid-kpi-value">${formatCurrency(totals.total)}</span>
             </div>
             <div class="paid-kpi paid-kpi-count">
               <span class="paid-kpi-label paid-kpi-head"><i class="fas fa-receipt"></i>Records</span>
@@ -7213,13 +6985,13 @@
       const list = document.createElement('div');
       list.className = 'bill-list';
       renderVirtualizedBillList(list, items, (payment) => {
-        const paidAmounts = getPaidHistoryAmounts(payment);
+        const paidAmounts = normalizePaidReminderAmounts(payment);
         const paidItem = {
           ...payment,
           paidMode: true,
-          reminderAmount: paidAmounts.principal,
-          totalAmount: paidAmounts.paidAmount,
-          reminderInterest: paidAmounts.interestAmount,
+          reminderAmount: paidAmounts.reminderAmount,
+          totalAmount: paidAmounts.totalAmount,
+          reminderInterest: paidAmounts.reminderInterest,
         };
         return buildBillItem(paidItem);
       });
@@ -7235,7 +7007,7 @@
 
       const topPaidAmountEl = document.getElementById('summaryPaidAmount');
       const topPaidCountEl = document.getElementById('summaryPaidCount');
-      if (topPaidAmountEl) topPaidAmountEl.textContent = formatCurrency(summary.paid || 0);
+      if (topPaidAmountEl) topPaidAmountEl.textContent = formatCurrency(summary.total || 0);
       if (topPaidCountEl) topPaidCountEl.textContent = `${summary.count || 0} payment${summary.count === 1 ? '' : 's'}`;
     }
 
@@ -7545,7 +7317,10 @@
       document.getElementById('monthlyEmi').value = parsedPlan?.monthly ? formatAmount(parsedPlan.monthly) : '';
       document.getElementById('reminderNote').value = stripPlanTag(document.getElementById('reminderNote').value);
 
-      updateSelectedUserChip();
+      const nameText = document.getElementById('selectedUser').value.trim();
+      const mobileText = document.getElementById('manualMobile').value.trim();
+      document.getElementById('selectedUserChip').querySelector('.value').textContent =
+        nameText || mobileText ? `${nameText || 'Unknown'} / ${mobileText || 'No mobile'}` : 'No user selected yet';
 
       calculateAmounts('interest');
       calculateDaysRemaining();
@@ -7683,7 +7458,7 @@
       const selectedText = `${plainName} / ${payment.mobile || 'No mobile'}`.trim();
       document.getElementById('selectedUser').value = plainName;
       document.getElementById('manualMobile').value = payment.mobile || '';
-      updateSelectedUserChip();
+      document.getElementById('selectedUserChip').querySelector('.value').textContent = selectedText;
       document.getElementById('borrowDate').value = payment.reminderBorrowDate || '';
       document.getElementById('repaymentDate').value = payment.reminderRepaymentDate || '';
       const principal = payment.reminderAmount ?? '';
@@ -7756,7 +7531,7 @@
       selectedReminderId = '';
       document.getElementById('selectedUser').value = '';
       document.getElementById('manualMobile').value = '';
-      updateSelectedUserChip();
+      document.getElementById('selectedUserChip').querySelector('.value').textContent = 'No user selected yet';
       document.getElementById('borrowDate').value = '';
       document.getElementById('repaymentDate').value = '';
       document.getElementById('reminderAmount').value = '';
@@ -8610,88 +8385,8 @@
       charCount.textContent = `${noteInput.value.length}/500 characters`;
     }
 
-    function sanitizeMobileNumber(value) {
-      return String(value || '').replace(/\D+/g, '').slice(0, 10);
-    }
-
-    function updateSelectedUserChip() {
-      const nameText = document.getElementById('selectedUser').value.trim();
-      const mobileText = document.getElementById('manualMobile').value.trim();
-      document.getElementById('selectedUserChip').querySelector('.value').textContent =
-        nameText || mobileText ? `${nameText || 'Unknown'} / ${mobileText || 'No mobile'}` : 'No user selected yet';
-    }
-
-    async function pickMobileNumberFromPhone(options = {}) {
-      const silent = Boolean(options.silent);
-      try {
-        const contactSelector = navigator.contacts && typeof navigator.contacts.select === 'function'
-          ? navigator.contacts.select.bind(navigator.contacts)
-          : null;
-
-        if (!contactSelector) {
-          if (!silent) {
-            alert('This browser does not support phone contact selection. Use autofill or enter the number manually.');
-          }
-          return;
-        }
-
-        const contacts = await contactSelector(['name', 'tel'], { multiple: false });
-        const contact = Array.isArray(contacts) ? contacts[0] : null;
-        if (!contact) {
-          return;
-        }
-
-        const selectedName = Array.isArray(contact.name) ? contact.name[0] : contact.name;
-        const selectedTel = Array.isArray(contact.tel) ? contact.tel[0] : contact.tel;
-        const mobileInput = document.getElementById('manualMobile');
-        const userInput = document.getElementById('selectedUser');
-
-        if (selectedName && !userInput.value.trim()) {
-          userInput.value = String(selectedName).trim();
-        }
-
-        if (selectedTel) {
-          mobileInput.value = sanitizeMobileNumber(selectedTel);
-        }
-
-        updateSelectedUserChip();
-        mobileInput.focus();
-      } catch (error) {
-        console.error('Contact picker error:', error);
-        if (!silent) {
-          alert('Unable to open phone contacts on this browser. You can still use autofill or enter the number manually.');
-        }
-      }
-    }
-
-    function maybeAutoPickMobileNumberFromPhone() {
-      const mobileInput = document.getElementById('manualMobile');
-      const canUseContacts = Boolean(navigator.contacts && typeof navigator.contacts.select === 'function');
-      const isLikelyMobile = window.matchMedia('(max-width: 768px)').matches || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
-      const alreadyTried = sessionStorage.getItem('paymentReminderMobilePickerAutoPrompted') === 'true';
-
-      if (!mobileInput || mobileInput.value.trim() || !canUseContacts || !isLikelyMobile || alreadyTried) {
-        return;
-      }
-
-      sessionStorage.setItem('paymentReminderMobilePickerAutoPrompted', 'true');
-      window.setTimeout(() => {
-        pickMobileNumberFromPhone({ silent: true });
-      }, 450);
-    }
-
     // Initialize character counter
     document.getElementById('reminderNote').addEventListener('input', updateCharCount);
-    document.getElementById('selectedUser').addEventListener('input', updateSelectedUserChip);
-    document.getElementById('manualMobile').addEventListener('input', () => {
-      const input = document.getElementById('manualMobile');
-      const digitsOnly = sanitizeMobileNumber(input.value);
-      if (input.value !== digitsOnly) {
-        input.value = digitsOnly;
-      }
-      updateSelectedUserChip();
-    });
-    maybeAutoPickMobileNumberFromPhone();
 
     // ===== PREMIUM NOTIFICATIONS & TOASTS =====
     function showToast(message, type = 'success', title = '') {

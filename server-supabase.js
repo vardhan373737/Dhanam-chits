@@ -67,6 +67,14 @@ app.use(express.json({
     req.rawBody = buf.toString("utf8");
   },
 }));
+app.use((req, res, next) => {
+  if (req.path === "/payment-reminderA.html") {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+  }
+  next();
+});
 app.use(express.static(path.join(__dirname, "public"), { index: false }));
 
 // Directory for invoices (PDFs)
@@ -1334,22 +1342,61 @@ function reminderDateDiffDays(repaymentDate) {
   return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 }
 
+function formatCurrency(val) {
+  const n = Number(val);
+  if (!Number.isFinite(n)) return String(val || '0');
+  return n.toLocaleString('en-IN');
+}
+
+function formatDate(val) {
+  if (!val) return '-';
+  const d = new Date(val);
+  if (Number.isNaN(d.getTime())) return String(val);
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 function buildReminderDeliveryMessage(reminder) {
+  const name = reminder.name || 'Customer';
+  const borrowDate = reminder.reminderBorrowDate || reminder.borrowDate || null;
+  const repaymentDate = reminder.reminderRepaymentDate || reminder.repaymentDate || null;
+  const daysLeft = typeof reminder.daysRemaining !== 'undefined' ? `${reminder.daysRemaining} days` : (reminder.reminderRepaymentDate ? `${reminderDateDiff(repaymentDate)} days` : '-');
+  const emiAmount = reminder.reminderEmiAmount ?? reminder.emiAmount ?? reminder.emi ?? null;
+  const pendingEmis = reminder.pendingEmis ?? reminder.emisPending ?? null;
+  const pendingEmiAmount = reminder.pendingEmiAmount ?? reminder.pendingAmount ?? null;
+  const paidEmis = reminder.paidEmis ?? reminder.emisPaid ?? null;
+  const emiPaidAmount = reminder.paidEmiAmount ?? reminder.paidAmount ?? null;
+  const balance = reminder.balance ?? reminder.remainingBalance ?? reminder.reminderTotalAmount ?? reminder.totalAmount ?? null;
   const lines = [];
-  lines.push(`Hello ${reminder.name || "Customer"}, this is a payment reminder.`);
-  if (reminder.reminderRepaymentDate) {
-    lines.push(`Repayment date: ${reminder.reminderRepaymentDate}`);
-  }
+  const noteText = String(reminder.reminderNote || reminder.note || '').toLowerCase();
+  const isEmi = noteText.includes('mode=emi') || (emiAmount && Number(emiAmount) > 0) || pendingEmis || paidEmis;
+  lines.push(isEmi ? '🔔 *EMI Payment Reminder*' : '🔔 *Payment Reminder*');
+  lines.push('');
+  lines.push(`*Dear ${name},*`);
+  lines.push('');
+  lines.push(`📌 *Borrow:* ${formatDate(borrowDate)}`);
+  lines.push(`📅 *Due:* ${formatDate(repaymentDate)} — *${daysLeft} left*`);
+  lines.push('');
   if (reminder.reminderAmount !== null && reminder.reminderAmount !== undefined) {
-    lines.push(`Principal: ${reminder.reminderAmount}`);
+    lines.push(`💰 *Principal:* ₹${formatCurrency(reminder.reminderAmount)}`);
   }
-  if (reminder.reminderInterest !== null && reminder.reminderInterest !== undefined) {
-    lines.push(`Interest: ${reminder.reminderInterest}%`);
+  if (emiAmount) {
+    lines.push(`💸 *EMI:* ₹${formatCurrency(emiAmount)}`);
   }
-  if (reminder.reminderNote) {
-    lines.push(`Note: ${reminder.reminderNote}`);
+  if (pendingEmis || pendingEmiAmount) {
+    const pendingCount = pendingEmis ? `${pendingEmis} EMI${pendingEmis > 1 ? 's' : ''}` : '';
+    const pendingAmt = pendingEmiAmount ? ` (₹${formatCurrency(pendingEmiAmount)})` : '';
+    lines.push(`⏳ *Pending:* ${pendingCount}${pendingAmt}`.trim());
   }
-  lines.push("Please complete your payment on time.");
+  if (emiPaidAmount || paidEmis) {
+    const paidCount = paidEmis ? `${paidEmis} EMI${paidEmis > 1 ? 's' : ''}` : '';
+    const paidAmt = emiPaidAmount ? ` (₹${formatCurrency(emiPaidAmount)})` : '';
+    lines.push(`✅ *Paid:* ${paidCount}${paidAmt}`.trim());
+  }
+  if (balance) {
+    lines.push(`🏦 *Balance:* ₹${formatCurrency(balance)}`);
+  }
+  lines.push('');
+  lines.push('Kindly complete the payment at the earliest.');
   return lines.join("\n");
 }
 
@@ -1660,7 +1707,23 @@ function buildCashfreePaymentLink(amount, customerId, description = "") {
   return {
     orderId,
     returnUrl,
-    displayLink: `💳 Pay via Cashfree: ${returnUrl}`,
+    displayLink: `🔗 *Pay Now:* ${returnUrl}`,
+  };
+}
+
+function buildUpiPaymentLink(amount, upiId = "9346412185@pzw", payeeName = "DHANAM CHITS PVT LTD") {
+  const safeUpiId = String(upiId || "").trim() || "9346412185@pzw";
+  const numericAmount = Number(amount || 0);
+  const params = [
+    `pa=${encodeURIComponent(safeUpiId)}`,
+    `pn=${encodeURIComponent(payeeName)}`,
+    numericAmount > 0 ? `am=${encodeURIComponent(numericAmount.toFixed(2))}` : null,
+    "cu=INR",
+    `tn=${encodeURIComponent("EMI Payment Reminder")}`,
+  ].filter(Boolean).join("&");
+  return {
+    paymentUrl: `upi://pay?${params}`,
+    displayLink: `🔗 *Pay Now:* upi://pay?${params}`,
   };
 }
 
@@ -2052,7 +2115,7 @@ function startLenderPipelineWorker() {
   }, 20000);
 }
 
-async function upsertPaymentReminderRow({ paymentId = null, mobile, name = null, reminderId = null, reminderData }) {
+async function upsertPaymentReminderRow({ paymentId = null, mobile, name = null, reminderId = null, reminderData, appendNew = false }) {
   const reminderRow = {
     payment_id: paymentId || null,
     payment_mobile: normalizeMobile(mobile || ""),
@@ -2066,51 +2129,61 @@ async function upsertPaymentReminderRow({ paymentId = null, mobile, name = null,
     paid_at: reminderData?.paidAt || null,
   };
 
-  const existingFilters = [];
-  if (reminderId) {
-    existingFilters.push({ column: "id", value: reminderId });
-  }
-  if (paymentId) {
-    existingFilters.push({ column: "payment_id", value: paymentId });
-  }
-  // Only search by mobile if no reminderId was provided (allow creating new manual reminders with same mobile)
-  if (mobile && !reminderId) {
-    existingFilters.push({ column: "payment_mobile", value: normalizeMobile(mobile) });
-  }
-
-  let existingRow = null;
-  for (const filter of existingFilters) {
-    let query = supabase.from(paymentRemindersTable).select("*");
-    query = query.eq(filter.column, filter.value).order("created_at", { ascending: false }).limit(1);
-
-    const { data, error } = await query.maybeSingle();
-    if (error) {
-      throw error;
+  if (!appendNew) {
+    const existingFilters = [];
+    if (reminderId) {
+      existingFilters.push({ column: "id", value: reminderId });
+    }
+    if (paymentId) {
+      existingFilters.push({ column: "payment_id", value: paymentId });
+    }
+    // Only search by mobile if no reminderId was provided (allow creating new manual reminders with same mobile)
+    if (mobile && !reminderId) {
+      existingFilters.push({ column: "payment_mobile", value: normalizeMobile(mobile) });
     }
 
-    if (data) {
-      existingRow = data;
-      break;
+    let existingRow = null;
+    for (const filter of existingFilters) {
+      let query = supabase.from(paymentRemindersTable).select("*");
+      query = query.eq(filter.column, filter.value).order("created_at", { ascending: false }).limit(1);
+
+      const { data, error } = await query.maybeSingle();
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        existingRow = data;
+        break;
+      }
+    }
+
+    if (existingRow?.id) {
+      const { data, error } = await supabase
+        .from(paymentRemindersTable)
+        .update(reminderRow)
+        .eq("id", existingRow.id)
+        .select("*")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
     }
   }
 
-  if (existingRow?.id) {
-    const { data, error } = await supabase
-      .from(paymentRemindersTable)
-      .update(reminderRow)
-      .eq("id", existingRow.id)
-      .select("*")
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    return data;
-  }
-
-  // When inserting a new row with a specific reminderId, include it in the insert
-  const insertRow = reminderId ? { ...reminderRow, id: reminderId } : reminderRow;
+  // Paid history rows should always append a new record so earlier paid entries stay visible.
+  const shouldReuseReminderId = !appendNew && reminderId;
+  const insertRow = shouldReuseReminderId
+    ? { ...reminderRow, id: reminderId }
+    : {
+        ...reminderRow,
+        id: appendNew
+          ? (reminderId && /^(paid|partial|emi|extend)-/i.test(reminderId) ? reminderId : `paid-${crypto.randomUUID()}`)
+          : reminderId || undefined,
+      };
 
   const { data, error } = await supabase
     .from(paymentRemindersTable)
@@ -4559,6 +4632,7 @@ app.put("/api/payments/:id/reminder", requireAuthenticatedUser, paymentAdminActi
           mobile: targetMobile,
           name: rawName || paymentRecord.name,
           reminderData,
+          appendNew: reminderData.reminderStatus === "paid",
         });
       } else {
         await clearPaymentReminderRows({ paymentId: targetId, mobile: targetMobile });

@@ -147,6 +147,14 @@ app.use(bodyParser.json({
 }));
 
 // Serve static files from the public directory
+app.use((req, res, next) => {
+    if (req.path === '/payment-reminderA.html') {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+    }
+    next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Generate EMI breakdown PDF from an HTML page (query `source` optional)
@@ -650,7 +658,23 @@ const buildCashfreePaymentLink = (amount, customerId, description = '') => {
         orderId,
         paymentUrl: `${CASHFREE_BASE_URL}/pg/orders`,
         returnUrl: safeReturnUrl,
-        displayLink: `💳 Pay via Cashfree: ${safeReturnUrl.split('?')[0]}?order_id=${orderId}`
+        displayLink: `🔗 *Pay Now:* ${safeReturnUrl.split('?')[0]}?order_id=${orderId}`
+    };
+};
+
+const buildUpiPaymentLink = (amount, upiId = '9346412185@pzw', payeeName = 'DHANAM CHITS PVT LTD') => {
+    const safeUpiId = String(upiId || '').trim() || '9346412185@pzw';
+    const numericAmount = Number(amount || 0);
+    const params = [
+        `pa=${encodeURIComponent(safeUpiId)}`,
+        `pn=${encodeURIComponent(payeeName)}`,
+        numericAmount > 0 ? `am=${encodeURIComponent(numericAmount.toFixed(2))}` : null,
+        'cu=INR',
+        `tn=${encodeURIComponent('EMI Payment Reminder')}`,
+    ].filter(Boolean).join('&');
+    return {
+        paymentUrl: `upi://pay?${params}`,
+        displayLink: `🔗 *Pay Now:* upi://pay?${params}`,
     };
 };
 
@@ -1149,21 +1173,61 @@ const reminderDaysDiff = (repaymentDate) => {
     return Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 };
 
+const formatCurrency = (val) => {
+    const n = Number(val);
+    if (!Number.isFinite(n)) return String(val || '0');
+    return n.toLocaleString('en-IN');
+};
+
+const formatDate = (val) => {
+    if (!val) return '-';
+    const d = new Date(val);
+    if (Number.isNaN(d.getTime())) return String(val);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
 const buildReminderMessage = (item) => {
-    const lines = [`Hello ${item.name || 'Customer'}, this is a payment reminder.`];
-    if (item.reminderRepaymentDate) {
-        lines.push(`Repayment date: ${item.reminderRepaymentDate}`);
-    }
+    const name = item.name || 'Customer';
+    const borrowDate = item.reminderBorrowDate || item.borrowDate || null;
+    const repaymentDate = item.reminderRepaymentDate || item.repaymentDate || null;
+    const daysLeft = typeof item.daysRemaining !== 'undefined' ? `${item.daysRemaining} days` : (item.reminderRepaymentDate ? `${reminderDaysDiff(item.reminderRepaymentDate)} days` : '-');
+    const emiAmount = item.reminderEmiAmount ?? item.emiAmount ?? item.emi ?? null;
+    const pendingEmis = item.pendingEmis ?? item.emisPending ?? null;
+    const pendingEmiAmount = item.pendingEmiAmount ?? item.pendingAmount ?? null;
+    const paidEmis = item.paidEmis ?? item.emisPaid ?? null;
+    const emiPaidAmount = item.paidEmiAmount ?? item.paidAmount ?? null;
+    const balance = item.balance ?? item.remainingBalance ?? item.totalAmount ?? null;
+    const lines = [];
+    const noteText = String(item.reminderNote || item.note || '').toLowerCase();
+    const isEmi = noteText.includes('mode=emi') || (emiAmount && Number(emiAmount) > 0) || pendingEmis || paidEmis;
+    lines.push(isEmi ? '🔔 *EMI Payment Reminder*' : '🔔 *Payment Reminder*');
+    lines.push('');
+    lines.push(`*Dear ${name},*`);
+    lines.push('');
+    lines.push(`📌 *Borrow:* ${formatDate(borrowDate)}`);
+    lines.push(`📅 *Due:* ${formatDate(repaymentDate)} — *${daysLeft} left*`);
+    lines.push('');
     if (item.reminderAmount !== null && item.reminderAmount !== undefined && item.reminderAmount !== '') {
-        lines.push(`Principal: ${item.reminderAmount}`);
+        lines.push(`💰 *Principal:* ₹${formatCurrency(item.reminderAmount)}`);
     }
-    if (item.reminderInterest !== null && item.reminderInterest !== undefined && item.reminderInterest !== '') {
-        lines.push(`Interest: ${item.reminderInterest}%`);
+    if (emiAmount) {
+        lines.push(`💸 *EMI:* ₹${formatCurrency(emiAmount)}`);
     }
-    if (item.reminderNote) {
-        lines.push(`Note: ${item.reminderNote}`);
+    if (pendingEmis || pendingEmiAmount) {
+        const pendingCount = pendingEmis ? `${pendingEmis} EMI${pendingEmis > 1 ? 's' : ''}` : '';
+        const pendingAmt = pendingEmiAmount ? ` (₹${formatCurrency(pendingEmiAmount)})` : '';
+        lines.push(`⏳ *Pending:* ${pendingCount}${pendingAmt}`.trim());
     }
-    lines.push('Please complete your payment on time.');
+    if (emiPaidAmount || paidEmis) {
+        const paidCount = paidEmis ? `${paidEmis} EMI${paidEmis > 1 ? 's' : ''}` : '';
+        const paidAmt = emiPaidAmount ? ` (₹${formatCurrency(emiPaidAmount)})` : '';
+        lines.push(`✅ *Paid:* ${paidCount}${paidAmt}`.trim());
+    }
+    if (balance) {
+        lines.push(`🏦 *Balance:* ₹${formatCurrency(balance)}`);
+    }
+    lines.push('');
+    lines.push('Kindly complete the payment at the earliest.');
     return lines.join('\n');
 };
 
