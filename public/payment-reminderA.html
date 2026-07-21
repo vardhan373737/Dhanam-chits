@@ -3913,8 +3913,9 @@
   <link rel="stylesheet" href="premium-shared.css">
   <link rel="stylesheet" href="admin-sidebar.css">
   <link rel="stylesheet" href="index-theme.css">
+  <link rel="stylesheet" href="reminder-theme.css">
 </head>
-<body>
+<body class="reminder-workspace">
   <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
 
   <!-- Toast Notifications Container -->
@@ -4073,7 +4074,7 @@
     <a href="borrowA.html"><i class="fas fa-hand-holding-usd"></i> <span class="menu-text">Borrows</span></a>
     <a href="ChitIdA.html"><i class="fas fa-university"></i> <span class="menu-text">chit-ids Approve</span></a>
     <a href="paymentA.html"><i class="fas fa-credit-card"></i> <span class="menu-text">Payments</span></a>
-    <a href="payment-reminderA.html"><i class="fas fa-bell"></i> <span class="menu-text">Payment Reminder</span></a>
+    <a href="payment-reminderA.html" class="is-current" aria-current="page"><i class="fas fa-bell"></i> <span class="menu-text">Payment Reminder</span></a>
     <a href="lenderA.html"><i class="fas fa-landmark"></i> <span class="menu-text">Lender Center</span></a>
     <a href="whatsapp-setup.html" class="legacy-integration"><i class="fab fa-whatsapp"></i> <span class="menu-text">WhatsApp Setup</span></a>
     <a href="ContactA.html"><i class="fas fa-envelope"></i> <span class="menu-text">Contact Details</span></a>
@@ -4084,7 +4085,8 @@
     <div class="page-head">
       <div>
         <h1>💰 Payment Reminder Center</h1>
-        <p class="page-tagline">Manage payment reminders & track collections efficiently.</p>
+        <div class="workspace-kicker"><i class="fas fa-bell"></i> Collections workspace</div>
+        <p class="page-tagline">Prioritize follow-ups, track collections, and keep every reminder on schedule.</p>
         <button type="button" id="themeModeBadge" class="theme-badge" onclick="toggleDarkMode()">🌞 Light Mode</button>
       </div>
       <div class="toolbar-group">
@@ -4201,14 +4203,33 @@
 
     <div class="charts-grid" id="premiumCharts">
       <div class="chart-card">
-        <div class="chart-card-title">📈 Payment Trend</div>
+        <div class="chart-card-heading">
+          <div><div class="chart-card-title"><i class="fas fa-chart-column"></i> Collection activity</div><p id="activityChartDescription">Overdue and paid payments in the last 7 days</p></div>
+          <div class="chart-actions">
+            <span class="chart-period" id="chartRangeLabel">7 days</span>
+            <button type="button" class="chart-download-btn" id="downloadTrendChart" title="Download collection activity chart"><i class="fas fa-download"></i> PNG</button>
+          </div>
+        </div>
+        <div class="chart-range-controls" aria-label="Collection activity date range">
+          <label>From <input type="date" id="chartStartDate"></label>
+          <label>To <input type="date" id="chartEndDate"></label>
+          <button type="button" id="chartApplyRange"><i class="fas fa-filter"></i> Apply range</button>
+          <button type="button" class="chart-reset-btn" id="chartResetRange">Last 7 days</button>
+        </div>
         <canvas id="paymentTrendChart"></canvas>
       </div>
       <div class="chart-card">
-        <div class="chart-card-title">🥧 Status Breakdown</div>
+        <div class="chart-card-heading">
+          <div><div class="chart-card-title"><i class="fas fa-chart-pie"></i> Payment status</div><p>Live mix of action-needed and completed records</p></div>
+          <div class="chart-actions">
+            <span class="chart-period">Live</span>
+            <button type="button" class="chart-download-btn" id="downloadStatusChart" title="Download payment status chart"><i class="fas fa-download"></i> PNG</button>
+          </div>
+        </div>
         <canvas id="statusBreakdownChart"></canvas>
       </div>
     </div>
+    <div class="charts-export-row"><button type="button" class="charts-export-btn" id="downloadAllChartsButton"><i class="fas fa-images"></i> Download both charts</button></div>
 
     <!-- Analytics Dashboard -->
     <div class="analytics-section" id="analyticsDashboard">
@@ -8186,7 +8207,12 @@
       today.setHours(0, 0, 0, 0);
       
       const overdueCount = grouped.overdue.length;
-      const dueSoonCount = grouped.thisMonth.length;
+      const dueSoonCount = active.filter((payment) => {
+        const dueDate = toDateStart(payment.reminderRepaymentDate);
+        const sevenDaysFromNow = new Date(today);
+        sevenDaysFromNow.setDate(today.getDate() + 7);
+        return dueDate && dueDate >= today && dueDate <= sevenDaysFromNow;
+      }).length;
       const pendingCount = active.length;
       const paidThisMonthCount = renderedPaidSummary?.count ?? visiblePaidRecords.length;
       const paidThisMonthAmount = renderedPaidSummary?.total
@@ -9787,6 +9813,7 @@
     // Enhanced KPI Updates
     let premiumTrendChart = null;
     let premiumStatusChart = null;
+    let chartDateRange = { start: null, end: null };
 
     function updateKPICards() {
       const { active, paid, grouped } = getReminderBuckets();
@@ -9838,87 +9865,229 @@
       updateContextualAlerts();
     }
 
+    function getChartRecords() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const sevenDaysFromNow = new Date(today);
+      sevenDaysFromNow.setDate(today.getDate() + 7);
+
+      const active = paymentCache.filter((item) => {
+        const status = normalizeText(item.status);
+        const reminderStatus = normalizeText(item.reminderStatus);
+        return status === 'manual-reminder' && reminderStatus !== 'paid' && !item.reminderPaidAt;
+      });
+      const paid = paymentCache.filter((item) => {
+        const status = normalizeText(item.status);
+        const reminderStatus = normalizeText(item.reminderStatus);
+        return status === 'approved' || status === 'paid' || status === 'completed'
+          || status === 'paid-reminder' || reminderStatus === 'paid' || Boolean(item.reminderPaidAt);
+      });
+      const overdue = active.filter((item) => {
+        const dueDate = toDateStart(item.reminderRepaymentDate);
+        return dueDate && dueDate < today;
+      });
+      const dueSoon = active.filter((item) => {
+        const dueDate = toDateStart(item.reminderRepaymentDate);
+        return dueDate && dueDate >= today && dueDate <= sevenDaysFromNow;
+      });
+      const upcoming = active.filter((item) => !overdue.includes(item) && !dueSoon.includes(item));
+
+      return { active, paid, overdue, dueSoon, upcoming };
+    }
+
+    function getChartDateRange() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const start = chartDateRange.start ? new Date(chartDateRange.start) : new Date(today);
+      const end = chartDateRange.end ? new Date(chartDateRange.end) : new Date(today);
+      if (!chartDateRange.start) start.setDate(today.getDate() - 6);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      return start <= end ? { start, end } : { start: end, end: start };
+    }
+
+    function chartDateInputValue(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function applyChartDateRange() {
+      const startValue = document.getElementById('chartStartDate')?.value;
+      const endValue = document.getElementById('chartEndDate')?.value;
+      if (!startValue || !endValue) {
+        showToast('Select both a start and end date.', 'warning');
+        return;
+      }
+      if (new Date(startValue) > new Date(endValue)) {
+        showToast('Start date must be before the end date.', 'warning');
+        return;
+      }
+      chartDateRange = { start: startValue, end: endValue };
+      renderPremiumCharts();
+      showToast('Chart range updated.', 'success');
+    }
+
+    function resetChartDateRange() {
+      chartDateRange = { start: null, end: null };
+      renderPremiumCharts();
+      showToast('Showing the last 7 days.', 'success');
+    }
+
+    function downloadChartImage(canvasId, filename) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) {
+        showToast('Chart is not ready yet. Please try again.', 'warning');
+        return;
+      }
+      try {
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png', 1);
+        link.download = `${filename}-${chartDateInputValue(new Date())}.png`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        showToast('Chart download started.', 'success');
+      } catch (error) {
+        console.error('Chart download failed:', error);
+        showToast('Unable to download this chart. Please try again.', 'error');
+      }
+    }
+
+    function downloadAllCharts() {
+      downloadChartImage('paymentTrendChart', 'collection-activity');
+      window.setTimeout(() => downloadChartImage('statusBreakdownChart', 'payment-status'), 180);
+    }
+
+    function bindChartControls() {
+      document.getElementById('chartApplyRange')?.addEventListener('click', applyChartDateRange);
+      document.getElementById('chartResetRange')?.addEventListener('click', resetChartDateRange);
+      document.getElementById('downloadTrendChart')?.addEventListener('click', () => downloadChartImage('paymentTrendChart', 'collection-activity'));
+      document.getElementById('downloadStatusChart')?.addEventListener('click', () => downloadChartImage('statusBreakdownChart', 'payment-status'));
+      document.getElementById('downloadAllChartsButton')?.addEventListener('click', downloadAllCharts);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bindChartControls);
+    } else {
+      bindChartControls();
+    }
+
     function renderPremiumCharts() {
-      const { active, paid, grouped } = getReminderBuckets();
-      const visiblePaidRecords = getVisiblePaidPaymentRecords(active, paid);
+      const { active, paid, overdue, dueSoon, upcoming } = getChartRecords();
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
+      const { start: rangeStart, end: rangeEnd } = getChartDateRange();
       const labels = [];
       const dueData = [];
       const paidData = [];
 
-      for (let offset = 6; offset >= 0; offset--) {
-        const day = new Date(today);
-        day.setDate(today.getDate() - offset);
-        labels.push(day.toLocaleDateString('en-IN', { weekday: 'short' }));
+      for (let day = new Date(rangeStart); day <= rangeEnd; day.setDate(day.getDate() + 1)) {
+        const currentDay = new Date(day);
+        labels.push(currentDay.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' }));
 
-        dueData.push(active.filter(payment => {
+        dueData.push(overdue.filter(payment => {
           const repaymentDate = toDateStart(payment.reminderRepaymentDate);
-          return repaymentDate && repaymentDate.toDateString() === day.toDateString();
+          return repaymentDate && repaymentDate.toDateString() === currentDay.toDateString();
         }).length);
 
-        paidData.push(visiblePaidRecords.filter(payment => {
-          const paidDate = toDateStart(getPaidDateValue(payment));
-          return paidDate && paidDate.toDateString() === day.toDateString();
+        paidData.push(paid.filter(payment => {
+          const paidDate = toDateStart(payment.reminderPaidAt);
+          return paidDate && paidDate.toDateString() === currentDay.toDateString();
         }).length);
       }
+
+      const startInput = document.getElementById('chartStartDate');
+      const endInput = document.getElementById('chartEndDate');
+      const rangeLabel = document.getElementById('chartRangeLabel');
+      const rangeDescription = document.getElementById('activityChartDescription');
+      if (startInput) startInput.value = chartDateInputValue(rangeStart);
+      if (endInput) endInput.value = chartDateInputValue(rangeEnd);
+      if (rangeLabel) rangeLabel.textContent = `${rangeStart.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} – ${rangeEnd.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
+      if (rangeDescription) rangeDescription.textContent = `Overdue and paid payments from ${rangeStart.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} to ${rangeEnd.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`;
 
       const trendCanvas = document.getElementById('paymentTrendChart');
       if (trendCanvas && window.Chart) {
         if (premiumTrendChart) premiumTrendChart.destroy();
         premiumTrendChart = new Chart(trendCanvas, {
-          type: 'line',
+          type: 'bar',
           data: {
             labels,
             datasets: [{
-              label: 'Due',
+              label: 'Overdue',
               data: dueData,
-              borderColor: '#0d7c91',
-              backgroundColor: 'rgba(13, 124, 145, 0.14)',
-              tension: 0.35,
-              fill: true,
-              pointRadius: 3
+              backgroundColor: '#b8304e',
+              borderColor: '#b8304e',
+              borderRadius: 6,
+              borderSkipped: false
             }, {
               label: 'Paid',
               data: paidData,
               borderColor: '#0f9a5f',
-              backgroundColor: 'rgba(15, 154, 95, 0.14)',
-              tension: 0.35,
-              fill: true,
-              pointRadius: 3
+              backgroundColor: '#0f9a5f',
+              borderRadius: 6,
+              borderSkipped: false
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom' } },
-            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            plugins: {
+              legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'rectRounded', padding: 18 } },
+              tooltip: { callbacks: { label: (context) => `${context.dataset.label}: ${context.parsed.y} payment${context.parsed.y === 1 ? '' : 's'}` } }
+            },
+            scales: {
+              x: { grid: { display: false } },
+              y: { beginAtZero: true, ticks: { precision: 0, stepSize: 1 }, grid: { color: 'rgba(16, 39, 57, 0.1)' } }
+            }
           }
         });
       }
 
       const statusCanvas = document.getElementById('statusBreakdownChart');
       if (statusCanvas && window.Chart) {
-        const overdueCount = grouped.overdue.length;
-        const dueSoonCount = grouped.thisMonth.length;
-        const paidCount = visiblePaidRecords.length;
+        const overdueCount = overdue.length;
+        const dueSoonCount = dueSoon.length;
+        const upcomingCount = upcoming.length;
+        const paidCount = paid.length;
 
         if (premiumStatusChart) premiumStatusChart.destroy();
+        const statusTotal = overdueCount + dueSoonCount + upcomingCount + paidCount;
         premiumStatusChart = new Chart(statusCanvas, {
           type: 'doughnut',
+          plugins: [{
+            id: 'statusCenterLabel',
+            beforeDraw(chart) {
+              const { ctx, chartArea } = chart;
+              if (!chartArea) return;
+              const centerX = (chartArea.left + chartArea.right) / 2;
+              const centerY = (chartArea.top + chartArea.bottom) / 2;
+              ctx.save();
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillStyle = '#102739';
+              ctx.font = '800 28px Manrope';
+              ctx.fillText(String(statusTotal), centerX, centerY - 8);
+              ctx.fillStyle = '#5d7487';
+              ctx.font = '700 11px Manrope';
+              ctx.fillText('TOTAL RECORDS', centerX, centerY + 15);
+              ctx.restore();
+            }
+          }],
           data: {
-            labels: ['Overdue', 'Due Soon', 'Paid'],
+            labels: ['Overdue', 'Due in 7 days', 'Upcoming', 'Paid'],
             datasets: [{
-              data: [overdueCount, dueSoonCount, paidCount],
-              backgroundColor: ['#b8304e', '#d97e2a', '#0f9a5f'],
+              data: [overdueCount, dueSoonCount, upcomingCount, paidCount],
+              backgroundColor: ['#b8304e', '#d97e2a', '#277da1', '#0f9a5f'],
               borderWidth: 0
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom' } },
+            plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', padding: 18 } } },
             cutout: '68%'
           }
         });

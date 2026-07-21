@@ -593,7 +593,7 @@ body.premium-home #welcomeBanner button {
         font-family: 'Manrope', sans-serif !important;
     }
 
-    body.premium-home .brand-logo {
+body.premium-home .brand-logo {
         height: 50px;
         margin-right: 15px;
         object-fit: cover;
@@ -818,6 +818,158 @@ body.premium-home #welcomeBanner {
         linear-gradient(140deg, rgba(4, 21, 37, 0.88), rgba(8, 43, 70, 0.82));
     backdrop-filter: blur(5px);
     overflow: auto;
+}
+
+/* Final homepage experience layer */
+body.premium-home header {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+}
+
+body.premium-home .navbar {
+    width: min(1240px, 96vw);
+    margin: 0 auto;
+    min-height: 76px;
+    padding: 10px 4px;
+}
+
+body.premium-home .nav-login {
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+body.premium-home .nav-cta {
+    background: #f3ba35;
+    color: #082641 !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
+}
+
+body.premium-home .nav-cta:hover,
+body.premium-home .nav-cta:focus {
+    background: #ffd66e;
+    color: #082641 !important;
+}
+
+body.premium-home .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 10px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff7df;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+body.premium-home .carousel-caption h3 {
+    color: #fff;
+    font-size: clamp(2rem, 4.2vw, 3.7rem);
+    line-height: 1.05;
+    letter-spacing: -0.045em;
+    text-shadow: none;
+}
+
+body.premium-home .carousel-caption p {
+    color: rgba(255, 255, 255, 0.88);
+    font-size: clamp(1rem, 1.7vw, 1.22rem);
+}
+
+body.premium-home .carousel-caption .btn {
+    border-radius: 10px;
+    padding: 11px 18px;
+}
+
+body.premium-home .trust-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    margin: -1px 18px 0;
+    position: relative;
+    z-index: 5;
+    overflow: hidden;
+    border: 1px solid rgba(14, 64, 95, 0.1);
+    border-radius: 0 0 18px 18px;
+    background: rgba(14, 64, 95, 0.1);
+    box-shadow: 0 14px 28px rgba(8, 32, 50, 0.11);
+}
+
+body.premium-home .trust-strip > div {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 15px 18px;
+    background: rgba(255, 255, 255, 0.96);
+}
+
+body.premium-home .trust-strip i {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: #e8f4f3;
+    color: #08766b;
+    font-size: 1.05rem;
+}
+
+body.premium-home .trust-strip span {
+    display: grid;
+    color: #56708a;
+    font-size: 0.78rem;
+    line-height: 1.2;
+}
+
+body.premium-home .trust-strip strong {
+    color: #123d5e;
+    font-size: 0.9rem;
+}
+
+body.premium-home .premium-search__head h2 {
+    font-size: clamp(1.55rem, 3vw, 2.2rem);
+    letter-spacing: -0.04em;
+}
+
+body.premium-home .result-card {
+    min-height: 142px;
+    padding: 18px;
+}
+
+body.premium-home #feedback .form-control {
+    min-height: 46px;
+    border: 1px solid #d9e4ef;
+    border-radius: 10px;
+    box-shadow: none;
+}
+
+body.premium-home #feedback textarea.form-control {
+    min-height: 118px;
+}
+
+body.premium-home #feedback .form-control:focus {
+    border-color: #0f7f73;
+    box-shadow: 0 0 0 3px rgba(15, 127, 115, 0.13);
+}
+
+body.premium-home .feedback-item {
+    border: 1px solid #dce8f2 !important;
+    border-radius: 14px !important;
+    background: #fff;
+}
+
+@media (max-width: 768px) {
+    body.premium-home .navbar { min-height: 64px; }
+    body.premium-home .trust-strip {
+        grid-template-columns: 1fr;
+        margin: 10px 0 0;
+        border-radius: 14px;
+    }
+    body.premium-home .trust-strip > div { padding: 12px 14px; }
+    body.premium-home .hero-eyebrow { font-size: 0.64rem; margin-bottom: 6px; }
+    body.premium-home .carousel-caption h3 { font-size: 1.55rem; }
 }
 
 body.premium-home #welcomeBanner img {
